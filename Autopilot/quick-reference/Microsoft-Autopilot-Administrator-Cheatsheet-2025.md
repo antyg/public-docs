@@ -21,34 +21,31 @@ This cheat sheet provides quick reference information for day-to-day Microsoft W
 ## Quick Access Portal Links
 
 ### Primary Administration Portals
-```
-Microsoft Intune Admin Center:
-https://intune.microsoft.com/
 
-Microsoft Entra Admin Center:
-https://entra.microsoft.com/
-
-Microsoft 365 Admin Center:
-https://admin.microsoft.com/
-
-Windows Autopilot Admin:
-https://intune.microsoft.com/#view/Microsoft_Intune_Enrollment/WindowsAutopilotMenu
-```
+- **[Microsoft Intune Admin Center](https://intune.microsoft.com/)**
+- **[Microsoft Entra Admin Center](https://entra.microsoft.com/)**
+- **[Microsoft 365 Admin Center](https://admin.microsoft.com/)**
+- **[Windows Autopilot Admin](https://intune.microsoft.com/#view/Microsoft_Intune_Enrollment/WindowsAutopilotMenu)**
 
 ### Common Navigation Paths
-```
-Device Registration:
-Devices > Windows > Windows enrollment > Windows Autopilot > Devices
 
-Deployment Profiles:
-Devices > Windows > Windows enrollment > Windows Autopilot > Deployment profiles
+**[Device Registration](https://intune.microsoft.com/#view/Microsoft_Intune_Enrollment/WindowsAutopilotDeviceIdentitiesMenu)**
+- Path: Devices > Windows > Windows enrollment > Windows Autopilot > Devices
 
-Device Status:
-Devices > All devices > [Select device] > Hardware
+**[Deployment Profiles](https://intune.microsoft.com/#view/Microsoft_Intune_Enrollment/WindowsAutopilotDeploymentProfilesMenu)**
+- Path: Devices > Windows > Windows enrollment > Windows Autopilot > Deployment profiles
 
-Autopilot Events:
-Devices > Monitor > Enrollment failures
-```
+**[Device Status](https://intune.microsoft.com/#view/Microsoft_Intune_DeviceSettings/DevicesMenu/~/overview)**
+- Path: Devices > All devices > [Select device] > Hardware
+
+**[Autopilot Events](https://intune.microsoft.com/#view/Microsoft_Intune_DeviceSettings/DevicesMonitorMenu/~/enrollmentFailures)**
+- Path: Devices > Monitor > Enrollment failures
+
+**[MDM Enrollment](https://portal.azure.com/#blade/Microsoft_AAD_IAM/ActiveDirectoryMenuBlade/Mobility)**
+- Path: Microsoft Entra admin center > Identity > Mobility (MDM and MAM) > Microsoft Intune
+
+**[Device Settings](https://portal.azure.com/#blade/Microsoft_AAD_IAM/DevicesMenuBlade/DeviceSettings/menuId/)**
+- Path: Microsoft Entra admin center > Identity > Devices > Device settings
 
 ## Essential PowerShell Commands
 
@@ -558,26 +555,18 @@ Level 2 Support: IT Infrastructure
 - Hours: Extended hours
 
 Level 3 Support: Microsoft Support
-- Case Portal: https://admin.microsoft.com/ (Support section)
-- Alternative: https://support.serviceshub.microsoft.com/
+- Case Portal: **[Microsoft 365 Admin Center](https://admin.microsoft.com/)** (Support section)
+- Alternative: **[Microsoft Support Hub](https://support.serviceshub.microsoft.com/)**
 - Priority: Based on support plan and business impact
 - Contact: [Replace with your Microsoft Account Manager]
 ```
 
 ### Microsoft Support Resources
-```
-Microsoft Tech Community:
-https://techcommunity.microsoft.com/t5/microsoft-intune/ct-p/Microsoft-Intune
 
-Microsoft Documentation:
-https://learn.microsoft.com/autopilot/
-
-Service Health Dashboard:
-https://admin.microsoft.com/Adminportal/Home#/servicehealth
-
-Feature Roadmap:
-https://www.microsoft.com/microsoft-365/roadmap
-```
+- **[Microsoft Tech Community](https://techcommunity.microsoft.com/t5/microsoft-intune/ct-p/Microsoft-Intune)**
+- **[Microsoft Autopilot Documentation](https://learn.microsoft.com/autopilot/)**
+- **[Service Health Dashboard](https://admin.microsoft.com/Adminportal/Home#/servicehealth)**
+- **[Microsoft 365 Feature Roadmap](https://www.microsoft.com/microsoft-365/roadmap)**
 
 ---
 

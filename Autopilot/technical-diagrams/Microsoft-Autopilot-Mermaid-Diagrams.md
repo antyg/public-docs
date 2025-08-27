@@ -24,7 +24,7 @@
 ### High-Level Service Architecture
 
 ```mermaid
-graph TB
+graph LR
     subgraph "End User Device Layer"
         Device[Windows Device<br/>TPM 2.0, UEFI]
         OOBE[Out-of-Box Experience<br/>Windows Setup]
@@ -155,17 +155,35 @@ graph TB
     CA_Internal -.-> Device
     EntraID --> CA_Internal
 
-    classDef deviceClass fill:#1e3a5f,stroke:#4fc3f7,stroke-width:3px
-    classDef cloudClass fill:#4a148c,stroke:#ba68c8,stroke-width:2px
-    classDef securityClass fill:#7f1e1e,stroke:#ef5350,stroke-width:2px
-    classDef onpremClass fill:#5d4037,stroke:#ff9800,stroke-width:2px,stroke-dasharray: 5 5
-    classDef supportClass fill:#2e4e1f,stroke:#8bc34a,stroke-width:1px
+    %% Missing Connections - Fix Disconnected Nodes
+    %% PIM Integration
+    EntraID --> PIM
+    PIM --> EntraID
+    
+    %% MAM Integration  
+    Intune --> MAM
+    MAM --> Device
+    
+    %% Proxy Integration
+    Device --> Proxy
+    Proxy --> Internet
+
+    %% Color Legend Classification
+    classDef deviceClass fill:#0d47a1,stroke:#64b5f6,stroke-width:3px,color:#ffffff
+    classDef cloudClass fill:#4a148c,stroke:#ba68c8,stroke-width:2px,color:#ffffff
+    classDef securityClass fill:#b71c1c,stroke:#ef5350,stroke-width:2px,color:#ffffff
+    classDef onpremClass fill:#5d4037,stroke:#ff9800,stroke-width:2px,stroke-dasharray:5 5,color:#ffffff
+    classDef supportClass fill:#1b5e20,stroke:#66bb6a,stroke-width:2px,color:#ffffff
+    classDef dataFlowClass fill:#880e4f,stroke:#ec407a,stroke-width:2px,color:#ffffff
+    classDef dmzClass fill:#5d4e37,stroke:#ffc107,stroke-width:2px,color:#ffffff
 
     class Device,OOBE,ESP deviceClass
-    class WAS,Intune,EntraID,MFA,CA,MSStore,M365Apps,EAC cloudClass
-    class Defender,DLP,CloudAppSec,Sentinel securityClass
+    class WAS,Intune,EntraID,MSStore,M365Apps,EAC,WUFB,WNS,ConfigManager cloudClass
+    class MFA,CA,PIM,Defender,DLP,CloudAppSec,Sentinel,MAM,ComplianceEngine,AppProxy securityClass
     class AD,ODJConnector,DC,CA_Internal,ConfigMgrOnPrem onpremClass
     class DNS,NTP,CRL,Telemetry supportClass
+    class Internet dataFlowClass
+    class VPN,Proxy dmzClass
 ```
 
 ### Detailed Service Dependencies and Data Flow
@@ -1192,7 +1210,7 @@ stateDiagram-v2
 ### Data Flow and Security Boundaries
 
 ```mermaid
-graph TB
+graph LR
     subgraph "Security Zones"
         subgraph "Untrusted Zone"
             Internet[Public Internet]

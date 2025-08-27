@@ -167,18 +167,16 @@ Hybrid Azure AD joined devices require on-premises Active Directory credentials 
 - Authentication flow complexity for end users
 
 **Authentication Flow Limitations:**
-```
-Supported Authentication:
-✅ On-premises AD accounts (synced to Azure AD)
-✅ Password Hash Synchronization accounts
-✅ Pass-through Authentication accounts
 
-Unsupported Authentication:
-❌ Cloud-only Azure AD accounts
-❌ Guest user accounts
-❌ B2B collaboration accounts
-❌ Azure AD B2C accounts
-```
+| Authentication Method | Hybrid Autopilot Support | Cloud-Native Support | Migration Path | Notes |
+|----------------------|--------------------------|---------------------|---------------|--------|
+| **On-premises AD accounts (synced)** | ✅ Supported | ✅ Supported | Azure AD Connect sync | Requires active sync |
+| **Password Hash Synchronization** | ✅ Supported | ✅ Supported | Direct migration | Most compatible |
+| **Pass-through Authentication** | ✅ Supported | ✅ Supported | Direct migration | On-premises dependency |
+| **Cloud-only Azure AD accounts** | ❌ Not supported | ✅ Supported | Cloud-native only | Hybrid incompatible |
+| **Guest user accounts** | ❌ Not supported | ⚠️ Limited support | External identity | Policy dependent |
+| **B2B collaboration accounts** | ❌ Not supported | ⚠️ Limited support | External identity | Tenant dependent |
+| **Azure AD B2C accounts** | ❌ Not supported | ❌ Not supported | Not applicable | Consumer identity |
 
 **Workarounds:**
 1. **Ensure proper identity synchronization:**
@@ -566,19 +564,17 @@ Applications deployed during hybrid Autopilot may encounter context and permissi
 - Group Policy conflicts with Intune policies
 
 **Application Deployment Constraints:**
-```
-Problematic Application Types:
-- Apps requiring domain user context during installation
-- Certificate-dependent applications before domain join completion
-- Applications with Group Policy dependencies
-- Line-of-business apps with domain authentication requirements
 
-Safe Application Types:
-- System context Win32 apps
-- Microsoft Store apps (business)
-- Applications with no authentication dependencies
-- Utility applications and drivers
-```
+| Application Type | Compatibility | Specific Issues | Recommended Workaround | Deployment Phase |
+|-----------------|---------------|-----------------|----------------------|------------------|
+| **Apps requiring domain user context** | ❌ Problematic | Installation fails before domain join | Deploy post-domain join via Intune | Phase 2: Post-OOBE |
+| **Certificate-dependent applications** | ❌ Problematic | Cannot validate certificates before domain join | Pre-install certificates or delay deployment | Phase 2: Post-OOBE |
+| **Applications with Group Policy dependencies** | ❌ Problematic | GPOs not applied during OOBE | Convert to Intune policies or delay deployment | Phase 2: Post-OOBE |
+| **Line-of-business apps with domain auth** | ❌ Problematic | Authentication failure during OOBE | Use system context or scheduled deployment | Phase 2: Post-OOBE |
+| **System context Win32 apps** | ✅ Safe | No domain dependencies | Standard Intune deployment | Phase 1: During ESP |
+| **Microsoft Store apps (business)** | ✅ Safe | Cloud-based installation | Standard Intune deployment | Phase 1: During ESP |
+| **Applications with no auth dependencies** | ✅ Safe | Self-contained installation | Standard Intune deployment | Phase 1: During ESP |
+| **Utility applications and drivers** | ✅ Safe | System-level installation | Standard Intune deployment | Phase 1: During ESP |
 
 **Workarounds:**
 1. **Phased application deployment:**
@@ -635,25 +631,103 @@ Safe Application Types:
 ### Enterprise-Grade Hybrid Deployment Framework
 
 #### Solution Framework: Hybrid-to-Cloud Bridge Architecture
-```
-Phase 1: Current State (Hybrid Required)
-├── On-premises AD infrastructure
-├── Hybrid Autopilot deployment
-├── Domain-dependent applications
-└── Legacy authentication systems
 
-Phase 2: Transition State (Hybrid + Cloud)
-├── Dual authentication support
-├── Application modernization
-├── Cloud-native service adoption
-└── Identity federation enhancement
+**Enterprise Migration Architecture Progression:**
 
-Phase 3: Target State (Cloud-Native)
-├── Azure AD-only authentication
-├── Cloud-based applications
-├── Intune-only device management
-└── Conditional Access optimization
+```mermaid
+flowchart TD
+    Start([Enterprise Migration<br/>Project Initiation])
+
+    %% Phase 1: Current State (Hybrid Required)
+    subgraph Phase1 ["Phase 1: Current State - Hybrid Required"]
+        P1_AD[On-premises AD<br/>Infrastructure]
+        P1_Autopilot[Hybrid Autopilot<br/>Deployment]
+        P1_Apps[Domain-dependent<br/>Applications]
+        P1_Auth[Legacy Authentication<br/>Systems]
+        
+        P1_AD --> P1_Autopilot
+        P1_Autopilot --> P1_Apps
+        P1_Apps --> P1_Auth
+    end
+
+    %% Phase 1 Transition Gate
+    P1Gate{Phase 1 Assessment Complete?<br/>✓ Current state documented<br/>✓ Dependencies mapped<br/>✓ Migration strategy defined}
+
+    %% Phase 2: Transition State (Hybrid + Cloud)
+    subgraph Phase2 ["Phase 2: Transition State - Hybrid + Cloud"]
+        P2_DualAuth[Dual Authentication<br/>Support<br/>AD + Azure AD]
+        P2_AppMod[Application<br/>Modernization<br/>Legacy → Modern]
+        P2_CloudAdopt[Cloud-native Service<br/>Adoption<br/>Intune + M365]
+        P2_Federation[Identity Federation<br/>Enhancement<br/>Seamless SSO]
+        
+        P2_DualAuth --> P2_AppMod
+        P2_AppMod --> P2_CloudAdopt
+        P2_CloudAdopt --> P2_Federation
+    end
+
+    %% Phase 2 Transition Gate
+    P2Gate{Phase 2 Validation Complete?<br/>✓ Hybrid systems stable<br/>✓ Applications modernized<br/>✓ Users migrated successfully}
+
+    %% Phase 3: Target State (Cloud-Native)
+    subgraph Phase3 ["Phase 3: Target State - Cloud-Native"]
+        P3_AAD[Azure AD-only<br/>Authentication<br/>Cloud Identity]
+        P3_CloudApps[Cloud-based<br/>Applications<br/>SaaS + PaaS]
+        P3_Intune[Intune-only Device<br/>Management<br/>Cloud MDM]
+        P3_CA[Conditional Access<br/>Optimization<br/>Zero Trust]
+        
+        P3_AAD --> P3_CloudApps
+        P3_CloudApps --> P3_Intune
+        P3_Intune --> P3_CA
+    end
+
+    %% Final Success
+    Complete([Enterprise Cloud-Native<br/>Transformation Complete])
+
+    %% Flow connections
+    Start --> Phase1
+    Phase1 --> P1Gate
+    P1Gate -->|Yes - Proceed| Phase2
+    P1Gate -->|No - Remediate| Phase1
+    
+    Phase2 --> P2Gate
+    P2Gate -->|Yes - Proceed| Phase3
+    P2Gate -->|No - Stabilize| Phase2
+    
+    Phase3 --> Complete
+
+    %% Architecture Evolution Arrows
+    P1_AD -.->|Legacy Bridge| P2_DualAuth
+    P1_Autopilot -.->|Hybrid Transition| P2_CloudAdopt
+    P1_Apps -.->|Modernization Path| P2_AppMod
+    P1_Auth -.->|Federation Evolution| P2_Federation
+
+    P2_DualAuth -.->|Cloud Migration| P3_AAD
+    P2_AppMod -.->|Cloud-Native| P3_CloudApps
+    P2_CloudAdopt -.->|Full Cloud| P3_Intune
+    P2_Federation -.->|Zero Trust| P3_CA
+
+    %% Vibrant Autopilot Documentation Color Scheme
+    classDef phase1 fill:#bf360c,stroke:#ff7043,stroke-width:3px,color:#ffffff
+    classDef phase2 fill:#5d4037,stroke:#ff9800,stroke-width:3px,color:#ffffff  
+    classDef phase3 fill:#1b5e20,stroke:#66bb6a,stroke-width:3px,color:#ffffff
+    classDef decision fill:#880e4f,stroke:#ec407a,stroke-width:2px,color:#ffffff
+    classDef milestone fill:#4a148c,stroke:#ba68c8,stroke-width:3px,color:#ffffff
+    classDef components fill:#0d47a1,stroke:#64b5f6,stroke-width:2px,color:#ffffff
+
+    class P1_AD,P1_Autopilot,P1_Apps,P1_Auth components
+    class P2_DualAuth,P2_AppMod,P2_CloudAdopt,P2_Federation components
+    class P3_AAD,P3_CloudApps,P3_Intune,P3_CA components
+    class P1Gate,P2Gate decision
+    class Start,Complete milestone
 ```
+
+**Architecture Transformation Summary:**
+
+| Phase | Duration | Focus Area | Key Deliverables | Success Criteria |
+|-------|----------|------------|------------------|------------------|
+| **Phase 1: Current State** | Assessment | Hybrid Infrastructure | Documentation, dependency mapping, migration strategy | Complete understanding of current environment |
+| **Phase 2: Transition State** | 12-18 months | Dual Mode Operations | Modern authentication, app modernization, cloud adoption | Stable hybrid environment with cloud services |
+| **Phase 3: Target State** | 6-12 months | Cloud-Native Operations | Full cloud migration, infrastructure decommission | Complete cloud-native transformation |
 
 #### Implementation Strategy: Gradual Migration Approach
 
@@ -699,164 +773,321 @@ Phase 3: Target State (Cloud-Native)
 
 ### Emergency Recovery Procedures
 
-#### Emergency Procedure: Complete Hybrid Deployment Failure
-```powershell
-<#
-.SYNOPSIS
-Emergency recovery script for hybrid Autopilot deployment failures
+#### Emergency Recovery Workflow Overview
 
-.DESCRIPTION
-Comprehensive recovery procedure for situations where hybrid Autopilot
-deployment fails and devices cannot join the domain or complete setup.
-#>
+**Crisis Response Decision Matrix:**
 
-# Step 1: Assess current state
-$deviceState = @{
-    DomainJoinStatus = (Get-ComputerInfo).CsDomainRole
-    AutopilotStatus = Get-CimInstance -Namespace root/cimv2/mdm/dmmap -ClassName MDM_WindowsAutopilot
-    NetworkConnectivity = Test-NetConnection -ComputerName (Get-ADDomainController).Name -Port 389
-    TimeSync = w32tm /query /status
-}
-
-# Step 2: Emergency domain join (if network available)
-if ($deviceState.NetworkConnectivity.TcpTestSucceeded) {
-    $credential = Get-Credential -Message "Enter domain administrator credentials"
-    Add-Computer -DomainName $env:USERDNSDOMAIN -Credential $credential -Force -Restart
-}
-
-# Step 3: Manual Intune enrollment (if cloud connectivity available)
-else {
-    # Configure manual MDM enrollment
-    $enrollmentURL = "https://enrollment.manage.microsoft.com/enrollmentserver/discovery.svc"
-    Start-Process "ms-device-enrollment:?mode=mdm&enrollmenturl=$enrollmentURL"
-}
-
-# Step 4: Create incident report
-$incidentReport = @{
-    Timestamp = Get-Date
-    DeviceInfo = Get-ComputerInfo | Select Name, Domain, Model, SerialNumber
-    FailurePoint = "Domain join during Autopilot"
-    ErrorDetails = Get-EventLog -LogName System -Source "Microsoft-Windows-OfflineFiles/Operational" -Newest 10
-    RecoveryAction = "Manual domain join attempted"
-    NextSteps = "Contact Level 2 support if issues persist"
-}
-
-$incidentReport | ConvertTo-Json | Out-File "C:\Temp\AutopilotFailureReport.json"
-```
-
-#### Emergency Procedure: Intune Connector Failure
-```powershell
-<#
-.SYNOPSIS
-Emergency Intune Connector recovery procedures
-#>
-
-# Immediate assessment
-$connectorStatus = @{
-    ServiceStatus = Get-Service "Microsoft Intune Connector" | Select Status, StartType
-    ConnectorVersion = Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\Microsoft Intune on-premise Connector" -Name "Version"
-    LastError = Get-EventLog -LogName Application -Source "Microsoft Intune on-premise Connector" -EntryType Error -Newest 1
-    MSAAccount = Get-ADServiceAccount -Filter "Name -like 'MSOL_*'"
-}
-
-# Automated recovery attempt
-if ($connectorStatus.ServiceStatus.Status -ne "Running") {
-    # Attempt service restart
-    Restart-Service "Microsoft Intune Connector" -Force
-    Start-Sleep 30
+```mermaid
+flowchart TD
+    Crisis([🚨 EMERGENCY: Hybrid Autopilot Failure Detected])
     
-    # Verify restart success
-    $serviceCheck = Get-Service "Microsoft Intune Connector"
-    if ($serviceCheck.Status -eq "Running") {
-        Write-Output "✅ Connector service restart successful"
-    } else {
-        Write-Output "❌ Connector service restart failed - manual intervention required"
+    subgraph "Initial Assessment & Triage"
+        FailureType{What type of failure<br/>is occurring?}
         
-        # Emergency contact notification
-        $alertMessage = @{
-            Subject = "CRITICAL: Intune Connector Failure"
-            Body = "Connector service failed to restart. Hybrid Autopilot deployments blocked."
-            Priority = "High"
-            Recipients = @("infrastructure@company.com", "oncall@company.com")
-        }
-    }
-}
-
-# MSA account validation and recovery
-if (!$connectorStatus.MSAAccount) {
-    Write-Output "⚠️ MSA account missing - connector reinstallation may be required"
-    # Log emergency procedure initiation
-    # Contact Microsoft support if necessary
-}
+        DeploymentFailure[Complete Deployment Failure<br/>• Device won't join domain<br/>• Autopilot process stuck<br/>• Authentication failures]
+        
+        ConnectorFailure[Intune Connector Failure<br/>• Service down/stopped<br/>• MSA account issues<br/>• Registration failures]
+        
+        NetworkFailure[Network Connectivity Issues<br/>• DNS resolution failure<br/>• Domain controller unreachable<br/>• VPN connectivity problems]
+    end
+    
+    Crisis --> FailureType
+    FailureType --> DeploymentFailure
+    FailureType --> ConnectorFailure  
+    FailureType --> NetworkFailure
+    
+    DeploymentFailure --> DeploymentRecovery
+    ConnectorFailure --> ConnectorRecovery
+    NetworkFailure --> NetworkRecovery
+    
+    classDef crisis fill:#d32f2f,stroke:#ef5350,stroke-width:4px,color:#ffffff
+    classDef assessment fill:#f57c00,stroke:#ff9800,stroke-width:2px,color:#ffffff
+    classDef failure fill:#1976d2,stroke:#42a5f5,stroke-width:2px,color:#ffffff
+    
+    class Crisis crisis
+    class FailureType assessment
+    class DeploymentFailure,ConnectorFailure,NetworkFailure failure
 ```
+
+#### Recovery Procedure 1: Complete Hybrid Deployment Failure
+
+**Deployment Failure Recovery Flowchart:**
+
+```mermaid
+flowchart TD
+    Start([🚨 Deployment Failure Alert])
+    
+    subgraph "Step 1: System Assessment"
+        AssessState[Assess Current Device State<br/>• Domain join status<br/>• Autopilot enrollment state<br/>• Network connectivity<br/>• Time synchronization]
+        
+        DomainJoined{Is device<br/>domain joined?}
+        NetworkOK{Is network<br/>connectivity OK?}
+    end
+    
+    subgraph "Step 2: Network-Based Recovery"
+        EmergencyDomainJoin[Emergency Domain Join<br/>• Get admin credentials<br/>• Force domain join<br/>• Schedule restart]
+        
+        DomainJoinSuccess{Domain join<br/>successful?}
+        
+        RestartDevice[Restart Device<br/>Complete Autopilot process]
+    end
+    
+    subgraph "Step 3: Cloud-Based Recovery"
+        ManualEnrollment[Manual Intune Enrollment<br/>• Launch enrollment URL<br/>• Complete MDM registration<br/>• Configure policies]
+        
+        EnrollmentSuccess{Enrollment<br/>successful?}
+        
+        CloudOnlySetup[Complete Cloud-Only Setup<br/>Azure AD join mode]
+    end
+    
+    subgraph "Step 4: Incident Management"
+        CreateIncident[Create Incident Report<br/>• Timestamp and device info<br/>• Failure point analysis<br/>• Recovery actions taken<br/>• Error log collection]
+        
+        EscalateL2[Escalate to Level 2 Support<br/>• Provide incident report<br/>• Transfer device control<br/>• Notify stakeholders]
+        
+        Success([✅ Recovery Complete])
+        Failed([❌ Recovery Failed - Manual Intervention Required])
+    end
+    
+    %% Main flow
+    Start --> AssessState
+    AssessState --> DomainJoined
+    DomainJoined -->|Yes| Success
+    DomainJoined -->|No| NetworkOK
+    
+    NetworkOK -->|Yes| EmergencyDomainJoin
+    NetworkOK -->|No| ManualEnrollment
+    
+    EmergencyDomainJoin --> DomainJoinSuccess
+    DomainJoinSuccess -->|Yes| RestartDevice
+    DomainJoinSuccess -->|No| ManualEnrollment
+    RestartDevice --> Success
+    
+    ManualEnrollment --> EnrollmentSuccess
+    EnrollmentSuccess -->|Yes| CloudOnlySetup
+    EnrollmentSuccess -->|No| CreateIncident
+    CloudOnlySetup --> Success
+    
+    CreateIncident --> EscalateL2
+    EscalateL2 --> Failed
+    
+    %% Vibrant Autopilot Documentation Color Scheme
+    classDef start fill:#bf360c,stroke:#ff7043,stroke-width:3px,color:#ffffff
+    classDef assessment fill:#0d47a1,stroke:#64b5f6,stroke-width:2px,color:#ffffff
+    classDef action fill:#1b5e20,stroke:#66bb6a,stroke-width:2px,color:#ffffff
+    classDef decision fill:#880e4f,stroke:#ec407a,stroke-width:2px,color:#ffffff
+    classDef success fill:#2e7d32,stroke:#66bb6a,stroke-width:3px,color:#ffffff
+    classDef failure fill:#d32f2f,stroke:#ef5350,stroke-width:3px,color:#ffffff
+    
+    class Start start
+    class AssessState,CreateIncident assessment
+    class EmergencyDomainJoin,RestartDevice,ManualEnrollment,CloudOnlySetup,EscalateL2 action
+    class DomainJoined,NetworkOK,DomainJoinSuccess,EnrollmentSuccess decision
+    class Success success
+    class Failed failure
+```
+
+#### Recovery Procedure 2: Intune Connector Failure
+
+**Connector Failure Recovery Flowchart:**
+
+```mermaid
+flowchart TD
+    ConnectorAlert([🚨 Intune Connector Failure])
+    
+    subgraph "Step 1: Connector Assessment"
+        CheckStatus[Check Connector Status<br/>• Service state<br/>• Version information<br/>• Last error logs<br/>• MSA account health]
+        
+        ServiceRunning{Is connector<br/>service running?}
+        MSAValid{Is MSA account<br/>valid and accessible?}
+    end
+    
+    subgraph "Step 2: Automated Recovery"
+        RestartService[Restart Connector Service<br/>• Force service stop<br/>• Wait 30 seconds<br/>• Start service<br/>• Verify operation]
+        
+        RestartSuccess{Service restart<br/>successful?}
+        
+        TestConnectivity[Test Connector Functionality<br/>• Azure AD connectivity<br/>• Domain controller access<br/>• Device registration test]
+    end
+    
+    subgraph "Step 3: MSA Account Recovery"
+        ReconfigureMSA[Reconfigure MSA Account<br/>• Validate account existence<br/>• Reset account permissions<br/>• Update connector config]
+        
+        MSARecovery{MSA account<br/>recovery successful?}
+        
+        ReinstallConnector[Reinstall Connector<br/>• Download latest version<br/>• Remove old installation<br/>• Fresh installation<br/>• Configure MSA]
+    end
+    
+    subgraph "Step 4: Emergency Response"
+        CriticalAlert[Send Critical Alert<br/>• Notify infrastructure team<br/>• Notify on-call engineer<br/>• Update incident board<br/>• Block new deployments]
+        
+        ContactMicrosoft[Contact Microsoft Support<br/>• Create support case<br/>• Provide diagnostic data<br/>• Request escalation]
+        
+        ConnectorFixed([✅ Connector Restored])
+        RequiresSupport([❌ Microsoft Support Required])
+    end
+    
+    %% Main flow
+    ConnectorAlert --> CheckStatus
+    CheckStatus --> ServiceRunning
+    ServiceRunning -->|No| RestartService
+    ServiceRunning -->|Yes| MSAValid
+    
+    RestartService --> RestartSuccess
+    RestartSuccess -->|Yes| TestConnectivity
+    RestartSuccess -->|No| CriticalAlert
+    
+    TestConnectivity --> MSAValid
+    MSAValid -->|Yes| ConnectorFixed
+    MSAValid -->|No| ReconfigureMSA
+    
+    ReconfigureMSA --> MSARecovery
+    MSARecovery -->|Yes| ConnectorFixed
+    MSARecovery -->|No| ReinstallConnector
+    
+    ReinstallConnector --> ConnectorFixed
+    ReinstallConnector --> CriticalAlert
+    
+    CriticalAlert --> ContactMicrosoft
+    ContactMicrosoft --> RequiresSupport
+    
+    %% Styling  
+    classDef alert fill:#d32f2f,stroke:#ef5350,stroke-width:3px,color:#ffffff
+    classDef assessment fill:#1976d2,stroke:#42a5f5,stroke-width:2px,color:#ffffff
+    classDef recovery fill:#388e3c,stroke:#66bb6a,stroke-width:2px,color:#ffffff
+    classDef decision fill:#f57c00,stroke:#ff9800,stroke-width:2px,color:#ffffff
+    classDef emergency fill:#9c27b0,stroke:#ba68c8,stroke-width:2px,color:#ffffff
+    classDef success fill:#4caf50,stroke:#66bb6a,stroke-width:3px,color:#ffffff
+    classDef escalation fill:#d32f2f,stroke:#ef5350,stroke-width:3px,color:#ffffff
+    
+    class ConnectorAlert alert
+    class CheckStatus assessment
+    class RestartService,TestConnectivity,ReconfigureMSA,ReinstallConnector recovery
+    class ServiceRunning,MSAValid,RestartSuccess,MSARecovery decision
+    class CriticalAlert,ContactMicrosoft emergency
+    class ConnectorFixed success
+    class RequiresSupport escalation
+```
+
+**Emergency Contact Matrix:**
+
+| Failure Type | Response Time | Primary Contact | Secondary Contact | Escalation Level |
+|-------------|---------------|-----------------|-------------------|------------------|
+| **Complete Deployment Failure** | 30 minutes | IT Operations Team | Device Management Team | Level 2 → Level 3 |
+| **Intune Connector Failure** | 15 minutes | Infrastructure Team | Microsoft Premier Support | Level 2 → Microsoft |
+| **Network Connectivity Issues** | 15 minutes | Network Operations | Domain Controller Team | Level 1 → Level 2 |
+| **MSA Account Issues** | 30 minutes | Identity Team | Security Team | Level 2 → Level 3 |
+
+**Recovery Success Metrics:**
+
+| Recovery Type | Target Resolution Time | Success Rate Target | Escalation Threshold |
+|--------------|----------------------|-------------------|-------------------|
+| **Deployment Recovery** | 2 hours | 85% | 90 minutes without progress |
+| **Connector Recovery** | 1 hour | 95% | 45 minutes without progress |
+| **Network Recovery** | 30 minutes | 90% | 20 minutes without progress |
+| **Account Recovery** | 1 hour | 80% | 45 minutes without progress |
 
 ## Monitoring and Alerting Framework
 
 ### Critical Monitoring Points
-```powershell
-# Hybrid Autopilot health monitoring script
-$monitoringChecks = @{
-    
-    # Connector Health
-    ConnectorService = {
-        $service = Get-Service "Microsoft Intune Connector" -ErrorAction SilentlyContinue
-        return @{
-            Status = $service.Status
-            Alert = $service.Status -ne "Running"
-            Severity = if ($service.Status -ne "Running") {"Critical"} else {"OK"}
-        }
-    }
-    
-    # Domain Controller Connectivity  
-    DomainConnectivity = {
-        $dcs = (Get-ADDomainController -Filter *).Name
-        $failures = @()
-        foreach ($dc in $dcs) {
-            $test = Test-NetConnection -ComputerName $dc -Port 389 -WarningAction SilentlyContinue
-            if (!$test.TcpTestSucceeded) {
-                $failures += $dc
-            }
-        }
-        return @{
-            FailedDCs = $failures
-            Alert = $failures.Count -gt 0
-            Severity = if ($failures.Count -gt ($dcs.Count / 2)) {"Critical"} else {"Warning"}
-        }
-    }
-    
-    # Compliance Sync Health
-    ComplianceSync = {
-        $unknownDevices = Get-MgDeviceManagementManagedDevice | Where-Object {$_.ComplianceState -eq "unknown"}
-        return @{
-            UnknownCount = $unknownDevices.Count
-            Alert = $unknownDevices.Count -gt 10
-            Severity = if ($unknownDevices.Count -gt 50) {"Critical"} elseif ($unknownDevices.Count -gt 10) {"Warning"} else {"OK"}
-        }
-    }
-    
-    # Deployment Success Rate
-    DeploymentSuccess = {
-        $last24h = (Get-Date).AddDays(-1)
-        $deployments = Get-MgDeviceManagementWindowsAutopilotDeviceIdentity | Where-Object {$_.LastContactedDateTime -gt $last24h}
-        $successful = $deployments | Where-Object {$_.EnrollmentState -eq "enrolled"}
-        $successRate = if ($deployments.Count -gt 0) {($successful.Count / $deployments.Count) * 100} else {100}
-        
-        return @{
-            SuccessRate = $successRate
-            TotalDeployments = $deployments.Count
-            FailedDeployments = $deployments.Count - $successful.Count
-            Alert = $successRate -lt 85
-            Severity = if ($successRate -lt 70) {"Critical"} elseif ($successRate -lt 85) {"Warning"} else {"OK"}
-        }
-    }
-}
 
-# Execute monitoring and generate alerts
-foreach ($check in $monitoringChecks.Keys) {
-    $result = & $monitoringChecks[$check]
-    if ($result.Alert) {
-        Write-Output "🚨 ALERT [$($result.Severity)]: $check - $($result | ConvertTo-Json)"
-    }
+**Hybrid Autopilot Monitoring Architecture:**
+
+```mermaid
+flowchart TB
+    subgraph "Monitoring System Overview"
+        MonitorController[Central Monitoring Controller<br/>PowerShell Framework]
+    end
+
+    subgraph "Infrastructure Monitoring"
+        ConnectorHealth[Intune Connector Health<br/>Service Status Check<br/>Alert Threshold: Service Down]
+        DomainHealth[Domain Controller Connectivity<br/>LDAP Port 389 Test<br/>Alert Threshold: >50% DCs Failed]
+        NetworkHealth[Network Infrastructure<br/>DNS Resolution & Time Sync<br/>Alert Threshold: Connection Failures]
+    end
+
+    subgraph "Device Management Monitoring"
+        ComplianceHealth[Compliance Sync Health<br/>Unknown Device State Tracking<br/>Alert Thresholds:<br/>Warning: >10 devices<br/>Critical: >50 devices]
+        DeploymentHealth[Deployment Success Rate<br/>24-Hour Success Tracking<br/>Alert Thresholds:<br/>Warning: <85% success<br/>Critical: <70% success]
+        DeviceHealth[Device Registration Health<br/>Autopilot Identity Tracking<br/>Alert Threshold: Registration Failures]
+    end
+
+    subgraph "Alert Management System"
+        CriticalAlerts[Critical Alerts<br/>🚨 Immediate Response Required<br/>- Connector Service Down<br/>- >50% DC Failures<br/>- <70% Deployment Success]
+        WarningAlerts[Warning Alerts<br/>⚠️ Investigation Required<br/>- DC Connectivity Issues<br/>- 10-50 Unknown Compliance<br/>- 70-84% Deployment Success]
+        InfoAlerts[Information Alerts<br/>ℹ️ Status Updates<br/>- Successful Health Checks<br/>- Normal Operations<br/>- Scheduled Maintenance]
+    end
+
+    subgraph "Response Actions"
+        AutoRemediation[Automated Remediation<br/>- Service Restart Attempts<br/>- DNS Cache Flush<br/>- Connector Re-registration]
+        Escalation[Alert Escalation<br/>- Email Notifications<br/>- Incident Creation<br/>- On-Call Activation]
+        Reporting[Health Reporting<br/>- Executive Dashboard<br/>- Trend Analysis<br/>- SLA Tracking]
+    end
+
+    %% Main monitoring flow
+    MonitorController --> ConnectorHealth
+    MonitorController --> DomainHealth
+    MonitorController --> NetworkHealth
+    MonitorController --> ComplianceHealth
+    MonitorController --> DeploymentHealth
+    MonitorController --> DeviceHealth
+
+    %% Alert routing
+    ConnectorHealth -->|Critical Failure| CriticalAlerts
+    DomainHealth -->|>50% Failed| CriticalAlerts
+    DeploymentHealth -->|<70% Success| CriticalAlerts
+
+    DomainHealth -->|<50% Failed| WarningAlerts
+    ComplianceHealth -->|10-50 Unknown| WarningAlerts
+    DeploymentHealth -->|70-84% Success| WarningAlerts
+
+    ComplianceHealth -->|<10 Unknown| InfoAlerts
+    DeploymentHealth -->|>85% Success| InfoAlerts
+    NetworkHealth -->|Healthy| InfoAlerts
+
+    %% Response routing
+    CriticalAlerts --> AutoRemediation
+    CriticalAlerts --> Escalation
+    WarningAlerts --> Escalation
+    InfoAlerts --> Reporting
+
+    %% Vibrant Autopilot Documentation Color Scheme
+    classDef controller fill:#4a148c,stroke:#ba68c8,stroke-width:3px,color:#ffffff
+    classDef infrastructure fill:#0d47a1,stroke:#64b5f6,stroke-width:2px,color:#ffffff
+    classDef devicemgmt fill:#1b5e20,stroke:#66bb6a,stroke-width:2px,color:#ffffff
+    classDef critical fill:#d32f2f,stroke:#ef5350,stroke-width:3px,color:#ffffff
+    classDef warning fill:#f57c00,stroke:#ff9800,stroke-width:2px,color:#ffffff
+    classDef info fill:#1976d2,stroke:#42a5f5,stroke-width:2px,color:#ffffff
+    classDef response fill:#5d4037,stroke:#ff7043,stroke-width:2px,color:#ffffff
+
+    class MonitorController controller
+    class ConnectorHealth,DomainHealth,NetworkHealth infrastructure
+    class ComplianceHealth,DeploymentHealth,DeviceHealth devicemgmt
+    class CriticalAlerts critical
+    class WarningAlerts warning
+    class InfoAlerts info
+    class AutoRemediation,Escalation,Reporting response
+```
+
+**Monitoring Thresholds and Response Matrix:**
+
+| Monitoring Component | OK Status | Warning Threshold | Critical Threshold | Auto-Remediation | Escalation Time |
+|---------------------|-----------|-------------------|-------------------|------------------|-----------------|
+| **Intune Connector Service** | Running | Service Stopped | Service Failed + Restart Failed | Service restart attempt | Immediate |
+| **Domain Controller Connectivity** | All DCs accessible | 1-49% DC failures | >50% DC failures | Network diagnostics | 15 minutes |
+| **Compliance Sync Health** | <10 unknown devices | 10-50 unknown devices | >50 unknown devices | Force sync attempt | 30 minutes |
+| **Deployment Success Rate** | >85% success | 70-84% success | <70% success | Deployment analysis | 1 hour |
+| **Device Registration Health** | All registrations successful | <5% failure rate | >5% failure rate | Certificate refresh | 15 minutes |
+| **Network Infrastructure** | All tests pass | DNS/Time sync issues | Complete connectivity failure | Cache flush/sync | Immediate |
+
+**PowerShell Implementation Reference:**
+```powershell
+# Critical monitoring checks implementation
+# See full PowerShell monitoring framework in supplementary scripts
+$monitoringChecks = @{
+    ConnectorService = { Get-Service "Microsoft Intune Connector" }
+    DomainConnectivity = { Test-NetConnection -ComputerName $dcs -Port 389 }
+    ComplianceSync = { Get-MgDeviceManagementManagedDevice | Where ComplianceState -eq "unknown" }
+    DeploymentSuccess = { Calculate 24-hour success rate from Autopilot device identities }
 }
 ```
 
@@ -865,58 +1096,216 @@ foreach ($check in $monitoringChecks.Keys) {
 ### Assessment Questionnaire for Cloud-Native Migration
 
 #### Organizational Readiness Assessment
+
+**Cloud-Native Migration Readiness Decision Tree:**
+
+```mermaid
+flowchart TD
+    Start[Start Migration Assessment]
+    
+    subgraph Phase1 ["Phase 1: Application Dependencies"]
+        AppStart{Applications require<br/>domain authentication?}
+        AppCatalog[Catalog Domain Apps<br/>IIS Windows Auth<br/>Desktop AD Apps<br/>Database Integrated Security]
+        AppHardCoded{Hard-coded domain<br/>dependencies exist?}
+        AppModern[Assess Modernization<br/>API Authentication<br/>OAuth2 SAML Integration<br/>Application Proxy Support]
+        AppCostBenefit[Calculate Migration Costs<br/>Development Effort<br/>Business Disruption<br/>Training Requirements]
+    end
+    
+    subgraph Phase2 ["Phase 2: Infrastructure Dependencies"]
+        InfraStart{Infrastructure depends<br/>on Active Directory?}
+        FileShares[Document File Dependencies<br/>Windows File Servers<br/>DFS Namespaces<br/>NTFS Permissions]
+        NetworkRes[Network Resources<br/>Print Services<br/>Network Devices<br/>Monitoring Systems]
+        BackupSys[Backup and Monitoring<br/>Software Integration<br/>Tool Authentication<br/>Management Systems]
+    end
+    
+    subgraph Phase3 ["Phase 3: Compliance and Security"]
+        ComplianceStart{Regulatory requirements<br/>for on-premises AD?}
+        Regulatory[Review Constraints<br/>Data Residency Laws<br/>Industry Compliance<br/>Security Requirements]
+        DataSovereignty[Data Sovereignty<br/>Geographic Restrictions<br/>Cloud Limitations<br/>Cross-border Transfer]
+        AuditReporting[Audit Requirements<br/>Compliance Reporting<br/>Log Retention<br/>Control Frameworks]
+        SecurityPolicies[Security Compatibility<br/>Conditional Access<br/>Zero Trust Readiness<br/>Identity Governance]
+    end
+    
+    subgraph Phase4 ["Phase 4: User Experience Impact"]
+        UXStart{Migration impacts<br/>user experience?}
+        UserTraining[Training Requirements<br/>New Authentication<br/>Self-service Support<br/>Procedures]
+        SSOChanges[SSO Experience<br/>Application Access<br/>Authentication Flows<br/>Password Policies]
+        RemoteAccess[Remote Access Impact<br/>VPN Dependencies<br/>Home Networks<br/>Mobile Devices]
+    end
+    
+    subgraph Results ["Assessment Results"]
+        LowComplexity[Low Complexity<br/>Minimal AD Dependencies<br/>Cloud-ready Apps<br/>Direct Migration]
+        MediumComplexity[Medium Complexity<br/>Some Legacy Dependencies<br/>Modernization Needed<br/>Phased Approach]
+        HighComplexity[High Complexity<br/>Extensive AD Integration<br/>Legacy Constraints<br/>Hybrid-first Strategy]
+        BlockingIssues[Migration Blockers<br/>Compliance Constraints<br/>Unsupported Systems<br/>Remain Hybrid]
+    end
+    
+    %% Phase 1 Flow
+    Start --> AppStart
+    AppStart -->|Yes| AppCatalog
+    AppStart -->|No| InfraStart
+    AppCatalog --> AppHardCoded
+    AppHardCoded -->|Yes| AppModern
+    AppHardCoded -->|No| AppCostBenefit
+    AppModern --> AppCostBenefit
+    AppCostBenefit --> InfraStart
+    
+    %% Phase 2 Flow
+    InfraStart -->|Yes| FileShares
+    InfraStart -->|No| ComplianceStart
+    FileShares --> NetworkRes
+    NetworkRes --> BackupSys
+    BackupSys --> ComplianceStart
+    
+    %% Phase 3 Flow
+    ComplianceStart -->|Yes| Regulatory
+    ComplianceStart -->|No| UXStart
+    Regulatory --> DataSovereignty
+    DataSovereignty --> AuditReporting
+    AuditReporting --> SecurityPolicies
+    SecurityPolicies --> UXStart
+    
+    %% Phase 4 Flow
+    UXStart -->|Yes| UserTraining
+    UXStart -->|No| LowComplexity
+    UserTraining --> SSOChanges
+    SSOChanges --> RemoteAccess
+    
+    %% Results Flow
+    RemoteAccess --> LowComplexity
+    RemoteAccess --> MediumComplexity
+    RemoteAccess --> HighComplexity
+    RemoteAccess --> BlockingIssues
+    
+    %% Vibrant Autopilot Documentation Color Scheme
+    classDef phase1 fill:#0d47a1,stroke:#64b5f6,stroke-width:2px,color:#ffffff
+    classDef phase2 fill:#4a148c,stroke:#ba68c8,stroke-width:2px,color:#ffffff
+    classDef phase3 fill:#5d4037,stroke:#ff9800,stroke-width:2px,color:#ffffff
+    classDef phase4 fill:#1b5e20,stroke:#66bb6a,stroke-width:2px,color:#ffffff
+    classDef decision fill:#880e4f,stroke:#ec407a,stroke-width:2px,color:#ffffff
+    classDef result fill:#bf360c,stroke:#ff7043,stroke-width:3px,color:#ffffff
+    classDef start fill:#4a148c,stroke:#ba68c8,stroke-width:3px,color:#ffffff
+    
+    class Start start
+    class AppStart,AppHardCoded,InfraStart,ComplianceStart,UXStart decision
+    class AppCatalog,AppModern,AppCostBenefit phase1
+    class FileShares,NetworkRes,BackupSys phase2
+    class Regulatory,DataSovereignty,AuditReporting,SecurityPolicies phase3
+    class UserTraining,SSOChanges,RemoteAccess phase4
+    class LowComplexity,MediumComplexity,HighComplexity,BlockingIssues result
 ```
-1. Application Dependencies
-   □ Catalog all applications requiring domain authentication
-   □ Identify applications with hard-coded domain dependencies  
-   □ Assess modernization feasibility for each application
-   □ Calculate migration cost vs. benefit for each app
 
-2. Infrastructure Dependencies
-   □ Document file share dependencies requiring domain access
-   □ Identify network resources requiring domain authentication
-   □ Assess printer and device dependencies
-   □ Evaluate backup and monitoring system integration
+**Assessment Scoring Matrix:**
 
-3. Compliance and Security Requirements
-   □ Review regulatory requirements for on-premises AD
-   □ Assess data residency and sovereignty constraints
-   □ Evaluate audit and compliance reporting dependencies
-   □ Review security policy compatibility with cloud-native approach
+| Assessment Category | Weight | Low Score (1-3) | Medium Score (4-6) | High Score (7-10) | Impact on Migration |
+|-------------------|--------|-----------------|-------------------|------------------|-------------------|
+| **Application Dependencies** | 35% | Few cloud-ready apps | Mixed app portfolio | Extensive legacy apps | Determines modernization effort |
+| **Infrastructure Dependencies** | 25% | Cloud services ready | Some on-premises deps | Heavy infrastructure integration | Affects timeline and complexity |
+| **Compliance & Security** | 25% | Cloud compliance ready | Some regulatory constraints | Strict compliance requirements | May block or delay migration |
+| **User Experience Impact** | 15% | Minimal user impact | Moderate training needed | Significant workflow changes | Influences change management |
 
-4. User Experience Impact
-   □ Assess user training requirements for cloud authentication
-   □ Evaluate single sign-on experience changes
-   □ Review password management and reset procedures
-   □ Assess remote access and VPN dependency changes
+**Migration Path Decision Logic:**
+
+```mermaid
+pie title Migration Recommendation Based on Assessment Score
+    "Direct Migration (Score: 1.0-3.5)" : 25
+    "Phased Approach (Score: 3.6-6.5)" : 40
+    "Hybrid-First Strategy (Score: 6.6-8.5)" : 30
+    "Remain Hybrid (Score: 8.6-10.0)" : 5
 ```
 
 #### Migration Planning Timeline
+
+**Enterprise Migration Project Timeline:**
+
+```mermaid
+gantt
+    title Hybrid to Cloud-Native Migration Timeline (18 Month Project)
+    dateFormat  YYYY-MM-DD
+    axisFormat  %b %Y
+
+    section Phase 1: Assessment & Planning
+    Complete Dependency Analysis         :crit, assess1, 2025-01-01, 45d
+    Design Target State Architecture     :crit, assess2, after assess1, 30d
+    Create Migration Strategy & Timeline :assess3, after assess2, 30d
+    Establish Pilot Program Criteria     :assess4, after assess3, 15d
+    Phase 1 Completion Milestone        :milestone, m1, after assess4, 0d
+
+    section Phase 2: Pilot Implementation
+    Deploy Cloud-Native Pilot            :crit, pilot1, after m1, 45d
+    Test App Compatibility & UX          :pilot2, after pilot1, 30d
+    Validate Security & Compliance       :pilot3, after pilot2, 30d
+    Refine Procedures & Documentation    :pilot4, after pilot3, 15d
+    Phase 2 Completion Milestone        :milestone, m2, after pilot4, 0d
+
+    section Phase 3: Gradual Migration
+    Wave 1 - Device Migration 30%        :crit, migrate1, after m2, 60d
+    Wave 2 - Device Migration 40%        :crit, migrate2, after migrate1, 60d
+    Wave 3 - Device Migration 30%        :crit, migrate3, after migrate2, 60d
+    Application Modernization            :appmod, after m2, 120d
+    Infrastructure Decommissioning       :decomm, after migrate2, 60d
+    Optimize Cloud-Native Operations     :optimize, after migrate3, 30d
+    Phase 3 Completion Milestone        :milestone, m3, after optimize, 0d
+
+    section Phase 4: Completion & Optimization
+    Complete Migration All Devices       :final1, after m3, 45d
+    Optimize Cloud-Native Configs        :final2, after final1, 30d
+    Advanced Security Implementation      :final3, after final2, 30d
+    Document Lessons Learned             :final4, after final3, 15d
+    Project Completion Milestone         :milestone, complete, after final4, 0d
 ```
-Phase 1 (Months 1-3): Assessment and Planning
-- Complete dependency analysis
-- Design target state architecture  
-- Create migration strategy and timeline
-- Establish pilot program criteria
 
-Phase 2 (Months 4-6): Pilot Implementation
-- Deploy cloud-native pilot for small subset of devices
-- Test application compatibility and user experience
-- Validate security and compliance controls
-- Refine deployment procedures and documentation
+**Migration Wave Strategy and Risk Mitigation:**
 
-Phase 3 (Months 7-12): Gradual Migration
-- Migrate devices in waves based on dependency assessment
-- Modernize or replace legacy applications
-- Decommission on-premises infrastructure components
-- Monitor and optimize cloud-native operations
+```mermaid
+timeline
+    title Migration Execution Strategy & Risk Controls
+    
+    Months 1-3  : Phase 1 - Foundation Building
+                : Comprehensive assessment
+                : Architecture design
+                : Risk identification
+                : Pilot group selection
 
-Phase 4 (Months 13-18): Completion and Optimization
-- Complete migration for all suitable devices
-- Optimize cloud-native configurations
-- Implement advanced security and compliance features
-- Document lessons learned and best practices
+    Months 4-6  : Phase 2 - Controlled Testing
+                : Limited scope pilot
+                : Application validation
+                : User experience testing
+                : Process refinement
+
+    Months 7-9  : Phase 3A - Wave 1 Migration
+                : Low-risk users (30%)
+                : New employee devices
+                : Non-critical applications
+                : Continuous monitoring
+
+    Months 10-12 : Phase 3B - Wave 2 Migration
+                 : Medium-risk users (40%)
+                 : Standard business applications
+                 : Department-based migration
+                 : Performance optimization
+
+    Months 13-15 : Phase 3C - Wave 3 Migration
+                 : High-risk users (30%)
+                 : Mission-critical applications
+                 : Executive and specialized roles
+                 : Enhanced support
+
+    Months 16-18 : Phase 4 - Optimization & Closure
+                 : Infrastructure cleanup
+                 : Security posture enhancement
+                 : Performance tuning
+                 : Knowledge transfer
 ```
+
+**Migration Success Criteria and Checkpoints:**
+
+| Phase | Success Criteria | Key Deliverables | Go/No-Go Decision Points |
+|-------|------------------|------------------|------------------------|
+| **Phase 1: Assessment** | 100% inventory complete<br/>Architecture approved<br/>Strategy validated | Dependency matrix<br/>Target architecture<br/>Migration plan<br/>Pilot criteria | Executive approval<br/>Budget confirmation<br/>Resource allocation |
+| **Phase 2: Pilot** | Pilot success >90%<br/>User satisfaction >80%<br/>No critical issues | Working pilot environment<br/>Validated procedures<br/>Performance baselines<br/>Issue resolution process | Technical validation<br/>User acceptance<br/>Security compliance |
+| **Phase 3: Migration** | Wave completion rates<br/>Application functionality<br/>Security maintained<br/>Performance targets met | Migrated user groups<br/>Modernized applications<br/>Decommissioned infrastructure<br/>Operational procedures | Wave success criteria<br/>Risk tolerance levels<br/>Business continuity |
+| **Phase 4: Completion** | 100% migration complete<br/>All objectives achieved<br/>Performance optimized<br/>Documentation complete | Cloud-native environment<br/>Optimized configurations<br/>Advanced security features<br/>Knowledge base | Final acceptance<br/>Performance validation<br/>Business sign-off |
 
 ## Conclusion and Recommendations
 
@@ -942,21 +1331,95 @@ Phase 4 (Months 13-18): Completion and Optimization
 
 ### Risk Mitigation Summary
 
-**High-Priority Risks:**
-- Intune Connector deprecation (June 2025) - **Action Required**
-- Application deployment context issues - **Monitoring Required**
-- VPN compatibility limitations - **Infrastructure Planning Required**
+**Enterprise Risk Assessment and Prioritization Matrix:**
 
-**Medium-Priority Risks:**
-- Duplicate device object management - **Process Optimization**
-- Compliance state synchronization delays - **User Communication**
-- DNS and time sync dependencies - **Infrastructure Hardening**
+```mermaid
+%%{init: {"quadrantChart": {"chartWidth": 500, "chartHeight": 500}}}%%
+quadrantChart
+    title Hybrid Autopilot Risk Assessment Matrix
+    x-axis Low --> High
+    y-axis Low --> High
+    quadrant-1 High Impact / Low Probability
+    quadrant-2 High Impact / High Probability - Critical Action Required
+    quadrant-3 Low Impact / Low Probability - Monitor
+    quadrant-4 Low Impact / High Probability - Operational Focus
+    Connector Deprecation: [0.9, 0.9]
+    App Deployment Issues: [0.7, 0.8]
+    VPN Compatibility: [0.8, 0.6]
+    Device Object Mgmt: [0.4, 0.7]
+    Compliance Sync: [0.3, 0.6]
+    DNS/Time Sync: [0.5, 0.4]
+```
 
-**Ongoing Monitoring:**
-- Deployment success rates and failure analysis
-- Connector health and domain controller connectivity
-- User experience metrics and satisfaction
-- Security posture and compliance adherence
+**Risk Prioritization and Response Strategy:**
+
+| Risk Category | Risk Name | Impact Level | Probability | Priority Score | Response Strategy | Timeline | Owner |
+|---------------|-----------|--------------|-------------|----------------|-------------------|----------|-------|
+| **Critical Risks** | Intune Connector Deprecation (June 2025) | Very High | Very High | 9.9 | Immediate upgrade to new connector with MSA | Q1 2025 | Infrastructure Team |
+| **High Priority** | Application Deployment Context Issues | High | High | 8.0 | Enhanced monitoring and staged deployment | Q1 2025 | Application Team |
+| **High Priority** | VPN Compatibility Limitations | High | Medium | 6.8 | Always-On VPN implementation | Q2 2025 | Network Team |
+| **Medium Priority** | Duplicate Device Object Management | Medium | Medium | 4.9 | Automated cleanup processes | Q2 2025 | Identity Team |
+| **Medium Priority** | Compliance State Sync Delays | Low | Medium | 3.6 | User communication and grace periods | Q3 2025 | Compliance Team |
+| **Low Priority** | DNS and Time Sync Dependencies | Medium | Low | 2.5 | Infrastructure hardening | Q3 2025 | Infrastructure Team |
+
+**Risk Response Framework:**
+
+```mermaid
+flowchart TD
+    subgraph "Risk Categories & Response Times"
+        Critical[Critical Risks<br/>Score: 8.0+<br/>Response: Immediate Action]
+        High[High Priority Risks<br/>Score: 6.0-7.9<br/>Response: 30 days]
+        Medium[Medium Priority Risks<br/>Score: 4.0-5.9<br/>Response: 90 days]
+        Low[Low Priority Risks<br/>Score: <4.0<br/>Response: Monitor]
+    end
+
+    subgraph "Response Actions"
+        ImmediateAction[Immediate Action Required<br/>- Executive escalation<br/>- Emergency resources<br/>- Daily status updates]
+        PlannedAction[Planned Mitigation<br/>- Resource allocation<br/>- Project planning<br/>- Weekly reporting]
+        ProactiveAction[Proactive Management<br/>- Process optimization<br/>- Standard procedures<br/>- Monthly review]
+        MonitoringAction[Ongoing Monitoring<br/>- Trend analysis<br/>- Threshold alerting<br/>- Quarterly assessment]
+    end
+
+    subgraph "Escalation Matrix"
+        L1[Level 1: Technical Teams<br/>Score: <4.0]
+        L2[Level 2: Management<br/>Score: 4.0-7.9]
+        L3[Level 3: Executive<br/>Score: 8.0+]
+    end
+
+    Critical --> ImmediateAction
+    High --> PlannedAction
+    Medium --> ProactiveAction
+    Low --> MonitoringAction
+
+    ImmediateAction --> L3
+    PlannedAction --> L2
+    ProactiveAction --> L2
+    MonitoringAction --> L1
+
+    classDef critical fill:#d32f2f,stroke:#ef5350,stroke-width:3px,color:#ffffff
+    classDef high fill:#f57c00,stroke:#ff9800,stroke-width:2px,color:#ffffff
+    classDef medium fill:#1976d2,stroke:#42a5f5,stroke-width:2px,color:#ffffff
+    classDef low fill:#388e3c,stroke:#66bb6a,stroke-width:2px,color:#ffffff
+    classDef action fill:#4a148c,stroke:#ba68c8,stroke-width:2px,color:#ffffff
+    classDef escalation fill:#5d4037,stroke:#ff7043,stroke-width:2px,color:#ffffff
+
+    class Critical critical
+    class High high
+    class Medium medium
+    class Low low
+    class ImmediateAction,PlannedAction,ProactiveAction,MonitoringAction action
+    class L1,L2,L3 escalation
+```
+
+**Risk Monitoring Dashboard:**
+
+| Risk Monitoring Area | Key Metrics | Alert Thresholds | Review Frequency |
+|--------------------- |-------------|------------------|------------------|
+| **Deployment Success Rates** | Success percentage, failure analysis, user feedback | Warning: <85%, Critical: <70% | Daily |
+| **Connector Health** | Service status, MSA account health, connectivity | Warning: Service issues, Critical: Service down | Real-time |
+| **Domain Controller Connectivity** | Response times, availability, authentication success | Warning: >5% failures, Critical: >20% failures | Every 5 minutes |
+| **User Experience Metrics** | Satisfaction scores, help desk tickets, training completion | Warning: <80% satisfaction, Critical: <60% satisfaction | Weekly |
+| **Security and Compliance** | Policy violations, audit findings, security incidents | Warning: Minor violations, Critical: Security breaches | Daily |
 
 ---
 

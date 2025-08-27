@@ -147,7 +147,7 @@ enterpriseregistration.contoso.com    CNAME    enterpriseregistration.windows.ne
 #### Supported Devices
 - **Windows 10** version 1809 or later
 - **Windows 11** all versions
-- **TPM 2.0** chip (recommended for security features)
+- **TPM 2.0** chip (required for security features)
 - **UEFI firmware** (required for secure boot)
 - **Network connectivity** (Ethernet or Wi-Fi)
 
@@ -157,6 +157,119 @@ enterpriseregistration.contoso.com    CNAME    enterpriseregistration.windows.ne
 - **Additional space** for applications and updates
 
 ## Step-by-Step Setup Process
+
+**Autopilot Setup Workflow:**
+
+```mermaid
+flowchart TD
+    Start([Begin Autopilot Setup])
+    
+    %% Phase 1: Initial Configuration
+    subgraph Phase1 ["Phase 1: Initial Configuration"]
+        Step1[Step 1: Enable Automatic<br/>Intune Enrollment<br/>📍 Entra Admin Center > Mobility]
+        Step2[Step 2: Configure Device<br/>Registration Settings<br/>📍 Entra Admin Center > Devices]
+        
+        Step1 --> Step2
+    end
+    
+    %% Phase 1 Validation
+    P1Check{Phase 1 Complete?<br/>✓ MDM enrollment enabled<br/>✓ Device registration configured}
+    
+    %% Phase 2: Windows Autopilot Configuration
+    subgraph Phase2 ["Phase 2: Windows Autopilot Configuration"]
+        Step3[Step 3: Create Device Groups<br/>Dynamic Security Groups<br/>📍 Entra Admin Center > Groups]
+        Step4[Step 4: Register Autopilot Devices<br/>Manual CSV Import or<br/>PowerShell Automation<br/>📍 Intune Admin Center > Autopilot]
+        Step5[Step 5: Create Deployment Profile<br/>User-Driven/Self-Deploying<br/>📍 Intune > Deployment Profiles]
+        
+        Step3 --> Step4
+        Step4 --> Step5
+    end
+    
+    %% Phase 2 Validation
+    P2Check{Phase 2 Complete?<br/>✓ Device groups created<br/>✓ Devices registered<br/>✓ Profile configured}
+    
+    %% Phase 3: Application and Policy Configuration
+    subgraph Phase3 ["Phase 3: Application & Policy Configuration"]
+        Step6[Step 6: Configure ESP<br/>Enrollment Status Page<br/>📍 Intune > Enrollment Status Page]
+        Step7[Step 7: Deploy Applications<br/>Win32 Apps & Store Apps<br/>📍 Intune > Apps]
+        
+        Step6 --> Step7
+    end
+    
+    %% Phase 3 Validation
+    P3Check{Phase 3 Complete?<br/>✓ ESP configured<br/>✓ Apps assigned}
+    
+    %% Phase 4: Security and Compliance Configuration
+    subgraph Phase4 ["Phase 4: Security & Compliance Configuration"]
+        Step8[Step 8: Configure Compliance<br/>Device Compliance Policies<br/>📍 Intune > Compliance Policies]
+        Step9[Step 9: Configure Conditional Access<br/>Device-Based Access Policies<br/>📍 Entra > Conditional Access]
+        
+        Step8 --> Step9
+    end
+    
+    %% Phase 4 Validation
+    P4Check{Phase 4 Complete?<br/>✓ Compliance policies active<br/>✓ Conditional access configured}
+    
+    %% Phase 5: Monitoring and Validation
+    subgraph Phase5 ["Phase 5: Monitoring & Validation"]
+        Step10[Step 10: Configure Monitoring<br/>Autopilot Reports & Dashboards<br/>📍 Intune > Monitor]
+        Validate[Validate Setup<br/>Test Pilot Device<br/>Monitor Initial Deployments]
+        
+        Step10 --> Validate
+    end
+    
+    %% Setup Complete
+    Complete([Autopilot Setup Complete<br/>Ready for Device Deployment])
+    
+    %% Flow Connections
+    Start --> Phase1
+    Phase1 --> P1Check
+    P1Check -->|Yes| Phase2
+    P1Check -->|No - Fix Issues| Phase1
+    
+    Phase2 --> P2Check
+    P2Check -->|Yes| Phase3
+    P2Check -->|No - Fix Issues| Phase2
+    
+    Phase3 --> P3Check
+    P3Check -->|Yes| Phase4
+    P3Check -->|No - Fix Issues| Phase3
+    
+    Phase4 --> P4Check
+    P4Check -->|Yes| Phase5
+    P4Check -->|No - Fix Issues| Phase4
+    
+    Phase5 --> Complete
+    
+    %% Additional Connections for Iterative Improvements
+    Validate -.->|Issues Found| Step8
+    Validate -.->|App Issues| Step7
+    Validate -.->|Profile Issues| Step5
+    
+    %% Vibrant Autopilot Documentation Color Scheme
+    classDef phase1 fill:#0d47a1,stroke:#64b5f6,stroke-width:2px,color:#ffffff
+    classDef phase2 fill:#1b5e20,stroke:#66bb6a,stroke-width:2px,color:#ffffff
+    classDef phase3 fill:#5d4037,stroke:#ff9800,stroke-width:2px,color:#ffffff
+    classDef phase4 fill:#4a148c,stroke:#ba68c8,stroke-width:2px,color:#ffffff
+    classDef phase5 fill:#2e4e1f,stroke:#8bc34a,stroke-width:2px,color:#ffffff
+    classDef decision fill:#880e4f,stroke:#ec407a,stroke-width:2px,color:#ffffff
+    classDef milestone fill:#bf360c,stroke:#ff7043,stroke-width:3px,color:#ffffff
+    
+    class Step1,Step2 phase1
+    class Step3,Step4,Step5 phase2
+    class Step6,Step7 phase3
+    class Step8,Step9 phase4
+    class Step10,Validate phase5
+    class P1Check,P2Check,P3Check,P4Check decision
+    class Start,Complete milestone
+```
+
+**Process Summary:**
+- **5 Phases** with clear validation gates between each phase
+- **10 Sequential Steps** with dependencies and prerequisites
+- **Quality Gates** to ensure each phase is complete before proceeding
+- **Feedback Loops** for iterative improvement and issue resolution
+- **Estimated Timeline**: 2-4 weeks for complete setup depending on organization size and complexity
 
 ### Phase 1: Initial Configuration
 
@@ -173,11 +286,12 @@ enterpriseregistration.contoso.com    CNAME    enterpriseregistration.windows.ne
    - **None** - Disabled
 
 **Critical Settings:**
-```
-MDM User Scope: All
-MDM URLs: (Auto-populated by Microsoft)
-MAM User Scope: All (recommended)
-```
+
+| Setting | Value |
+|---------|-------|
+| MDM User Scope | All |
+| MDM URLs | (Auto-populated by Microsoft) |
+| MAM User Scope | All (recommended) |
 
 #### Step 2: Configure Device Registration Settings
 
@@ -185,9 +299,14 @@ MAM User Scope: All (recommended)
 
 1. Navigate to **Devices** > **Device settings**
 2. Configure key settings:
-   - **Users may join devices to Microsoft Entra ID**: Yes
-   - **Additional local administrators on Microsoft Entra joined devices**: Configure as needed
-   - **Require Multi-Factor Authentication to register or join devices**: Yes (recommended)
+
+**Device Registration Settings:**
+
+| Setting | Value |
+|---------|-------|
+| Users may join devices to Microsoft Entra ID | Yes |
+| Additional local administrators on Microsoft Entra joined devices | Configure as needed |
+| Require Multi-Factor Authentication to register or join devices | Yes (recommended) |
 
 ### Phase 2: Windows Autopilot Configuration
 
@@ -198,108 +317,26 @@ MAM User Scope: All (recommended)
 1. Create dynamic device groups for Autopilot management:
 
 **Example: All Autopilot Devices Group**
-```
-Group Type: Security
-Membership Type: Dynamic Device
-Dynamic membership rule:
-(device.devicePhysicalIds -any _ -startswith "[ZTDId]")
-```
+
+| Setting | Value |
+|---------|-------|
+| Group Type | Security |
+| Membership Type | Dynamic Device |
+| Dynamic membership rule | `(device.devicePhysicalIds -any _ -startswith "[ZTDId]")` |
 
 **Example: Hybrid Autopilot Devices (if required)**
-```
-Group Type: Security
-Membership Type: Dynamic Device
-Dynamic membership rule:
-(device.devicePhysicalIds -any _ -eq "[OrderID]:hybrid")
-```
+
+| Setting | Value |
+|---------|-------|
+| Group Type | Security |
+| Membership Type | Dynamic Device |
+| Dynamic membership rule | `(device.devicePhysicalIds -any _ -eq "[OrderID]:hybrid")` |
 
 **Additional Dynamic Group Filter Examples:**
 
-**Join Type Filtering:**
-```
-# Entra joined devices only
-(device.trustType -eq "AzureAd")
+For comprehensive dynamic group filter examples including join type filtering, OS targeting, hardware-based groups, management state filtering, limitations, workarounds, and complex combination rules, see:
 
-# Hybrid joined devices only
-(device.trustType -eq "ServerAd")
-```
-
-**Operating System Targeting:**
-```
-# Windows 11 devices
-(device.deviceOSVersion -startswith "10.0.22")
-
-# Windows 10 devices
-(device.deviceOSVersion -startswith "10.0.19")
-```
-
-**Hardware-Based Groups:**
-```
-# Specific manufacturer
-(device.deviceManufacturer -eq "Dell Inc.")
-
-# Device model targeting
-(device.deviceModel -contains "Latitude")
-```
-
-**Management State Filtering:**
-```
-# MDM enrolled devices
-(device.managementType -eq "MDM")
-
-# Recently registered (fixed date - update manually)
-(device.registrationDateTime -ge "2024-08-01T00:00:00Z")
-
-# NOTE: Dynamic groups do NOT support rolling dates like now() or relative dates
-# You must update the timestamp manually or use PowerShell automation
-
-# WORKAROUND: PowerShell script to update dynamic group rules monthly
-# $thirtyDaysAgo = (Get-Date).AddDays(-30).ToString("yyyy-MM-ddTHH:mm:ssZ")
-# $newRule = "(device.registrationDateTime -ge `"$thirtyDaysAgo`")"
-# Update-MgGroup -GroupId $groupId -MembershipRule $newRule
-```
-
-**⚠️ Dynamic Group Limitations:**
-
-**Cannot Do (Not Supported):**
-```
-# These DO NOT work - dynamic groups cannot reference other groups
-(device.memberOf -contains "group-id")
-(device.groups -any _ -eq "Pilot Devices")
--not (device.memberOf -contains "excluded-group-id")
-```
-
-**Workarounds for Group-Based Logic:**
-
-**Option 1: Replicate Logic with Device Properties**
-```
-# Instead of excluding a "Pilot Group", use device properties
-(device.devicePhysicalIds -any _ -startswith "[ZTDId]") and -not (device.devicePhysicalIds -any _ -eq "[OrderID]:pilot")
-
-# Instead of targeting "Finance Group", use naming or tags
-(device.displayName -startswith "FIN-") or (device.devicePhysicalIds -any _ -eq "[OrderID]:finance")
-```
-
-**Option 2: Use Static Groups with Nested Membership**
-```
-Static Group A: Contains Dynamic Group 1 + Dynamic Group 2
-Static Group B: Contains Dynamic Group 1 - Static exclusion list
-```
-
-**Option 3: Administrative Units (Advanced)**
-```
-# Use administrative unit membership (limited scenarios)
-(device.administrativeUnitIds -any _ -eq "au-id-here")
-```
-
-**Complex Combination Rules:**
-```
-# Hybrid Autopilot corporate devices
-(device.trustType -eq "ServerAd") and (device.devicePhysicalIds -any _ -startswith "[ZTDId]") and (device.displayName -startswith "CORP-")
-
-# New Windows 11 Entra devices
-(device.trustType -eq "AzureAd") and (device.deviceOSVersion -startswith "10.0.22") and (device.registrationDateTime -ge "2024-01-01T00:00:00Z")
-```
+**[autopilot-group-rules.txt](../templates/autopilot-group-rules.txt)** - Complete dynamic group rule examples and best practices
 
 #### Step 4: Register Windows Autopilot Devices
 
@@ -336,27 +373,29 @@ Get-WindowsAutoPilotInfo.ps1 -OutputFile AutoPilotHWID.csv
 2. Configure basic settings:
 
 **Profile Configuration:**
-```
-Name: Corporate Devices - User Driven
-Description: Standard corporate device deployment profile
-Convert all targeted devices to Autopilot: Yes (recommended)
-Deployment mode: User-driven
-Join to Microsoft Entra ID as: Microsoft Entra joined
-Microsoft Software License Terms: Hide
-Privacy settings: Hide
-Hide change account options: Hide
-User account type: Standard
-Allow White Glove OOBE: Yes (for pre-provisioning)
-Apply device name template: Yes
-Device name template: CORP-%RAND:5%
-```
+
+| Setting | Value |
+|---------|-------|
+| Name | Corporate Devices - User Driven |
+| Description | Standard corporate device deployment profile |
+| Convert all targeted devices to Autopilot | Yes (recommended) |
+| Deployment mode | User-driven |
+| Join to Microsoft Entra ID as | Microsoft Entra joined |
+| Microsoft Software License Terms | Hide |
+| Privacy settings | Hide |
+| Hide change account options | Hide |
+| User account type | Standard |
+| Allow White Glove OOBE | Yes (for pre-provisioning) |
+| Apply device name template | Yes |
+| Device name template | CORP-%RAND:5% |
 
 **Advanced Settings:**
-```
-Language (Region): Select appropriate region
-Automatically configure keyboard: Yes
-Apply device name template: Enable if standardized naming required
-```
+
+| Setting | Value |
+|---------|-------|
+| Language (Region) | Select appropriate region |
+| Automatically configure keyboard | Yes |
+| Apply device name template | Enable if standardized naming required |
 
 ### Phase 3: Application and Policy Configuration
 
@@ -367,16 +406,17 @@ Apply device name template: Enable if standardized naming required
 1. Create Enrollment Status Page profile:
 
 **ESP Configuration:**
-```
-Name: Corporate Device ESP
-Show app and profile installation progress: Yes
-Show an error when installation takes longer than specified number of minutes: 60
-Show custom message when an error occurs: Yes
-Allow users to collect logs about installation errors: Yes
-Block device use until all apps and profiles are installed: Yes
-Allow users to reset device if installation error occurs: Yes
-Block device use until required apps are installed: Yes
-```
+
+| Setting | Value |
+|---------|-------|
+| Name | Corporate Device ESP |
+| Show app and profile installation progress | Yes |
+| Show an error when installation takes longer than specified number of minutes | 60 |
+| Show custom message when an error occurs | Yes |
+| Allow users to collect logs about installation errors | Yes |
+| Block device use until all apps and profiles are installed | Yes |
+| Allow users to reset device if installation error occurs | Yes |
+| Block device use until required apps are installed | Yes |
 
 #### Step 7: Deploy Required Applications
 
@@ -410,25 +450,20 @@ Device install context: System
 Create device compliance policy:
 
 **Windows 10/11 Compliance Policy:**
-```
-Name: Windows Corporate Compliance
-Platform: Windows 10 and later
 
-Device Health Settings:
-- BitLocker: Require
-- Secure Boot: Require
-- Code integrity: Require
-
-Device Properties:
-- Minimum OS version: 10.0.19041 (Windows 10 20H2)
-- Maximum OS version: Not configured
-
-System Security:
-- Password required: Yes
-- Password complexity: Required
-- Password minimum length: 8 characters
-- Password required type: Complex
-```
+| Setting Category | Setting | Value |
+|-----------------|---------|-------|
+| **General** | Name | Windows Corporate Compliance |
+| | Platform | Windows 10 and later |
+| **Device Health Settings** | BitLocker | Require |
+| | Secure Boot | Require |
+| | Code integrity | Require |
+| **Device Properties** | Minimum OS version | 10.0.19041 (Windows 10 20H2) |
+| | Maximum OS version | Not configured |
+| **System Security** | Password required | Yes |
+| | Password complexity | Required |
+| | Password minimum length | 8 characters |
+| | Password required type | Complex |
 
 #### Step 9: Configure Conditional Access Policies
 
@@ -437,20 +472,17 @@ System Security:
 Create device-based conditional access:
 
 **Policy Configuration:**
-```
-Name: Autopilot Device Compliance
-Assignments:
-  Users: All users
-  Cloud apps: All cloud apps
-  Conditions:
-    Device platforms: Windows
-    Client apps: All
 
-Access controls:
-  Grant: Grant access
-  Require device to be marked as compliant: Yes
-  Require Microsoft Entra hybrid joined device: No (cloud-native recommended)
-```
+| Setting Category | Setting | Value |
+|-----------------|---------|-------|
+| **General** | Name | Autopilot Device Compliance |
+| **Assignments** | Users | All users |
+| | Cloud apps | All cloud apps |
+| **Conditions** | Device platforms | Windows |
+| | Client apps | All |
+| **Access controls** | Grant | Grant access |
+| | Require device to be marked as compliant | Yes |
+| | Require Microsoft Entra hybrid joined device | No (cloud-native recommended) |
 
 ### Phase 5: Monitoring and Validation
 
@@ -478,35 +510,33 @@ Set up monitoring for:
 ### Deployment Profile Settings Reference
 
 #### User-Driven Mode Configuration
-```
-Deployment mode: User-driven
-Join type: Microsoft Entra joined
-Out-of-box experience (OOBE):
-  - Microsoft Software License Terms: Hide
-  - Privacy settings: Hide
-  - Hide change account options: Hide
-  - User account type: Standard
-  - Allow White Glove OOBE: Yes
-Language and Region:
-  - Language: Use device default
-  - Automatically configure keyboard: Yes
-  - Apply device name template: Optional
-```
+
+| Setting Category | Setting | Value |
+|-----------------|---------|-------|
+| **General** | Deployment mode | User-driven |
+| | Join type | Microsoft Entra joined |
+| **Out-of-box experience (OOBE)** | Microsoft Software License Terms | Hide |
+| | Privacy settings | Hide |
+| | Hide change account options | Hide |
+| | User account type | Standard |
+| | Allow White Glove OOBE | Yes |
+| **Language and Region** | Language | Use device default |
+| | Automatically configure keyboard | Yes |
+| | Apply device name template | Optional |
 
 #### Self-Deploying Mode Configuration
-```
-Deployment mode: Self-deploying
-Join type: Microsoft Entra joined
-Out-of-box experience (OOBE):
-  - Microsoft Software License Terms: Hide
-  - Privacy settings: Hide
-  - Skip keyboard selection page: Yes
-Language and Region:
-  - Language: Use OS default
-  - Region: Use OS default
-  - Apply device name template: Recommended
-  - Device name template: KIOSK-%RAND:4%
-```
+
+| Setting Category | Setting | Value |
+|-----------------|---------|-------|
+| **General** | Deployment mode | Self-deploying |
+| | Join type | Microsoft Entra joined |
+| **Out-of-box experience (OOBE)** | Microsoft Software License Terms | Hide |
+| | Privacy settings | Hide |
+| | Skip keyboard selection page | Yes |
+| **Language and Region** | Language | Use OS default |
+| | Region | Use OS default |
+| | Apply device name template | Recommended |
+| | Device name template | KIOSK-%RAND:4% |
 
 ### Profile Assignment Best Practices
 
@@ -545,17 +575,18 @@ Language and Region:
 4. **Configure dependencies** properly between applications
 
 #### Deployment Settings for Autopilot
-```
-Assignment type: Required
-Available for enrolled devices: Yes
-Install behavior: System
-Device restart behavior: Intune will force a mandatory device restart
-Return codes:
-  - Success: 0
-  - Soft reboot: 1641, 3010
-  - Hard reboot: 1618
-  - Retry: 1618
-```
+
+| Setting | Value |
+|---------|-------|
+| Assignment type | Required |
+| Available for enrolled devices | Yes |
+| Install behavior | System |
+| Device restart behavior | Intune will force a mandatory device restart |
+| **Return codes** | |
+| Success | 0 |
+| Soft reboot | 1641, 3010 |
+| Hard reboot | 1618 |
+| Retry | 1618 |
 
 ### Enterprise App Catalog Integration (2025 Feature)
 
@@ -574,50 +605,47 @@ Microsoft introduced Enterprise App Catalog support in June 2025:
 **Location:** Microsoft Intune admin center > Endpoint security > Disk encryption
 
 **BitLocker Policy Configuration:**
-```
-Platform: Windows 10 and later
-Profile type: BitLocker
 
-BitLocker Base Settings:
-- Enable BitLocker for OS and data drives: Yes
-- Configure drive encryption method and cipher strength: AES 256-bit XTS
-- Configure startup key and PIN: TPM
-- Configure recovery options: Save recovery information to Microsoft Entra ID
-```
+| Setting Category | Setting | Value |
+|-----------------|---------|-------|
+| **General** | Platform | Windows 10 and later |
+| | Profile type | BitLocker |
+| **BitLocker Base Settings** | Enable BitLocker for OS and data drives | Yes |
+| | Configure drive encryption method and cipher strength | AES 256-bit XTS |
+| | Configure startup key and PIN | TPM |
+| | Configure recovery options | Save recovery information to Microsoft Entra ID |
 
 ### Windows Hello for Business
 
 **Location:** Microsoft Intune admin center > Devices > Configuration profiles
 
 **Windows Hello Configuration:**
-```
-Platform: Windows 10 and later
-Profile type: Identity protection
 
-Windows Hello for Business:
-- Configure Windows Hello for Business: Enable
-- Use security keys for sign-in: Enable
-- Minimum PIN length: 6 characters
-- Maximum PIN length: 127 characters
-- Lowercase letters in PIN: Not allowed
-- Uppercase letters in PIN: Not allowed
-- Special characters in PIN: Not allowed
-```
+| Setting Category | Setting | Value |
+|-----------------|---------|-------|
+| **General** | Platform | Windows 10 and later |
+| | Profile type | Identity protection |
+| **Windows Hello for Business** | Configure Windows Hello for Business | Enable |
+| | Use security keys for sign-in | Enable |
+| | Minimum PIN length | 6 characters |
+| | Maximum PIN length | 127 characters |
+| | Lowercase letters in PIN | Not allowed |
+| | Uppercase letters in PIN | Not allowed |
+| | Special characters in PIN | Not allowed |
 
 ### Endpoint Detection and Response
 
 **Microsoft Defender Configuration:**
-```
-Platform: Windows 10 and later
-Profile type: Microsoft Defender for Endpoint (Windows 10 Desktop)
 
-Configuration settings:
-- Sample sharing: All samples
-- Telemetry reporting frequency: Expedited
-- Network protection: Enable (block mode)
-- Controlled folder access: Enable
-- Attack surface reduction rules: Enable recommended rules
-```
+| Setting Category | Setting | Value |
+|-----------------|---------|-------|
+| **General** | Platform | Windows 10 and later |
+| | Profile type | Microsoft Defender for Endpoint (Windows 10 Desktop) |
+| **Configuration settings** | Sample sharing | All samples |
+| | Telemetry reporting frequency | Expedited |
+| | Network protection | Enable (block mode) |
+| | Controlled folder access | Enable |
+| | Attack surface reduction rules | Enable recommended rules |
 
 ## Troubleshooting and Support
 

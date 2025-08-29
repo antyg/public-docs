@@ -1,0 +1,26 @@
+{
+  "NetScaler": {
+    "IP": "10.20.1.10",
+    "Username": "nsadmin",
+    "Password": "encrypted_password_here",
+    "VirtualServers": ["VS-Portal-SSL", "VS-API-SSL", "VS-Admin-SSL"]
+  },
+  "F5": {
+    "IP": "10.20.2.10",
+    "Username": "admin",
+    "Password": "encrypted_password_here",
+    "Partitions": ["Common", "Production"]
+  },
+  "PaloAlto": {
+    "IP": "10.20.3.10",
+    "Username": "admin",
+    "Password": "encrypted_password_here",
+    "Vsys": "vsys1"
+  },
+  "Zscaler": {
+    "Cloud": "zscaler.net",
+    "ApiKey": "api_key_here",
+    "Username": "admin@company.com",
+    "Password": "encrypted_password_here"
+  }
+}

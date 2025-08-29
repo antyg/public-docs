@@ -1,0 +1,7 @@
+{
+    "To": ["security@company.com", "pki-team@company.com"],
+    "From": "pki-monitor@company.com",
+    "SmtpServer": "smtp.company.com",
+    "Port": 25,
+    "EnableSSL": false
+}

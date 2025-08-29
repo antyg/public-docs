@@ -1,0 +1,45 @@
+Android_SCEP_Configuration:
+  Profile_Type: Android Enterprise
+  Deployment_Method: Managed Google Play
+  
+  Certificate_Profile:
+    Name: Company-Android-WiFi
+    Profile_Type: SCEP
+    
+  SCEP_Settings:
+    Server_URL: https://ndes.company.com.au/certsrv/mscep/mscep.dll
+    Server_Timeout: 30 seconds
+    Retry_Count: 3
+    Retry_Delay: 10 seconds
+    
+  Subject_Name:
+    Format: CN={{AAD_DeviceId}},OU=Mobile,O=Company
+    Include_Email: false
+    
+  Subject_Alternative_Names:
+    - Type: User_Principal_Name
+      Value: {{UserPrincipalName}}
+    - Type: DNS
+      Value: {{DeviceName}}.mobile.company.com.au
+      
+  Key_Settings:
+    Size: 2048
+    Storage: Hardware_Backed_Keystore
+    Usage: Digital Signature, Key Encipherment
+    
+  Certificate_Settings:
+    Validity: 2 years
+    Purpose: WiFi Authentication
+    Extended_Key_Usage: 1.3.6.1.5.5.7.3.2
+    
+  Hash_Algorithm: SHA-256
+  
+  Challenge_Password:
+    Type: Dynamic_Per_Device
+    Validity: 60 minutes
+    Source: Intune Connector
+    
+  Renewal:
+    Threshold: 80%
+    Method: Automatic
+    Notification: 30 days before expiry

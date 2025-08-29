@@ -1,0 +1,27 @@
+# Handover-Checklist.yaml
+# Phase 2 Prerequisites from Phase 1
+
+Handover_Checklist:
+  Infrastructure:
+    - Virtual Network configured and accessible
+    - Subnets allocated for Issuing CAs
+    - NSG rules configured for CA traffic
+    - ExpressRoute/VPN connectivity operational
+
+  Security:
+    - Key Vault accessible from CA subnet
+    - Root CA certificate exported
+    - Security baseline documented
+    - RBAC roles assigned
+
+  Operational:
+    - Monitoring configured
+    - Backup procedures tested
+    - DR plan documented
+    - Support contacts established
+
+  Documentation:
+    - Network diagram updated
+    - Firewall rules documented
+    - DNS entries configured
+    - Runbooks completed

@@ -1,0 +1,64 @@
+{
+  "properties": {
+    "displayName": "PKI Infrastructure Governance Policy",
+    "policyType": "Custom",
+    "mode": "All",
+    "description": "Enforces governance requirements for PKI infrastructure",
+    "metadata": {
+      "category": "PKI",
+      "version": "1.0.0"
+    },
+    "parameters": {
+      "allowedLocations": {
+        "type": "Array",
+        "defaultValue": ["australiaeast", "australiasoutheast"],
+        "allowedValues": ["australiaeast", "australiasoutheast"]
+      },
+      "requiredTags": {
+        "type": "Array",
+        "defaultValue": ["Environment", "Department", "CostCenter", "Owner"]
+      },
+      "minimumTlsVersion": {
+        "type": "String",
+        "defaultValue": "TLS1_2"
+      }
+    },
+    "policyRule": {
+      "if": {
+        "anyOf": [
+          {
+            "field": "location",
+            "notIn": "[parameters('allowedLocations')]"
+          },
+          {
+            "allOf": [
+              {
+                "field": "type",
+                "equals": "Microsoft.Storage/storageAccounts"
+              },
+              {
+                "field": "Microsoft.Storage/storageAccounts/minimumTlsVersion",
+                "less": "[parameters('minimumTlsVersion')]"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "field": "type",
+                "equals": "Microsoft.KeyVault/vaults"
+              },
+              {
+                "field": "Microsoft.KeyVault/vaults/enableSoftDelete",
+                "notEquals": "true"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "effect": "deny"
+      }
+    }
+  }
+}

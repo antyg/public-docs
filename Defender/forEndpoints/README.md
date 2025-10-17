@@ -15,10 +15,11 @@ This toolkit provides enterprise-grade resources for validating Microsoft Defend
 ### Key Features
 
 - ✅ **7 Validation Methods** - Comprehensive coverage from PowerShell to Advanced Hunting KQL
-- ✅ **3 Production Scripts** - Intelligent multi-method automation with automatic fallback
+- ✅ **4 Production Scripts** - Intelligent multi-method automation with automatic fallback
 - ✅ **Azure Workbook** - Real-time dashboards with interactive analytics
 - ✅ **AU Localized** - All endpoints configured for Australian region by default
 - ✅ **Enterprise Ready** - Supports bulk validation, parallel processing, and scheduled reporting
+- ✅ **Automated Diagnostics** - One-click download and setup of official Microsoft analyzer tool
 
 ---
 
@@ -39,10 +40,11 @@ This toolkit provides enterprise-grade resources for validating Microsoft Defend
 │   ├── 06-MDE-Client-Analyzer.md       # Method 6: Official Microsoft diagnostic tool
 │   └── 07-WMI-CIM-Validation.md        # Method 7: Legacy WMI/CIM queries
 │
-├── scripts\                            # Production PowerShell automation (3 active + 5 archived)
+├── scripts\                            # Production PowerShell automation (4 active + 5 archived)
 │   ├── Get-MDEStatus.ps1               # ⭐ Primary: Intelligent multi-method validation
 │   ├── Export-MDEInventoryFromGraph.ps1 # Graph API tenant-wide device export
 │   ├── Test-MDEConnectivity.ps1        # Network connectivity validation (AU region)
+│   ├── Get-MDEClientAnalyzer.ps1       # Download and extract official Microsoft analyzer
 │   └── archived\                       # Superseded scripts (kept for reference)
 │       ├── Get-MDECimStatus.ps1        # Replaced by Get-MDEStatus.ps1 -PreferredMethod CIM
 │       ├── Get-MDEWmiStatus.ps1        # Replaced by Get-MDEStatus.ps1 -PreferredMethod WMI
@@ -100,7 +102,14 @@ This toolkit provides enterprise-grade resources for validating Microsoft Defend
    .\scripts\Test-MDEConnectivity.ps1 -Region AU -Verbose
    ```
 
-5. **Export Tenant-Wide Inventory**
+5. **Download MDE Client Analyzer**
+
+   ```powershell
+   # Download and extract official Microsoft diagnostic tool
+   .\scripts\Get-MDEClientAnalyzer.ps1
+   ```
+
+6. **Export Tenant-Wide Inventory**
 
    ```powershell
    # Export all devices from Microsoft Graph API
@@ -165,9 +174,11 @@ All documentation references these universal validation states:
   4. Service (minimal validation when registry locked)
 - Event log checking (SENSE operational log, last 7 days)
 - Single device and bulk CSV validation
-- Parallel processing with configurable throttle limit
+- Parallel processing with configurable throttle limit (PS7+) or sequential fallback (PS5.1)
 - Comprehensive health status determination
-- **Automatic logging** to `Get-MDEStatus-Log.txt` in script directory (AU date format)
+- **Automatic comprehensive logging** to `Get-MDEStatus-Log.txt` with structured key=value format
+- Console output displays HealthStatus | OnboardingState [ValidationMethod] for quick assessment
+- All 21 result fields logged for intelligent parsing and analysis
 
 **Usage Examples:**
 
@@ -263,10 +274,12 @@ $Cred = Get-Credential
 
 #### 3. **Test-MDEConnectivity.ps1** - NETWORK VALIDATION
 
-**Purpose:** Test network connectivity to MDE cloud endpoints
+**Purpose:** Test network connectivity to MDE cloud endpoints (v2.0 - Gateway Architecture)
 
 **Features:**
 
+- **Gateway Architecture (2025+)** - Tests new streamlined `*.endpoint.security.microsoft.com` endpoints
+- **Criticality Detection** - Distinguishes CRITICAL vs OPTIONAL endpoints (blob storage)
 - Region-specific endpoint testing (US, EU, UK, **AU** - default)
 - DNS resolution validation
 - TCP connectivity testing (port 443)
@@ -274,10 +287,11 @@ $Cred = Get-Credential
 - **Port 80 fallback diagnostics** - automatically tests HTTP when HTTPS fails
 - SSL/TLS vs general connectivity issue differentiation
 - Proxy configuration detection
-- AU regional endpoints:
-  - Telemetry: `au.vortex-win.data.microsoft.com`
-  - Cyber: `au-v20.events.data.microsoft.com`
-  - Commands: `winatp-gw-aue.microsoft.com`
+- AU Gateway endpoints:
+  - Commands: `edr-aus.au.endpoint.security.microsoft.com`, `edr-aue.au.endpoint.security.microsoft.com`
+  - Cyber Data: `au-v20.events.endpoint.security.microsoft.com`
+  - MDAV: `mdav.au.endpoint.security.microsoft.com`
+  - AutoIR/Sample Upload: Proxied through gateway endpoints
 
 **Usage Examples:**
 
@@ -302,6 +316,68 @@ $Cred = Get-Credential
 - Proxy configuration details
 - Failed test summary with remediation guidance
 - CSV export with detailed results including diagnostic information
+
+---
+
+#### 4. **Get-MDEClientAnalyzer.ps1** - ANALYZER DOWNLOAD & SETUP
+
+**Purpose:** Automated download and extraction of Microsoft's official MDE Client Analyzer tool
+
+**Features:**
+
+- Automatic download from official Microsoft aka.ms URL (`https://aka.ms/mdatpanalyzer`)
+- Saves to script directory for easy access
+- Automatic extraction to `MDEClientAnalyzer\` subfolder
+- File size and download duration reporting
+- Displays usage instructions after extraction
+- Force re-download option with `-Force` parameter
+- Skip extraction option with `-SkipExtraction` for offline scenarios
+- Comprehensive error handling with troubleshooting guidance
+
+**Usage Examples:**
+
+```powershell
+# Download and extract analyzer (default)
+.\Get-MDEClientAnalyzer.ps1
+
+# Force re-download (overwrites existing)
+.\Get-MDEClientAnalyzer.ps1 -Force
+
+# Download only, skip extraction
+.\Get-MDEClientAnalyzer.ps1 -SkipExtraction
+```
+
+**What Gets Downloaded:**
+
+The MDE Client Analyzer provides comprehensive diagnostics including:
+
+- Network connectivity validation to all MDE cloud endpoints
+- Sensor health and configuration checks
+- Event log analysis for onboarding issues
+- Performance troubleshooting and baseline metrics
+- Detailed diagnostic reports in HTML and text formats
+- Region-specific endpoint validation (AU, US, EU, UK)
+
+**After Download:**
+
+```powershell
+# Navigate to extracted folder
+cd .\scripts\MDEClientAnalyzer
+
+# Run basic connectivity test
+.\MDEClientAnalyzer.cmd -Connectivity
+
+# Run full diagnostic
+.\MDEClientAnalyzer.cmd
+
+# View all options
+Get-Help .\MDEClientAnalyzer.ps1 -Full
+```
+
+**Official Documentation:**
+
+- [Run the client analyzer on Windows](https://learn.microsoft.com/en-us/defender-endpoint/run-analyzer-windows)
+- [GitHub Repository](https://github.com/microsoft/MDATP-PowerBI-Templates)
 
 ---
 
@@ -593,6 +669,7 @@ All scripts and documentation follow comprehensive citation standards:
 - `.REFERENCES` section in comment-based help
 - Inline comments with `# Reference: URL` before code blocks
 - Example:
+
   ```powershell
   # Query SENSE operational log for errors and warnings
   # Reference: https://learn.microsoft.com/en-us/defender-endpoint/event-error-codes
@@ -624,6 +701,60 @@ All PowerShell scripts use **Australian date/time format**:
 - **Display Format**: `dd/MM/yyyy HH:mm:ss` (e.g., "17/01/2025 14:30:45")
 - **Filename Format**: `yyyyMMdd-HHmmss` (e.g., "20250117-143045")
 - Applies to: Timestamp fields, CSV exports, log entries
+
+### Log File Format (Get-MDEStatus-Log.txt)
+
+All validation results are automatically logged with **comprehensive key=value pairs** for intelligent parsing:
+
+**Format:** Structured log entries with all result fields separated by `|` delimiter
+
+**Example Log Entry:**
+
+`Timestamp=17/01/2025 14:30:45 | Hostname=WORKSTATION01 | Reachable=True | ValidationMethod=CIM-WSMan | HealthStatus=Healthy | DefenderInstalled=True | OnboardingState=Onboarded | OnboardingStateValue=1 | AMRunningMode=Normal | AMServiceEnabled=True | RealTimeProtectionEnabled=True | BehaviorMonitorEnabled=True | IsTamperProtected=True | TamperProtectionSource=Intune | AntivirusSignatureVersion=1.439.224.0 | SignatureAgeHours=15.42 | SENSEServiceStatus=Running | DiagTrackServiceStatus=Running | RecentSENSEErrors=0 | LastSENSEError=None | ErrorMessage=None`
+
+**Fields Included:**
+
+- `Timestamp` - Australian date/time format
+- `Hostname` - Computer name validated
+- `Reachable` - Network connectivity status
+- `ValidationMethod` - Method used (CIM-WSMan, WMI-DCOM, Registry, Service)
+- `HealthStatus` - Overall health determination
+- `DefenderInstalled` - Installation status
+- `OnboardingState` - Onboarding status (Onboarded/NotOnboarded/Unknown)
+- `OnboardingStateValue` - Registry value (0/1)
+- `AMRunningMode` - Antimalware running mode
+- `AMServiceEnabled` - Service enabled status
+- `RealTimeProtectionEnabled` - Real-time protection status
+- `BehaviorMonitorEnabled` - Behavior monitoring status
+- `IsTamperProtected` - Tamper protection status
+- `TamperProtectionSource` - Source of tamper protection
+- `AntivirusSignatureVersion` - Current signature version
+- `SignatureAgeHours` - Age of signatures in hours
+- `SENSEServiceStatus` - MDE sensor service status
+- `DiagTrackServiceStatus` - Diagnostic tracking service status
+- `RecentSENSEErrors` - Count of recent errors
+- `LastSENSEError` - Most recent error description
+- `ErrorMessage` - Validation error if any
+
+**Parsing Example (PowerShell):**
+
+```powershell
+# Read and parse log entries
+$LogEntries = Get-Content "Get-MDEStatus-Log.txt" | ForEach-Object {
+    $Fields = @{}
+    $_.Split(' | ') | ForEach-Object {
+        $Key, $Value = $_.Split('=', 2)
+        $Fields[$Key] = $Value
+    }
+    [PSCustomObject]$Fields
+}
+
+# Filter for unhealthy devices
+$LogEntries | Where-Object { $_.HealthStatus -ne 'Healthy' }
+
+# Find devices with outdated signatures
+$LogEntries | Where-Object { [double]$_.SignatureAgeHours -gt 24 }
+```
 
 ### Documentation Updates
 
@@ -874,15 +1005,18 @@ When contributing:
 
 ## 📅 Version History
 
-| Version | Date       | Changes                                                                 |
-| ------- | ---------- | ----------------------------------------------------------------------- |
-| 2.4.0   | 2025-01-17 | Added thread-safe logging with synchronized collections                 |
-| 2.3.0   | 2025-01-17 | Fixed CIM/WMI DefenderInstalled detection and service status collection |
-| 2.2.0   | 2025-01-17 | Updated all date/time formats to Australian standard (dd/MM/yyyy)       |
-| 2.1.0   | 2025-01-17 | Added port 80 fallback diagnostics to Test-MDEConnectivity.ps1          |
-| 2.0.0   | 2025-01-17 | Consolidated 5 scripts into Get-MDEStatus.ps1 with intelligent fallback |
-| 1.1.0   | 2025-01-16 | Added Export-MDEInventoryFromGraph.ps1 -OnlyUnmanaged switch            |
-| 1.0.0   | 2025-01-15 | Initial release with 7 validation methods, 3 scripts, Azure Workbook    |
+| Version | Date       | Changes                                                                     |
+| ------- | ---------- | --------------------------------------------------------------------------- |
+| 3.0.0   | 2025-01-17 | Added Get-MDEClientAnalyzer.ps1 for automated analyzer download/extraction  |
+| 2.6.0   | 2025-01-17 | Test-MDEConnectivity.ps1 v2.0: Gateway Architecture endpoints + criticality |
+| 2.5.0   | 2025-01-17 | Comprehensive key=value log format with all fields for intelligent parsing  |
+| 2.4.0   | 2025-01-17 | Added OnboardingState to console output during bulk validation              |
+| 2.3.0   | 2025-01-17 | PowerShell 5.1 compatibility with sequential processing fallback            |
+| 2.2.0   | 2025-01-17 | Thread-safe logging with synchronized collections (PS7+)                    |
+| 2.1.0   | 2025-01-17 | Fixed CIM/WMI DefenderInstalled detection and service status collection     |
+| 2.0.0   | 2025-01-17 | Updated all date/time formats to Australian standard (dd/MM/yyyy)           |
+| 1.1.0   | 2025-01-17 | Added port 80 fallback diagnostics to Test-MDEConnectivity.ps1              |
+| 1.0.0   | 2025-01-17 | Consolidated 5 scripts into Get-MDEStatus.ps1 with intelligent fallback     |
 
 ---
 
@@ -892,6 +1026,7 @@ When contributing:
 - **[Primary Script: Get-MDEStatus.ps1](./scripts/Get-MDEStatus.ps1)**
 - **[Graph API Script: Export-MDEInventoryFromGraph.ps1](./scripts/Export-MDEInventoryFromGraph.ps1)**
 - **[Connectivity Test: Test-MDEConnectivity.ps1](./scripts/Test-MDEConnectivity.ps1)**
+- **[Analyzer Download: Get-MDEClientAnalyzer.ps1](./scripts/Get-MDEClientAnalyzer.ps1)**
 - **[Azure Workbook Guide](./workbooks/README.md)**
 
 ---

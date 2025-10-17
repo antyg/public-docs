@@ -2,25 +2,25 @@
 
 ## Overview
 
-Advanced Hunting in Microsoft 365 Defender provides powerful KQL (Kusto Query Language) querying capabilities for analyzing MDE device data, onboarding status, health trends, and historical telemetry[^1](https://learn.microsoft.com/en-us/defender-xdr/advanced-hunting-overview). This method excels at organization-wide analysis, trending, and compliance reporting.
+Advanced Hunting in Microsoft 365 Defender provides powerful KQL (Kusto Query Language) querying capabilities for analyzing MDE device data, onboarding status, health trends, and historical telemetry[1]. This method excels at organization-wide analysis, trending, and compliance reporting.
 
 ## Capabilities
 
-- ✅ Query 30 days of device telemetry history[^2](https://learn.microsoft.com/en-us/defender-xdr/advanced-hunting-overview)
+- ✅ Query 30 days of device telemetry history[1]
 - ✅ Identify devices that can be onboarded
 - ✅ Analyze onboarding trends over time
 - ✅ Find devices with stale agent versions
 - ✅ Detect communication gaps
 - ✅ Generate compliance reports
 - ✅ Cross-reference multiple data sources
-- ✅ Export results to Excel workbook (100,000 row display limit)[^3](https://learn.microsoft.com/en-us/defender-xdr/advanced-hunting-query-results)
+- ✅ Export results to Excel workbook (100,000 row display limit) [3]
 
 ## Prerequisites
 
 ### Access Requirements
 
-- Microsoft 365 Defender portal: https://security.microsoft.com
-- Advanced Hunting permissions[^4](https://learn.microsoft.com/en-us/defender-xdr/m365d-permissions):
+- Microsoft 365 Defender portal: [https://security.microsoft.com](https://security.microsoft.com)
+- Advanced Hunting permissions [4]:
   - Security Administrator
   - Security Operator
   - Security Reader
@@ -28,25 +28,25 @@ Advanced Hunting in Microsoft 365 Defender provides powerful KQL (Kusto Query La
 
 ### KQL Knowledge
 
-- Basic understanding of Kusto Query Language[^5](https://learn.microsoft.com/en-us/defender-xdr/advanced-hunting-query-language)
-- Familiarity with table schemas[^6](https://learn.microsoft.com/en-us/defender-xdr/advanced-hunting-schema-tables)
-- Knowledge of filtering, summarizing, and joining operators[^7](https://learn.microsoft.com/en-us/kusto/query/?view=microsoft-fabric)
+- Basic understanding of Kusto Query Language[4]
+- Familiarity with table schemas[5]
+- Knowledge of filtering, summarizing, and joining operators[6]
 
 ## Accessing Advanced Hunting
 
 ### Navigation Path
 
-1. Navigate to https://security.microsoft.com
+1. Navigate to [https://security.microsoft.com](https://security.microsoft.com)
 2. Click **Hunting** in left navigation
 3. Click **Advanced hunting**
 
-**Direct URL:** https://security.microsoft.com/v2/advanced-hunting
+**Direct URL:** [https://security.microsoft.com/v2/advanced-hunting](https://security.microsoft.com/v2/advanced-hunting)
 
 ## Primary Tables for MDE Validation
 
 ### DeviceInfo Table
 
-Contains device inventory information including onboarding status[^8](https://learn.microsoft.com/en-us/defender-xdr/advanced-hunting-deviceinfo-table).
+Contains device inventory information including onboarding status[7].
 
 #### Schema
 
@@ -64,7 +64,7 @@ Contains device inventory information including onboarding status[^8](https://le
 
 ### DeviceNetworkInfo Table
 
-Contains network configuration and connectivity data[^9](https://learn.microsoft.com/en-us/defender-xdr/advanced-hunting-devicenetworkinfo-table).
+Contains network configuration and connectivity data[8].
 
 #### Schema
 
@@ -78,7 +78,7 @@ Contains network configuration and connectivity data[^9](https://learn.microsoft
 
 ### DeviceProcessEvents Table
 
-Contains process execution telemetry (indicates active reporting)[^10](https://learn.microsoft.com/en-us/defender-xdr/advanced-hunting-deviceprocessevents-table).
+Contains process execution telemetry (indicates active reporting) [9].
 
 #### Schema
 
@@ -93,7 +93,7 @@ Contains process execution telemetry (indicates active reporting)[^10](https://l
 
 ### 1. Find Devices That Can Be Onboarded
 
-This query uses the DeviceInfo table[^11](https://learn.microsoft.com/en-us/defender-xdr/advanced-hunting-deviceinfo-table) with time filtering[^12](https://learn.microsoft.com/en-us/defender-xdr/advanced-hunting-query-language), record aggregation[^13](https://learn.microsoft.com/en-us/defender-xdr/advanced-hunting-query-language), field projection[^14](https://learn.microsoft.com/en-us/defender-xdr/advanced-hunting-query-language), and sorting operations[^15](https://learn.microsoft.com/en-us/kusto/query/?view=microsoft-fabric):
+This query uses the DeviceInfo table[7] with time filtering[4], record aggregation[4], field projection[4], and sorting operations[6]:
 
 ```kql
 DeviceInfo
@@ -128,7 +128,7 @@ DeviceInfo
 
 ### 2. Check Onboarding Status for Specific Devices
 
-This query demonstrates variable declaration[^16](https://learn.microsoft.com/en-us/defender-xdr/advanced-hunting-query-language) and case-insensitive filtering[^17](https://learn.microsoft.com/en-us/defender-xdr/advanced-hunting-query-language):
+This query demonstrates variable declaration[4] and case-insensitive filtering[4]:
 
 ```kql
 let DeviceList = dynamic(["WORKSTATION01", "WORKSTATION02", "SERVER01"]);
@@ -149,7 +149,7 @@ DeviceInfo
 
 **Purpose:** Validate onboarding status for a specific list of devices
 
-**Usage:** Replace `DeviceList` array with your target hostnames[^18](https://learn.microsoft.com/en-us/defender-xdr/advanced-hunting-best-practices)
+**Usage:** Replace `DeviceList` array with your target hostnames[10]
 
 ### 3. Devices Onboarded in Last 30 Days
 
@@ -171,7 +171,7 @@ DeviceInfo
 
 ### 4. Onboarded Devices with No Recent Telemetry
 
-This query uses the DeviceProcessEvents table[^19](https://learn.microsoft.com/en-us/defender-xdr/advanced-hunting-deviceprocessevents-table) for activity tracking[^20](https://learn.microsoft.com/en-us/defender-xdr/advanced-hunting-query-language) and left-outer joins[^21](https://learn.microsoft.com/en-us/defender-xdr/advanced-hunting-query-language) to identify silent devices:
+This query uses the DeviceProcessEvents table[9] for activity tracking[4] and left-outer joins[4] to identify silent devices:
 
 ```kql
 let OnboardedDevices = DeviceInfo
@@ -198,7 +198,7 @@ OnboardedDevices
 
 ### 5. Onboarding Status Distribution
 
-This query demonstrates aggregation by status[^22](https://learn.microsoft.com/en-us/defender-xdr/advanced-hunting-query-language) and percentage calculations[^23](https://learn.microsoft.com/en-us/kusto/query/?view=microsoft-fabric):
+This query demonstrates aggregation by status[4] and percentage calculations[6]:
 
 ```kql
 DeviceInfo
@@ -249,7 +249,7 @@ DeviceInfo
 
 ### 7. Devices with Outdated MDE Agent Versions
 
-This query extracts agent version information from the AdditionalFields JSON[^24](https://learn.microsoft.com/en-us/defender-xdr/advanced-hunting-deviceinfo-table):
+This query extracts agent version information from the AdditionalFields JSON[7]:
 
 ```kql
 DeviceInfo
@@ -428,8 +428,8 @@ DeviceInfo
 
 #### Limitations
 
-- Maximum 100,000 rows per query display[^25](https://learn.microsoft.com/en-us/defender-xdr/advanced-hunting-query-results)
-- For larger datasets, use pagination or Graph API[^26](https://learn.microsoft.com/en-us/defender-xdr/api-advanced-hunting)
+- Maximum 100,000 rows per query display[2]
+- For larger datasets, use pagination or Graph API[11]
 
 ### Scheduled Query (via Logic Apps)
 
@@ -439,7 +439,7 @@ For recurring exports:
 2. Configure Logic App to run query on schedule
 3. Export results to Azure Storage or email
 
-See: [Microsoft Documentation - Automate Advanced Hunting][^27](https://learn.microsoft.com/en-us/defender-xdr/api-advanced-hunting)
+See: [Microsoft Documentation - Automate Advanced Hunting][11]
 
 ## Troubleshooting
 
@@ -449,13 +449,13 @@ See: [Microsoft Documentation - Automate Advanced Hunting][^27](https://learn.mi
 
 **Resolution:** Use case-insensitive operators and verify device onboarding status.
 
-- Use `in~` operator (case-insensitive): `where DeviceName in~ (DeviceList)`[^28](https://learn.microsoft.com/en-us/defender-xdr/advanced-hunting-query-language)
+- Use `in~` operator (case-insensitive): `where DeviceName in~ (DeviceList)` [4]
 - Verify device onboarded recently (may take 5-30 minutes to appear)
 - Check for typos in device names
 
 ### Issue: "Query timeout" Error
 
-**Cause:** Query too complex or scanning too much data[^29](https://learn.microsoft.com/en-us/defender-xdr/advanced-hunting-limits)
+**Cause:** Query too complex or scanning too much data[12]
 
 **Resolution:** Reduce time range and add filters earlier in query pipeline.
 
@@ -532,26 +532,26 @@ Unsupported           50           1.0%
 
 ## KQL Learning Resources
 
-- [KQL Quick Reference][^30](https://learn.microsoft.com/en-us/azure/data-explorer/kql-quick-reference)
-- [Advanced Hunting Schema Tables][^31](https://learn.microsoft.com/en-us/defender-xdr/advanced-hunting-schema-tables)
-- [KQL Tutorial][^32](https://learn.microsoft.com/en-us/kusto/query/tutorials/learn-common-operators?view=microsoft-fabric)
-- [Advanced Hunting Sample Queries][^33](https://github.com/microsoft/Microsoft-365-Defender-Hunting-Queries)
+- [KQL Quick Reference][13]
+- [Advanced Hunting Schema Tables][5]
+- [KQL Tutorial][14]
+- [Advanced Hunting Sample Queries][15]
 
 ## Limitations
 
-- ❌ Maximum 30 days historical data retention[^34](https://learn.microsoft.com/en-us/defender-xdr/advanced-hunting-overview)
-- ❌ 100,000 row display limit per query[^35](https://learn.microsoft.com/en-us/defender-xdr/advanced-hunting-limits)
-- ❌ Query timeout after 10 minutes[^36](https://learn.microsoft.com/en-us/defender-xdr/advanced-hunting-limits)
+- ❌ Maximum 30 days historical data retention[1]
+- ❌ 100,000 row display limit per query[12]
+- ❌ Query timeout after 10 minutes[12]
 - ❌ Requires portal access (not scriptable without API)
 - ⚠️ Data reflects telemetry received, not real-time device state
 - ⚠️ New devices may take 5-30 minutes to appear
 
 ## Best Practices
 
-1. ✅ Always use `summarize arg_max(Timestamp, *) by DeviceId` for latest device state[^37](https://learn.microsoft.com/en-us/defender-xdr/advanced-hunting-best-practices)
-2. ✅ Filter merged devices: `where isempty(MergedToDeviceId)`[^38](https://learn.microsoft.com/en-us/defender-xdr/advanced-hunting-deviceinfo-table)
-3. ✅ Use case-insensitive operators: `in~`, `=~`, `contains_cs`[^39](https://learn.microsoft.com/en-us/defender-xdr/advanced-hunting-query-language)
-4. ✅ Limit time range to minimum necessary (performance)[^40](https://learn.microsoft.com/en-us/defender-xdr/advanced-hunting-best-practices)
+1. ✅ Always use `summarize arg_max(Timestamp, *) by DeviceId` for latest device state[10]
+2. ✅ Filter merged devices: `where isempty(MergedToDeviceId)` [7]
+3. ✅ Use case-insensitive operators: `in~`, `=~`, `contains_cs` [4]
+4. ✅ Limit time range to minimum necessary (performance) [10]
 5. ✅ Test queries on small device lists before scaling
 6. ✅ Save frequently used queries as "Shared queries" for team access
 7. ✅ Document query purpose and expected output in comments
@@ -588,82 +588,34 @@ DeviceInfo
 
 ## References
 
-[^1]: [Overview - Advanced hunting - Microsoft Defender XDR | Microsoft Learn](https://learn.microsoft.com/en-us/defender-xdr/advanced-hunting-overview)
+1. [Advanced Hunting Overview](https://learn.microsoft.com/en-us/defender-xdr/advanced-hunting-overview)
+2. [Advanced Hunting Query Results](https://learn.microsoft.com/en-us/defender-xdr/advanced-hunting-query-results)
+3. [Microsoft 365 Defender Permissions](https://learn.microsoft.com/en-us/defender-xdr/m365d-permissions)
+4. [Advanced Hunting Query Language](https://learn.microsoft.com/en-us/defender-xdr/advanced-hunting-query-language)
+5. [Advanced Hunting Schema Tables](https://learn.microsoft.com/en-us/defender-xdr/advanced-hunting-schema-tables)
+6. [Kusto Query Language Reference](https://learn.microsoft.com/en-us/kusto/query/?view=microsoft-fabric)
+7. [Advanced Hunting DeviceInfo Table](https://learn.microsoft.com/en-us/defender-xdr/advanced-hunting-deviceinfo-table)
+8. [Advanced Hunting DeviceNetworkInfo Table](https://learn.microsoft.com/en-us/defender-xdr/advanced-hunting-devicenetworkinfo-table)
+9. [Advanced Hunting DeviceProcessEvents Table](https://learn.microsoft.com/en-us/defender-xdr/advanced-hunting-deviceprocessevents-table)
+10. [Advanced Hunting Best Practices](https://learn.microsoft.com/en-us/defender-xdr/advanced-hunting-best-practices)
+11. [Advanced Hunting API](https://learn.microsoft.com/en-us/defender-xdr/api-advanced-hunting)
+12. [Advanced Hunting Limits](https://learn.microsoft.com/en-us/defender-xdr/advanced-hunting-limits)
+13. [KQL Quick Reference](https://learn.microsoft.com/en-us/azure/data-explorer/kql-quick-reference)
+14. [KQL Tutorial - Learn Common Operators](https://learn.microsoft.com/en-us/kusto/query/tutorials/learn-common-operators?view=microsoft-fabric)
+15. [Microsoft 365 Defender Advanced Hunting Sample Queries](https://github.com/microsoft/Microsoft-365-Defender-Hunting-Queries)
 
-[^2]: [Overview - Advanced hunting - Microsoft Defender XDR | Microsoft Learn](https://learn.microsoft.com/en-us/defender-xdr/advanced-hunting-overview)
-
-[^3]: [Work with advanced hunting query results in Microsoft Defender - Microsoft Defender XDR | Microsoft Learn](https://learn.microsoft.com/en-us/defender-xdr/advanced-hunting-query-results)
-
-[^4]: [Manage access to Microsoft Defender XDR with Microsoft Entra global roles - Microsoft Defender XDR | Microsoft Learn](https://learn.microsoft.com/en-us/defender-xdr/m365d-permissions)
-
-[^5]: [Learn the advanced hunting query language in Microsoft Defender - Microsoft Defender XDR | Microsoft Learn](https://learn.microsoft.com/en-us/defender-xdr/advanced-hunting-query-language)
-
-[^6]: [Data tables in the Microsoft Defender XDR advanced hunting schema - Microsoft Defender XDR | Microsoft Learn](https://learn.microsoft.com/en-us/defender-xdr/advanced-hunting-schema-tables)
-
-[^7]: [Kusto Query Language (KQL) overview - Kusto | Microsoft Learn](https://learn.microsoft.com/en-us/kusto/query/?view=microsoft-fabric)
-
-[^8]: [DeviceInfo table in the advanced hunting schema - Microsoft Defender XDR | Microsoft Learn](https://learn.microsoft.com/en-us/defender-xdr/advanced-hunting-deviceinfo-table)
-
-[^9]: [DeviceNetworkInfo table in the advanced hunting schema - Microsoft Defender XDR | Microsoft Learn](https://learn.microsoft.com/en-us/defender-xdr/advanced-hunting-devicenetworkinfo-table)
-
-[^10]: [DeviceProcessEvents table in the advanced hunting schema - Microsoft Defender XDR | Microsoft Learn](https://learn.microsoft.com/en-us/defender-xdr/advanced-hunting-deviceprocessevents-table)
-
-[^11]: [DeviceInfo table in the advanced hunting schema - Microsoft Defender XDR | Microsoft Learn](https://learn.microsoft.com/en-us/defender-xdr/advanced-hunting-deviceinfo-table)
-
-[^12]: [Learn the advanced hunting query language in Microsoft Defender - Microsoft Defender XDR | Microsoft Learn](https://learn.microsoft.com/en-us/defender-xdr/advanced-hunting-query-language)
-
-[^13]: [Learn the advanced hunting query language in Microsoft Defender - Microsoft Defender XDR | Microsoft Learn](https://learn.microsoft.com/en-us/defender-xdr/advanced-hunting-query-language)
-
-[^14]: [Learn the advanced hunting query language in Microsoft Defender - Microsoft Defender XDR | Microsoft Learn](https://learn.microsoft.com/en-us/defender-xdr/advanced-hunting-query-language)
-
-[^15]: [Kusto Query Language (KQL) overview - Kusto | Microsoft Learn](https://learn.microsoft.com/en-us/kusto/query/?view=microsoft-fabric)
-
-[^16]: [Learn the advanced hunting query language in Microsoft Defender - Microsoft Defender XDR | Microsoft Learn](https://learn.microsoft.com/en-us/defender-xdr/advanced-hunting-query-language)
-
-[^17]: [Learn the advanced hunting query language in Microsoft Defender - Microsoft Defender XDR | Microsoft Learn](https://learn.microsoft.com/en-us/defender-xdr/advanced-hunting-query-language)
-
-[^18]: [Advanced hunting query best practices in Microsoft Defender XDR - Microsoft Defender XDR | Microsoft Learn](https://learn.microsoft.com/en-us/defender-xdr/advanced-hunting-best-practices)
-
-[^19]: [DeviceProcessEvents table in the advanced hunting schema - Microsoft Defender XDR | Microsoft Learn](https://learn.microsoft.com/en-us/defender-xdr/advanced-hunting-deviceprocessevents-table)
-
-[^20]: [Learn the advanced hunting query language in Microsoft Defender - Microsoft Defender XDR | Microsoft Learn](https://learn.microsoft.com/en-us/defender-xdr/advanced-hunting-query-language)
-
-[^21]: [Learn the advanced hunting query language in Microsoft Defender - Microsoft Defender XDR | Microsoft Learn](https://learn.microsoft.com/en-us/defender-xdr/advanced-hunting-query-language)
-
-[^22]: [Learn the advanced hunting query language in Microsoft Defender - Microsoft Defender XDR | Microsoft Learn](https://learn.microsoft.com/en-us/defender-xdr/advanced-hunting-query-language)
-
-[^23]: [Kusto Query Language (KQL) overview - Kusto | Microsoft Learn](https://learn.microsoft.com/en-us/kusto/query/?view=microsoft-fabric)
-
-[^24]: [DeviceInfo table in the advanced hunting schema - Microsoft Defender XDR | Microsoft Learn](https://learn.microsoft.com/en-us/defender-xdr/advanced-hunting-deviceinfo-table)
-
-[^25]: [Work with advanced hunting query results in Microsoft Defender - Microsoft Defender XDR | Microsoft Learn](https://learn.microsoft.com/en-us/defender-xdr/advanced-hunting-query-results)
-
-[^26]: [Microsoft Defender XDR advanced hunting API - Microsoft Defender XDR | Microsoft Learn](https://learn.microsoft.com/en-us/defender-xdr/api-advanced-hunting)
-
-[^27]: [Microsoft Defender XDR advanced hunting API - Microsoft Defender XDR | Microsoft Learn](https://learn.microsoft.com/en-us/defender-xdr/api-advanced-hunting)
-
-[^28]: [Learn the advanced hunting query language in Microsoft Defender - Microsoft Defender XDR | Microsoft Learn](https://learn.microsoft.com/en-us/defender-xdr/advanced-hunting-query-language)
-
-[^29]: [Use the advanced hunting query resource report - Microsoft Defender XDR | Microsoft Learn](https://learn.microsoft.com/en-us/defender-xdr/advanced-hunting-limits)
-
-[^30]: [KQL quick reference | Microsoft Learn](https://learn.microsoft.com/en-us/azure/data-explorer/kql-quick-reference)
-
-[^31]: [Data tables in the Microsoft Defender XDR advanced hunting schema - Microsoft Defender XDR | Microsoft Learn](https://learn.microsoft.com/en-us/defender-xdr/advanced-hunting-schema-tables)
-
-[^32]: [Tutorial: Learn common Kusto Query Language operators - Kusto | Microsoft Learn](https://learn.microsoft.com/en-us/kusto/query/tutorials/learn-common-operators?view=microsoft-fabric)
-
-[^33]: [Microsoft 365 Defender Hunting Queries - GitHub Repository](https://github.com/microsoft/Microsoft-365-Defender-Hunting-Queries)
-
-[^34]: [Overview - Advanced hunting - Microsoft Defender XDR | Microsoft Learn](https://learn.microsoft.com/en-us/defender-xdr/advanced-hunting-overview)
-
-[^35]: [Use the advanced hunting query resource report - Microsoft Defender XDR | Microsoft Learn](https://learn.microsoft.com/en-us/defender-xdr/advanced-hunting-limits)
-
-[^36]: [Use the advanced hunting query resource report - Microsoft Defender XDR | Microsoft Learn](https://learn.microsoft.com/en-us/defender-xdr/advanced-hunting-limits)
-
-[^37]: [Advanced hunting query best practices in Microsoft Defender XDR - Microsoft Defender XDR | Microsoft Learn](https://learn.microsoft.com/en-us/defender-xdr/advanced-hunting-best-practices)
-
-[^38]: [DeviceInfo table in the advanced hunting schema - Microsoft Defender XDR | Microsoft Learn](https://learn.microsoft.com/en-us/defender-xdr/advanced-hunting-deviceinfo-table)
-
-[^39]: [Learn the advanced hunting query language in Microsoft Defender - Microsoft Defender XDR | Microsoft Learn](https://learn.microsoft.com/en-us/defender-xdr/advanced-hunting-query-language)
-
-[^40]: [Advanced hunting query best practices in Microsoft Defender XDR - Microsoft Defender XDR | Microsoft Learn](https://learn.microsoft.com/en-us/defender-xdr/advanced-hunting-best-practices)
+[1]: https://learn.microsoft.com/en-us/defender-xdr/advanced-hunting-overview
+[2]: https://learn.microsoft.com/en-us/defender-xdr/advanced-hunting-query-results
+[3]: https://learn.microsoft.com/en-us/defender-xdr/m365d-permissions
+[4]: https://learn.microsoft.com/en-us/defender-xdr/advanced-hunting-query-language
+[5]: https://learn.microsoft.com/en-us/defender-xdr/advanced-hunting-schema-tables
+[6]: https://learn.microsoft.com/en-us/kusto/query/?view=microsoft-fabric
+[7]: https://learn.microsoft.com/en-us/defender-xdr/advanced-hunting-deviceinfo-table
+[8]: https://learn.microsoft.com/en-us/defender-xdr/advanced-hunting-devicenetworkinfo-table
+[9]: https://learn.microsoft.com/en-us/defender-xdr/advanced-hunting-deviceprocessevents-table
+[10]: https://learn.microsoft.com/en-us/defender-xdr/advanced-hunting-best-practices
+[11]: https://learn.microsoft.com/en-us/defender-xdr/api-advanced-hunting
+[12]: https://learn.microsoft.com/en-us/defender-xdr/advanced-hunting-limits
+[13]: https://learn.microsoft.com/en-us/azure/data-explorer/kql-quick-reference
+[14]: https://learn.microsoft.com/en-us/kusto/query/tutorials/learn-common-operators?view=microsoft-fabric
+[15]: https://github.com/microsoft/Microsoft-365-Defender-Hunting-Queries

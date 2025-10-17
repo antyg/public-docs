@@ -2,7 +2,7 @@
 
 ## Overview
 
-Microsoft Graph API provides programmatic access to MDE device inventory, including onboarding status, health state, risk scores, and detailed device information[^1](https://learn.microsoft.com/en-us/graph/security-concept-overview). This method is ideal for centralized reporting, automation, and organization-wide validation.
+[Microsoft Graph API][1] provides programmatic access to MDE device inventory, including onboarding status, health state, risk scores, and detailed device information. This method is ideal for centralized reporting, automation, and organization-wide validation.
 
 ## Capabilities
 
@@ -19,10 +19,10 @@ Microsoft Graph API provides programmatic access to MDE device inventory, includ
 
 ### Authentication Requirements
 
-- Azure AD App Registration with API permissions[^2](https://learn.microsoft.com/en-us/defender-endpoint/api/exposed-apis-create-app-webapp):
+- [Azure AD App Registration][2] with API permissions:
   - `SecurityEvents.Read.All` (Application permission) **OR**
-  - `Machine.Read.All` (Application permission) **OR**[^3](https://learn.microsoft.com/en-us/defender-endpoint/api/get-machines)
-  - `Machine.ReadWrite.All` (Delegated permission)[^3](https://learn.microsoft.com/en-us/defender-endpoint/api/get-machines)
+  - [`Machine.Read.All`][3] (Application permission) **OR**
+  - [`Machine.ReadWrite.All`][3] (Delegated permission)
 - Client Secret or Certificate for app authentication
 - Tenant ID, Client ID, and Client Secret
 
@@ -39,7 +39,7 @@ Microsoft Graph API provides programmatic access to MDE device inventory, includ
 Install-Module Microsoft.Graph -Scope CurrentUser
 ```
 
-Install the Microsoft Graph PowerShell SDK[^4](https://learn.microsoft.com/en-us/powershell/microsoftgraph/installation?view=graph-powershell-1.0) to interact with Microsoft Graph APIs.
+Install the [Microsoft Graph PowerShell SDK][4] to interact with Microsoft Graph APIs.
 
 ## API Endpoints
 
@@ -49,25 +49,25 @@ Install the Microsoft Graph PowerShell SDK[^4](https://learn.microsoft.com/en-us
 GET https://api.security.microsoft.com/api/machines
 ```
 
-The machines API endpoint[^5](https://learn.microsoft.com/en-us/defender-endpoint/api/get-machines) provides access to device inventory data.
+The [machines API endpoint][3] provides access to device inventory data.
 
 ### Supported Query Parameters
 
-- `$filter` - Filter results by property values [^5](https://learn.microsoft.com/en-us/defender-endpoint/api/get-machines)
-- `$top` - Limit number of results (max 10,000) [^5](https://learn.microsoft.com/en-us/defender-endpoint/api/get-machines)
-- `$skip` - Skip specified number of results [^5](https://learn.microsoft.com/en-us/defender-endpoint/api/get-machines)
-- `$orderby` - Sort results by property [^5](https://learn.microsoft.com/en-us/defender-endpoint/api/get-machines)
-- `$select` - Return specific properties only [^5](https://learn.microsoft.com/en-us/defender-endpoint/api/get-machines)
+- `$filter` - Filter results by property values[3]
+- `$top` - Limit number of results (max 10,000) [3]
+- `$skip` - Skip specified number of results[3]
+- `$orderby` - Sort results by property[3]
+- `$select` - Return specific properties only[3]
 
 ### Rate Limits
 
-- **100 calls per minute** [^5](https://learn.microsoft.com/en-us/defender-endpoint/api/get-machines)
-- **1,500 calls per hour** [^5](https://learn.microsoft.com/en-us/defender-endpoint/api/get-machines)
-- Exceeding limits returns HTTP 429 (Too Many Requests) [^5](https://learn.microsoft.com/en-us/defender-endpoint/api/get-machines)
+- **100 calls per minute**[3]
+- **1,500 calls per hour**[3]
+- Exceeding limits returns HTTP 429 (Too Many Requests) [3]
 
 ## Device Properties
 
-The following properties are available from the machine resource type [^6](https://learn.microsoft.com/en-us/defender-endpoint/api/machine) for validating device status:
+The following properties are available from the [machine resource type][5] for validating device status:
 
 ### Key Properties for Validation
 
@@ -149,7 +149,7 @@ The following properties are available from the machine resource type [^6](https
 Connect-MgGraph -Scopes "Machine.Read.All"
 ```
 
-Use the Connect-MgGraph cmdlet [^7](https://learn.microsoft.com/en-us/powershell/module/microsoft.graph.authentication/connect-mggraph?view=graph-powershell-1.0) for interactive authentication with delegated permissions.
+Use the [Connect-MgGraph cmdlet][7] for interactive authentication with delegated permissions.
 
 ## PowerShell Query Examples
 
@@ -302,7 +302,7 @@ SERVER01,Onboarded,Inactive,2025-10-01T08:15:00Z,Medium,Low,10.8230
 GET https://api.securitycenter.microsoft.com/api/deviceavinfo
 ```
 
-The device antivirus health export API [^8](https://learn.microsoft.com/en-us/defender-endpoint/api/device-health-export-antivirus-health-report-api) provides detailed antivirus status information.
+The [device antivirus health export API][8] provides detailed antivirus status information.
 
 ### Key AV Properties
 
@@ -520,18 +520,18 @@ $HighRisk.value | Select-Object computerDnsName, riskScore, exposureLevel, lastS
 
 ## References
 
-[^1]: [Microsoft Graph security API overview](https://learn.microsoft.com/en-us/graph/security-concept-overview)
+1. [Microsoft Graph Security API Overview](https://learn.microsoft.com/en-us/graph/security-concept-overview)
+2. [Microsoft Defender for Endpoint App Registration](https://learn.microsoft.com/en-us/defender-endpoint/api/exposed-apis-create-app-webapp)
+3. [Microsoft Defender for Endpoint Machines API](https://learn.microsoft.com/en-us/defender-endpoint/api/get-machines)
+4. [Microsoft Graph PowerShell SDK Installation](https://learn.microsoft.com/en-us/powershell/microsoftgraph/installation?view=graph-powershell-1.0)
+5. [Microsoft Defender for Endpoint Machine Resource](https://learn.microsoft.com/en-us/defender-endpoint/api/machine)
+6. [Connect-MgGraph PowerShell Cmdlet](https://learn.microsoft.com/en-us/powershell/module/microsoft.graph.authentication/connect-mggraph?view=graph-powershell-1.0)
+7. [Microsoft Defender for Endpoint Device Health Export API](https://learn.microsoft.com/en-us/defender-endpoint/api/device-health-export-antivirus-health-report-api)
 
-[^2]: [Create an app to access Microsoft Defender for Endpoint without a user](https://learn.microsoft.com/en-us/defender-endpoint/api/exposed-apis-create-app-webapp)
-
-[^3]: [List machines API - Microsoft Defender for Endpoint](https://learn.microsoft.com/en-us/defender-endpoint/api/get-machines)
-
-[^4]: [Install the Microsoft Graph PowerShell SDK](https://learn.microsoft.com/en-us/powershell/microsoftgraph/installation?view=graph-powershell-1.0)
-
-[^5]: [List machines API - Microsoft Defender for Endpoint](https://learn.microsoft.com/en-us/defender-endpoint/api/get-machines)
-
-[^6]: [Machine resource type - Microsoft Defender for Endpoint](https://learn.microsoft.com/en-us/defender-endpoint/api/machine)
-
-[^7]: [Connect-MgGraph (Microsoft.Graph.Authentication)](https://learn.microsoft.com/en-us/powershell/module/microsoft.graph.authentication/connect-mggraph?view=graph-powershell-1.0)
-
-[^8]: [Microsoft Defender Antivirus Device Health export device antivirus health reporting](https://learn.microsoft.com/en-us/defender-endpoint/api/device-health-export-antivirus-health-report-api)
+[1]: https://learn.microsoft.com/en-us/graph/security-concept-overview
+[2]: https://learn.microsoft.com/en-us/defender-endpoint/api/exposed-apis-create-app-webapp
+[3]: https://learn.microsoft.com/en-us/defender-endpoint/api/get-machines
+[4]: https://learn.microsoft.com/en-us/powershell/microsoftgraph/installation?view=graph-powershell-1.0
+[5]: https://learn.microsoft.com/en-us/defender-endpoint/api/machine
+[6]: https://learn.microsoft.com/en-us/powershell/module/microsoft.graph.authentication/connect-mggraph?view=graph-powershell-1.0
+[7]: https://learn.microsoft.com/en-us/defender-endpoint/api/device-health-export-antivirus-health-report-api

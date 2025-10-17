@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Microsoft Defender for Endpoint Client Analyzer (`MDEClientAnalyzer.cmd`) is an official diagnostic tool[^1](https://learn.microsoft.com/en-us/defender-endpoint/overview-client-analyzer) that performs comprehensive health checks, connectivity validation, and log collection for troubleshooting MDE deployment and operational issues[^2](https://learn.microsoft.com/en-us/defender-endpoint/data-collection-analyzer). The tool is regularly used by Microsoft Customer Support Services (CSS) to collect information for troubleshooting Microsoft Defender for Endpoint issues[^1](https://learn.microsoft.com/en-us/defender-endpoint/overview-client-analyzer).
+The Microsoft Defender for Endpoint [Client Analyzer][1] (`MDEClientAnalyzer.cmd`) is an official diagnostic tool that performs comprehensive health checks, connectivity validation, and [log collection][2] for troubleshooting MDE deployment and operational issues. The tool is regularly used by Microsoft Customer Support Services (CSS) to collect information for troubleshooting Microsoft Defender for Endpoint issues.
 
 ## Capabilities
 
@@ -19,25 +19,25 @@ The Microsoft Defender for Endpoint Client Analyzer (`MDEClientAnalyzer.cmd`) is
 
 ### System Requirements
 
-- Windows 10 1607+ or Windows Server 2016+[^3](https://learn.microsoft.com/en-us/microsoft-365/security/defender-endpoint/minimum-requirements) [^4](https://learn.microsoft.com/en-us/microsoft-365/security/defender-endpoint/configure-server-endpoints)
+- Windows 10 1607+ or [Windows Server 2016+][3] ([Server configuration guide][4])
 - Administrator privileges (local or via PsExec)
 - Minimum 1 GB free disk space (for logs/traces)
-- Internet connectivity for connectivity tests[^5](https://learn.microsoft.com/en-us/defender-endpoint/verify-connectivity)
+- Internet connectivity for [connectivity tests][5]
 
 ### Required Tools
 
 - PowerShell 5.1 or higher
-- PsExec.exe (SysInternals) - for cloud connectivity checks[^6](https://learn.microsoft.com/en-us/defender-endpoint/download-client-analyzer)
-  - Download: https://live.sysinternals.com/PsExec.exe
+- [PsExec.exe][6] (SysInternals) - for cloud connectivity checks
+  - Download: [https://live.sysinternals.com/PsExec.exe](https://live.sysinternals.com/PsExec.exe)
   - Required only for connectivity validation
 
 ### Download Location
 
 #### Official Microsoft Tool
 
-- Download: [https://aka.ms/MDEAnalyzer](https://aka.ms/MDEAnalyzer) [^7](https://learn.microsoft.com/en-us/defender-endpoint/run-analyzer-windows)
+- Download: [https://aka.ms/MDEAnalyzer](https://aka.ms/MDEAnalyzer) ([Run analyzer guide][7])
 - Extracts to: `MDEClientAnalyzer` folder
-- Documentation: [https://learn.microsoft.com/en-us/defender-endpoint/overview-client-analyzer](https://learn.microsoft.com/en-us/defender-endpoint/overview-client-analyzer) [^1](https://learn.microsoft.com/en-us/defender-endpoint/overview-client-analyzer)
+- Documentation: [Overview and usage guide][1]
 
 ## Running the Client Analyzer
 
@@ -51,12 +51,12 @@ MDEClientAnalyzer.cmd
 
 ##### What it does
 
-- Verifies SENSE service status[^8](https://learn.microsoft.com/en-us/defender-endpoint/troubleshoot-onboarding)
-- Checks onboarding state[^9](https://learn.microsoft.com/en-us/defender-endpoint/configure-endpoints-sccm)
-- Validates registry configuration[^10](https://learn.microsoft.com/en-us/defender-endpoint/switch-to-mde-phase-2)
-- Tests cloud connectivity[^5](https://learn.microsoft.com/en-us/defender-endpoint/verify-connectivity)
-- Collects basic diagnostic logs[^11](https://learn.microsoft.com/en-us/defender-endpoint/analyzer-report)
-- Generates HTML report[^12](https://learn.microsoft.com/en-us/defender-endpoint/analyzer-report)
+- Verifies [SENSE service status][8]
+- Checks [onboarding state][9]
+- Validates [registry configuration][10]
+- Tests [cloud connectivity][5]
+- Collects [basic diagnostic logs][11]
+- Generates [HTML report][12]
 
 **Execution Time:** 2-5 minutes
 
@@ -70,9 +70,9 @@ MDEClientAnalyzer.cmd /?
 
 #### Parameter Categories
 
-- `-h` - Performance traces (high CPU diagnostics)[^13](https://learn.microsoft.com/en-us/defender-endpoint/troubleshoot-av-performance-issues-with-wprui)
-- `-c` - Application compatibility monitoring[^14](https://learn.microsoft.com/en-us/defender-endpoint/troubleshoot-av-performance-issues-with-procmon)
-- `-a` - Antivirus performance analysis[^15](https://learn.microsoft.com/en-us/defender-endpoint/tune-performance-defender-antivirus)
+- `-h` - [Performance traces][13] (high CPU diagnostics)
+- `-c` - [Application compatibility monitoring][14]
+- `-a` - [Antivirus performance analysis][15]
 - `-p` - Advanced connectivity tests
 - No parameters - Standard sensor health check (recommended)
 
@@ -80,7 +80,7 @@ MDEClientAnalyzer.cmd /?
 
 ### Performance Issues (High CPU)
 
-**Scenario:** SENSE service (MsSense.exe) consuming high CPU[^8](https://learn.microsoft.com/en-us/defender-endpoint/troubleshoot-onboarding)
+**Scenario:** [SENSE service][8] (MsSense.exe) consuming high CPU
 
 #### Command
 
@@ -90,9 +90,9 @@ MDEClientAnalyzer.cmd -h
 
 ##### What it does
 
-- Captures Windows Performance Recorder (WPR) trace[^13](https://learn.microsoft.com/en-us/defender-endpoint/troubleshoot-av-performance-issues-with-wprui)
+- Captures [Windows Performance Recorder (WPR) trace][13]
 - Records CPU, memory, disk activity
-- Generates .etl trace file for analysis[^13](https://learn.microsoft.com/en-us/defender-endpoint/troubleshoot-av-performance-issues-with-wprui)
+- Generates [.etl trace file][13] for analysis
 - Trace duration: 60-120 seconds
 
 #### Analysis
@@ -115,13 +115,13 @@ MDEClientAnalyzer.cmd -c
 
 ##### What it does
 
-- Launches Process Monitor (ProcMon) tool[^14](https://learn.microsoft.com/en-us/defender-endpoint/troubleshoot-av-performance-issues-with-procmon)
+- Launches [Process Monitor (ProcMon) tool][14]
 - Captures real-time:
   - File system operations
   - Registry accesses
   - Process/thread activity
   - Network activity
-- Generates .pml log file[^14](https://learn.microsoft.com/en-us/defender-endpoint/troubleshoot-av-performance-issues-with-procmon)
+- Generates [.pml log file][14]
 
 #### Analysis
 
@@ -134,7 +134,7 @@ MDEClientAnalyzer.cmd -c
 
 ### Antivirus Performance Issues
 
-**Scenario:** MsMpEng.exe (Defender Antivirus) consuming high CPU during scans[^15](https://learn.microsoft.com/en-us/defender-endpoint/tune-performance-defender-antivirus)
+**Scenario:** MsMpEng.exe ([Defender Antivirus][15]) consuming high CPU during scans
 
 #### Command
 
@@ -144,9 +144,9 @@ MDEClientAnalyzer.cmd -a
 
 ##### What it does
 
-- Captures performance trace specific to antivirus operations[^15](https://learn.microsoft.com/en-us/defender-endpoint/tune-performance-defender-antivirus)
+- Captures [performance trace][15] specific to antivirus operations
 - Records scan activity and resource usage
-- Generates .etl trace file[^15](https://learn.microsoft.com/en-us/defender-endpoint/tune-performance-defender-antivirus)
+- Generates [.etl trace file][15]
 
 #### Analysis Identify files/folders causing scan delays for potential exclusions
 
@@ -156,26 +156,26 @@ MDEClientAnalyzer.cmd -a
 
 #### Prerequisites
 
-- PsExec.exe in same folder as MDEClientAnalyzer.cmd[^6](https://learn.microsoft.com/en-us/defender-endpoint/download-client-analyzer)
+- [PsExec.exe][6] in same folder as MDEClientAnalyzer.cmd
 - OR in system PATH
 - Local Administrator privileges
 
 #### Automatic Test (Included in Standard Run)
 
-The analyzer automatically tests connectivity to MDE cloud endpoints[^5](https://learn.microsoft.com/en-us/defender-endpoint/verify-connectivity):
+The analyzer automatically tests connectivity to [MDE cloud endpoints][5]:
 
-- `*.blob.core.windows.net`[^16](https://learn.microsoft.com/en-us/defender-endpoint/configure-environment)
-- `*.microsoft.com`[^16](https://learn.microsoft.com/en-us/defender-endpoint/configure-environment)
+- [`*.blob.core.windows.net`][16]
+- [`*.microsoft.com`][16]
 - `crl.microsoft.com`
 - `*.windowsupdate.com`
-- Cloud service endpoints by region (US, EU, UK, etc.)[^5](https://learn.microsoft.com/en-us/defender-endpoint/verify-connectivity)
+- [Cloud service endpoints][5] by region (US, EU, UK, etc.)
 
 ##### What it validates
 
-- DNS resolution[^5](https://learn.microsoft.com/en-us/defender-endpoint/verify-connectivity)
-- HTTPS connectivity (port 443)[^5](https://learn.microsoft.com/en-us/defender-endpoint/verify-connectivity)
-- Certificate validation[^5](https://learn.microsoft.com/en-us/defender-endpoint/verify-connectivity)
-- Proxy configuration[^5](https://learn.microsoft.com/en-us/defender-endpoint/verify-connectivity)
+- [DNS resolution][5]
+- [HTTPS connectivity][5] (port 443)
+- [Certificate validation][5]
+- [Proxy configuration][5]
 - Authentication requirements
 
 ### Proxy Configuration Issues
@@ -202,13 +202,13 @@ netsh winhttp set proxy proxy-server="proxy.contoso.com:8080" bypass-list="<loca
 
 #### Report Sections
 
-1. **Summary** - Overall health status (Pass/Fail)[^12](https://learn.microsoft.com/en-us/defender-endpoint/analyzer-report)
-2. **Onboarding State** - Registry key validation[^9](https://learn.microsoft.com/en-us/defender-endpoint/configure-endpoints-sccm)
-3. **Service Status** - SENSE and DiagTrack service checks[^8](https://learn.microsoft.com/en-us/defender-endpoint/troubleshoot-onboarding) [^17](https://learn.microsoft.com/en-us/defender-endpoint/troubleshoot-onboarding)
-4. **Connectivity Tests** - Cloud endpoint reachability[^5](https://learn.microsoft.com/en-us/defender-endpoint/verify-connectivity)
+1. **Summary** - Overall [health status][12] (Pass/Fail)
+2. **Onboarding State** - [Registry key validation][9]
+3. **Service Status** - [SENSE and DiagTrack][8] service checks ([DiagTrack details][17])
+4. **Connectivity Tests** - [Cloud endpoint reachability][5]
 5. **Event Log Errors** - Recent SENSE operational log errors
 6. **Configuration Issues** - Misconfigurations detected
-7. **Recommendations** - Actionable remediation steps[^12](https://learn.microsoft.com/en-us/defender-endpoint/analyzer-report)
+7. **Recommendations** - [Actionable remediation steps][12]
 
 ### Health Status Indicators
 
@@ -252,8 +252,8 @@ netsh winhttp set proxy proxy-server="proxy.contoso.com:8080" bypass-list="<loca
 #### Standard Run
 
 - Registry exports:
-  - `HKLM\SOFTWARE\Microsoft\Windows Advanced Threat Protection`[^10](https://learn.microsoft.com/en-us/defender-endpoint/switch-to-mde-phase-2)
-  - `HKLM\SOFTWARE\Policies\Microsoft\Windows Advanced Threat Protection`[^10](https://learn.microsoft.com/en-us/defender-endpoint/switch-to-mde-phase-2)
+  - [`HKLM\SOFTWARE\Microsoft\Windows Advanced Threat Protection`][10]
+  - [`HKLM\SOFTWARE\Policies\Microsoft\Windows Advanced Threat Protection`][10]
 - Event logs:
   - SENSE Operational log
   - Windows Defender log
@@ -370,14 +370,14 @@ Message: Onboarding blob missing or invalid
 ### Prerequisites
 
 - Device onboarded to MDE
-- Live Response enabled in MDE settings[^18](https://learn.microsoft.com/en-us/defender-endpoint/live-response)
-- Security Operator role or higher[^18](https://learn.microsoft.com/en-us/defender-endpoint/live-response)
+- [Live Response enabled][18] in MDE settings
+- [Security Operator role][18] or higher
 
 ### Steps
 
-1. Navigate to device page in MDE portal[^18](https://learn.microsoft.com/en-us/defender-endpoint/live-response)
-2. Click **Initiate Live Response Session**[^18](https://learn.microsoft.com/en-us/defender-endpoint/live-response)
-3. Upload MDEClientAnalyzer.cmd to device[^19](https://learn.microsoft.com/en-us/defender-endpoint/api/upload-library)
+1. Navigate to [device page][18] in MDE portal
+2. Click [**Initiate Live Response Session**][18]
+3. [Upload MDEClientAnalyzer.cmd][19] to device
 4. Run analyzer:
 
    ```cmd
@@ -387,7 +387,7 @@ Message: Onboarding blob missing or invalid
 5. Download generated .cab file
 6. Extract and review HTML report locally
 
-**Use Case:** Diagnose onboarded devices without RDP/WinRM access[^18](https://learn.microsoft.com/en-us/defender-endpoint/live-response)
+**Use Case:** Diagnose onboarded devices without [RDP/WinRM access][18]
 
 ## Integration with Other Validation Methods
 
@@ -520,40 +520,42 @@ Last Exit Code: 1 (ERROR_INVALID_FUNCTION)
 
 ## References
 
-[^1]: [Troubleshoot sensor health using Microsoft Defender for Endpoint Client Analyzer](https://learn.microsoft.com/en-us/defender-endpoint/overview-client-analyzer)
+1. [MDE Client Analyzer Overview and Usage Guide](https://learn.microsoft.com/en-us/defender-endpoint/overview-client-analyzer)
+2. [MDE Client Analyzer Data Collection Guide](https://learn.microsoft.com/en-us/defender-endpoint/data-collection-analyzer)
+3. [MDE Minimum System Requirements](https://learn.microsoft.com/en-us/microsoft-365/security/defender-endpoint/minimum-requirements)
+4. [MDE Server Configuration Guide](https://learn.microsoft.com/en-us/microsoft-365/security/defender-endpoint/configure-server-endpoints)
+5. [MDE Connectivity Verification Guide](https://learn.microsoft.com/en-us/defender-endpoint/verify-connectivity)
+6. [MDE Client Analyzer Download Guide](https://learn.microsoft.com/en-us/defender-endpoint/download-client-analyzer)
+7. [MDE Client Analyzer Execution Guide](https://learn.microsoft.com/en-us/defender-endpoint/run-analyzer-windows)
+8. [MDE Onboarding Troubleshooting Guide](https://learn.microsoft.com/en-us/defender-endpoint/troubleshoot-onboarding)
+9. [MDE SCCM Configuration Guide](https://learn.microsoft.com/en-us/defender-endpoint/configure-endpoints-sccm)
+10. [MDE Migration Phase 2 Guide](https://learn.microsoft.com/en-us/defender-endpoint/switch-to-mde-phase-2)
+11. [MDE Client Analyzer Report Guide](https://learn.microsoft.com/en-us/defender-endpoint/analyzer-report)
+12. [MDE Client Analyzer Report Guide](https://learn.microsoft.com/en-us/defender-endpoint/analyzer-report)
+13. [MDE Performance Troubleshooting with WPR](https://learn.microsoft.com/en-us/defender-endpoint/troubleshoot-av-performance-issues-with-wprui)
+14. [MDE Performance Troubleshooting with Process Monitor](https://learn.microsoft.com/en-us/defender-endpoint/troubleshoot-av-performance-issues-with-procmon)
+15. [MDE Antivirus Performance Tuning Guide](https://learn.microsoft.com/en-us/defender-endpoint/tune-performance-defender-antivirus)
+16. [MDE Environment Configuration Guide](https://learn.microsoft.com/en-us/defender-endpoint/configure-environment)
+17. [MDE Onboarding Troubleshooting Guide](https://learn.microsoft.com/en-us/defender-endpoint/troubleshoot-onboarding)
+18. [MDE Live Response Guide](https://learn.microsoft.com/en-us/defender-endpoint/live-response)
+19. [MDE API Upload Library Guide](https://learn.microsoft.com/en-us/defender-endpoint/api/upload-library)
 
-[^2]: [Data collection for advanced troubleshooting on Windows](https://learn.microsoft.com/en-us/defender-endpoint/data-collection-analyzer)
-
-[^3]: [Minimum requirements for Microsoft Defender for Endpoint](https://learn.microsoft.com/en-us/microsoft-365/security/defender-endpoint/minimum-requirements)
-
-[^4]: [Onboard servers through Microsoft Defender for Endpoint's onboarding experience](https://learn.microsoft.com/en-us/microsoft-365/security/defender-endpoint/configure-server-endpoints)
-
-[^5]: [Verify client connectivity to Microsoft Defender for Endpoint service URLs](https://learn.microsoft.com/en-us/defender-endpoint/verify-connectivity)
-
-[^6]: [Download the Microsoft Defender for Endpoint client analyzer](https://learn.microsoft.com/en-us/defender-endpoint/download-client-analyzer)
-
-[^7]: [Run the client analyzer on Windows](https://learn.microsoft.com/en-us/defender-endpoint/run-analyzer-windows)
-
-[^8]: [Troubleshoot Microsoft Defender for Endpoint onboarding issues](https://learn.microsoft.com/en-us/defender-endpoint/troubleshoot-onboarding)
-
-[^9]: [Onboard Windows devices using Configuration Manager](https://learn.microsoft.com/en-us/defender-endpoint/configure-endpoints-sccm)
-
-[^10]: [Migrate to Microsoft Defender for Endpoint - Setup](https://learn.microsoft.com/en-us/defender-endpoint/switch-to-mde-phase-2)
-
-[^11]: [Understand the client analyzer HTML report](https://learn.microsoft.com/en-us/defender-endpoint/analyzer-report)
-
-[^12]: [Understand the client analyzer HTML report](https://learn.microsoft.com/en-us/defender-endpoint/analyzer-report)
-
-[^13]: [Troubleshoot Microsoft Defender Antivirus performance issues with WPRUI](https://learn.microsoft.com/en-us/defender-endpoint/troubleshoot-av-performance-issues-with-wprui)
-
-[^14]: [Troubleshoot Microsoft Defender Antivirus performance issues with Process Monitor](https://learn.microsoft.com/en-us/defender-endpoint/troubleshoot-av-performance-issues-with-procmon)
-
-[^15]: [Performance analyzer for Microsoft Defender Antivirus](https://learn.microsoft.com/en-us/defender-endpoint/tune-performance-defender-antivirus)
-
-[^16]: [Configure your network environment to ensure connectivity with Defender for Endpoint service](https://learn.microsoft.com/en-us/defender-endpoint/configure-environment)
-
-[^17]: [Troubleshoot Microsoft Defender for Endpoint onboarding issues - DiagTrack service](https://learn.microsoft.com/en-us/defender-endpoint/troubleshoot-onboarding)
-
-[^18]: [Investigate entities on devices using live response in Microsoft Defender for Endpoint](https://learn.microsoft.com/en-us/defender-endpoint/live-response)
-
-[^19]: [Upload files to the live response library](https://learn.microsoft.com/en-us/defender-endpoint/api/upload-library)
+[1]: https://learn.microsoft.com/en-us/defender-endpoint/overview-client-analyzer
+[2]: https://learn.microsoft.com/en-us/defender-endpoint/data-collection-analyzer
+[3]: https://learn.microsoft.com/en-us/microsoft-365/security/defender-endpoint/minimum-requirements
+[4]: https://learn.microsoft.com/en-us/microsoft-365/security/defender-endpoint/configure-server-endpoints
+[5]: https://learn.microsoft.com/en-us/defender-endpoint/verify-connectivity
+[6]: https://learn.microsoft.com/en-us/defender-endpoint/download-client-analyzer
+[7]: https://learn.microsoft.com/en-us/defender-endpoint/run-analyzer-windows
+[8]: https://learn.microsoft.com/en-us/defender-endpoint/troubleshoot-onboarding
+[9]: https://learn.microsoft.com/en-us/defender-endpoint/configure-endpoints-sccm
+[10]: https://learn.microsoft.com/en-us/defender-endpoint/switch-to-mde-phase-2
+[11]: https://learn.microsoft.com/en-us/defender-endpoint/analyzer-report
+[12]: https://learn.microsoft.com/en-us/defender-endpoint/analyzer-report
+[13]: https://learn.microsoft.com/en-us/defender-endpoint/troubleshoot-av-performance-issues-with-wprui
+[14]: https://learn.microsoft.com/en-us/defender-endpoint/troubleshoot-av-performance-issues-with-procmon
+[15]: https://learn.microsoft.com/en-us/defender-endpoint/tune-performance-defender-antivirus
+[16]: https://learn.microsoft.com/en-us/defender-endpoint/configure-environment
+[17]: https://learn.microsoft.com/en-us/defender-endpoint/troubleshoot-onboarding
+[18]: https://learn.microsoft.com/en-us/defender-endpoint/live-response
+[19]: https://learn.microsoft.com/en-us/defender-endpoint/api/upload-library

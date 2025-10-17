@@ -1,0 +1,48 @@
+# URL Consolidation Mapping for INDEX.md
+
+## Duplicate URL Groups
+
+duplicate_groups:
+  # Troubleshoot Onboarding (3 instances)
+  - url: https://learn.microsoft.com/en-us/defender-endpoint/troubleshoot-onboarding
+    primary_ref: 1
+    duplicate_refs: [2, 6]
+    action: Consolidate [2] and [6] → [1]
+
+## Unique URLs (Keep as-is)
+unique_refs:
+  - ref: 3
+    url: https://learn.microsoft.com/en-us/defender-xdr/microsoft-365-defender-portal
+  - ref: 4
+    url: https://learn.microsoft.com/en-us/defender-endpoint/api/get-machines
+  - ref: 5
+    url: https://learn.microsoft.com/en-us/defender-xdr/advanced-hunting-deviceinfo-table
+  - ref: 7
+    url: https://learn.microsoft.com/en-us/defender-endpoint/api/exposed-apis-create-app-nativeapp
+  - ref: 8
+    url: https://learn.microsoft.com/en-us/defender-endpoint/run-analyzer-windows
+
+## Consolidation Summary
+- Original references: 8
+- Duplicate references to remove: 2 ([2, 6])
+- Final unique references: 6
+- Reduction: 25%
+
+## Final Reference Numbering (After Consolidation)
+1. Troubleshoot Onboarding
+2. Microsoft 365 Defender Portal
+3. Get Machines API
+4. DeviceInfo Table
+5. Create App Registration
+6. Run Client Analyzer
+
+## Inline Citation Replacement Map
+replacement_map:
+  1 → 1  # No change
+  2 → 1  # Duplicate of [1]
+  3 → 2  # Renumbered
+  4 → 3  # Renumbered
+  5 → 4  # Renumbered
+  6 → 1  # Duplicate of [1]
+  7 → 5  # Renumbered
+  8 → 6  # Renumbered

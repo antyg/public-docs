@@ -2,7 +2,7 @@
 
 ## Overview
 
-Direct validation of MDE installation and onboarding status via Windows registry keys, services, and event logs. This method provides definitive local status checks and is essential for troubleshooting onboarding issues[^1](https://learn.microsoft.com/en-us/defender-endpoint/troubleshoot-onboarding).
+Direct validation of MDE installation and onboarding status via Windows registry keys, services, and event logs. This method provides definitive local status checks and is essential for troubleshooting onboarding issues[1].
 
 ## Capabilities
 
@@ -17,7 +17,7 @@ Direct validation of MDE installation and onboarding status via Windows registry
 ## Prerequisites
 
 - Administrator privileges (local or remote)
-- Windows 10 1607+ or Windows Server 2016+ [^2](https://learn.microsoft.com/en-us/defender-endpoint/minimum-requirements)
+- Windows 10 1607+ or Windows Server 2016+[2]
 - Registry read access
 - Event Viewer access (for log validation)
 
@@ -25,9 +25,9 @@ Direct validation of MDE installation and onboarding status via Windows registry
 
 ### Primary Onboarding Registry Location
 
-**Path:** `HKLM:\SOFTWARE\Microsoft\Windows Advanced Threat Protection\Status` [^3](https://learn.microsoft.com/en-us/defender-endpoint/configure-endpoints-sccm)
+**Path:** [`HKLM:\SOFTWARE\Microsoft\Windows Advanced Threat Protection\Status`][3]
 
-The following key values are available for validating onboarding status and device identifiers [^3](https://learn.microsoft.com/en-us/defender-endpoint/configure-endpoints-sccm):
+The following key values are available for validating onboarding status and device identifiers[3]:
 
 #### Key Values
 
@@ -39,9 +39,9 @@ The following key values are available for validating onboarding status and devi
 
 ### Policy Registry Location
 
-**Path:** `HKLM:\SOFTWARE\Policies\Microsoft\Windows Advanced Threat Protection` [^3](https://learn.microsoft.com/en-us/defender-endpoint/configure-endpoints-sccm)
+**Path:** [`HKLM:\SOFTWARE\Policies\Microsoft\Windows Advanced Threat Protection`][3]
 
-The policy registry location contains onboarding blob data and device group configurations [^3](https://learn.microsoft.com/en-us/defender-endpoint/configure-endpoints-sccm):
+The policy registry location contains onboarding blob data and device group configurations[3]:
 
 #### Key Values
 
@@ -52,9 +52,9 @@ The policy registry location contains onboarding blob data and device group conf
 
 ### Security Management Registry Location
 
-**Path:** `HKLM:\SOFTWARE\Microsoft\SenseCM` [^4](https://learn.microsoft.com/en-us/defender-endpoint/troubleshoot-security-config-mgt)
+**Path:** [`HKLM:\SOFTWARE\Microsoft\SenseCM`][4]
 
-The Security Management registry location provides enrollment status for managed devices [^4](https://learn.microsoft.com/en-us/defender-endpoint/troubleshoot-security-config-mgt):
+The Security Management registry location provides enrollment status for managed devices[4]:
 
 #### Key Values
 
@@ -132,19 +132,19 @@ Invoke-Command -ComputerName $ComputerName -ScriptBlock {
 
 ### SENSE Service (MDE Behavioral Sensor)
 
-The SENSE service is the behavioral sensor that powers Microsoft Defender for Endpoint [^5](https://learn.microsoft.com/en-us/answers/questions/983229/windows-defender-advanced-threat-protection-servic).
+The [SENSE service][5] is the behavioral sensor that powers Microsoft Defender for Endpoint.
 
-**Service Name:** `SENSE` [^5](https://learn.microsoft.com/en-us/answers/questions/983229/windows-defender-advanced-threat-protection-servic)
-**Display Name:** `Windows Defender Advanced Threat Protection Service` [^5](https://learn.microsoft.com/en-us/answers/questions/983229/windows-defender-advanced-threat-protection-servic)
-**Description:** Behavioral sensor that powers Microsoft Defender for Endpoint [^5](https://learn.microsoft.com/en-us/answers/questions/983229/windows-defender-advanced-threat-protection-servic)
+**Service Name:** [`SENSE`][5]
+**Display Name:** [`Windows Defender Advanced Threat Protection Service`][5]
+**Description:** Behavioral sensor that powers Microsoft Defender for Endpoint[5]
 
 ### DiagTrack Service (Diagnostic Data)
 
-The DiagTrack service is required for MDE telemetry upload[^6](https://learn.microsoft.com/en-us/windows/privacy/configure-windows-diagnostic-data-in-your-organization).
+The [DiagTrack service][6] is required for MDE telemetry upload.
 
-**Service Name:** `DiagTrack` [^6](https://learn.microsoft.com/en-us/windows/privacy/configure-windows-diagnostic-data-in-your-organization)
-**Display Name:** `Connected User Experiences and Telemetry` [^6](https://learn.microsoft.com/en-us/windows/privacy/configure-windows-diagnostic-data-in-your-organization)
-**Description:** Required for MDE telemetry upload [^6](https://learn.microsoft.com/en-us/windows/privacy/configure-windows-diagnostic-data-in-your-organization)
+**Service Name:** [`DiagTrack`][6]
+**Display Name:** [`Connected User Experiences and Telemetry`][6]
+**Description:** Required for MDE telemetry upload[6]
 
 ### Check Service Status (PowerShell)
 
@@ -182,7 +182,7 @@ SERVICE_NAME: SENSE
 
 ### Verify Service Startup Type
 
-Check the SENSE service startup configuration using Get-Service [^7](https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.management/get-service?view=powershell-7.5):
+Check the SENSE service startup configuration using [Get-Service][7]:
 
 ```powershell
 $SenseService = Get-Service -Name SENSE
@@ -197,7 +197,7 @@ if ($SenseStartType -eq 'Auto') {
 
 ### Start/Restart Services
 
-Manage MDE services using PowerShell service management cmdlets [^7](https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.management/get-service?view=powershell-7.5):
+Manage MDE services using [PowerShell service management cmdlets][7]:
 
 ```powershell
 Start-Service -Name SENSE
@@ -208,7 +208,7 @@ Restart-Service -Name SENSE
 
 ### Check Service Dependencies
 
-Examine service dependencies using Get-Service [^7](https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.management/get-service?view=powershell-7.5):
+Examine service dependencies using [Get-Service][7]:
 
 ```powershell
 Get-Service -Name SENSE -DependentServices
@@ -219,7 +219,7 @@ Get-Service -Name SENSE -RequiredServices
 
 ### SENSE Operational Log
 
-**Event Log Path:** `Applications and Services Logs\Microsoft\Windows\SENSE\Operational` [^8](https://learn.microsoft.com/en-us/defender-endpoint/event-error-codes)
+**Event Log Path:** [`Applications and Services Logs\Microsoft\Windows\SENSE\Operational`][8]
 
 ### PowerShell Event Log Queries
 
@@ -248,7 +248,7 @@ Get-WinEvent -FilterHashtable @{
 
 ### Key SENSE Event IDs
 
-The following event IDs are critical for monitoring SENSE service health and troubleshooting connectivity issues [^8](https://learn.microsoft.com/en-us/defender-endpoint/event-error-codes):
+The following event IDs are critical for monitoring SENSE service health and troubleshooting connectivity issues[8]:
 
 | Event ID | Level       | Description                  | Action                      |
 | -------- | ----------- | ---------------------------- | --------------------------- |
@@ -301,23 +301,23 @@ Validation Result     : HEALTHY
 
 ### MDE Installed
 
-- ✅ Registry key exists: `HKLM:\SOFTWARE\Microsoft\Windows Advanced Threat Protection` [^3](https://learn.microsoft.com/en-us/defender-endpoint/configure-endpoints-sccm)
-- ✅ SENSE service exists [^5](https://learn.microsoft.com/en-us/answers/questions/983229/windows-defender-advanced-threat-protection-servic)
+- ✅ Registry key exists: [`HKLM:\SOFTWARE\Microsoft\Windows Advanced Threat Protection`][3]
+- ✅ [SENSE service][5] exists
 
 ### MDE Onboarded
 
-- ✅ `OnboardingState` = `1` [^3](https://learn.microsoft.com/en-us/defender-endpoint/configure-endpoints-sccm)
-- ✅ `OrgId` is non-empty GUID [^3](https://learn.microsoft.com/en-us/defender-endpoint/configure-endpoints-sccm)
-- ✅ `SenseId` is non-empty GUID [^3](https://learn.microsoft.com/en-us/defender-endpoint/configure-endpoints-sccm)
-- ✅ Onboarding policy configured (OnboardingInfo present) [^3](https://learn.microsoft.com/en-us/defender-endpoint/configure-endpoints-sccm)
+- ✅ [`OnboardingState`][3] = `1`
+- ✅ [`OrgId`][3] is non-empty GUID
+- ✅ [`SenseId`][3] is non-empty GUID
+- ✅ [Onboarding policy][3] configured (OnboardingInfo present)
 
 ### MDE Functional
 
-- ✅ SENSE service status = `Running` [^5](https://learn.microsoft.com/en-us/answers/questions/983229/windows-defender-advanced-threat-protection-servic)
-- ✅ SENSE service startup type = `Automatic` [^5](https://learn.microsoft.com/en-us/answers/questions/983229/windows-defender-advanced-threat-protection-servic)
-- ✅ DiagTrack service status = `Running` [^6](https://learn.microsoft.com/en-us/windows/privacy/configure-windows-diagnostic-data-in-your-organization)
-- ✅ No critical errors in SENSE operational log (last 7 days) [^8](https://learn.microsoft.com/en-us/defender-endpoint/event-error-codes)
-- ✅ Recent Event ID 5 (sensor start) within last restart period [^8](https://learn.microsoft.com/en-us/defender-endpoint/event-error-codes)
+- ✅ [SENSE service][5] status = `Running`
+- ✅ [SENSE service][5] startup type = `Automatic`
+- ✅ [DiagTrack service][6] status = `Running`
+- ✅ No critical errors in [SENSE operational log][8] (last 7 days)
+- ✅ Recent [Event ID 5][8] (sensor start) within last restart period
 
 ## Remote Bulk Validation
 
@@ -373,28 +373,28 @@ $Results | Export-Csv "bulk-validation-results.csv" -NoTypeInformation
 
 ### Issue: OnboardingState = 0 or Not Present
 
-**Cause:** Device not onboarded [^1](https://learn.microsoft.com/en-us/defender-endpoint/troubleshoot-onboarding)
+**Cause:** [Device not onboarded][1]
 
 **Resolution:** Run onboarding script and verify DiagTrack service is running.
 
 1. Run onboarding script from MDE portal
-2. Verify DiagTrack service running [^6](https://learn.microsoft.com/en-us/windows/privacy/configure-windows-diagnostic-data-in-your-organization)
-3. Check network connectivity to MDE endpoints [^9](https://learn.microsoft.com/en-us/defender-endpoint/verify-connectivity)
+2. Verify [DiagTrack service][6] running
+3. Check [network connectivity to MDE endpoints][9]
 4. Review Application event log for WDATPOnboarding errors
 
 ### Issue: SENSE Service Not Found
 
-**Cause:** MDE not installed or installation failed [^5](https://learn.microsoft.com/en-us/answers/questions/983229/windows-defender-advanced-threat-protection-servic)
+**Cause:** [MDE not installed or installation failed][5]
 
 **Resolution:** Verify OS compatibility and install/reinstall MDE agent.
 
-1. Verify OS compatibility (Windows 10 1607+, Server 2016+) [^2](https://learn.microsoft.com/en-us/defender-endpoint/minimum-requirements)
+1. Verify [OS compatibility][2] (Windows 10 1607+, Server 2016+)
 2. Install/reinstall MDE agent
 3. Check Windows Update for sensor package
 
 ### Issue: SENSE Service Stopped or Failed to Start
 
-**Cause:** Service crash, dependency failure, or misconfiguration [^5](https://learn.microsoft.com/en-us/answers/questions/983229/windows-defender-advanced-threat-protection-servic)
+**Cause:** [Service crash, dependency failure, or misconfiguration][5]
 
 **Resolution:** Start DiagTrack and SENSE services, then review event log for errors.
 
@@ -404,11 +404,11 @@ Start-Service -Name SENSE
 Get-WinEvent -LogName 'Microsoft-Windows-SENSE/Operational' -MaxEvents 10
 ```
 
-Review event log for specific error codes [^8](https://learn.microsoft.com/en-us/defender-endpoint/event-error-codes)
+Review event log for [specific error codes][8]
 
 ### Issue: DiagTrack Service Disabled
 
-**Cause:** Group Policy or manual configuration [^6](https://learn.microsoft.com/en-us/windows/privacy/configure-windows-diagnostic-data-in-your-organization)
+**Cause:** [Group Policy or manual configuration][6]
 
 **Resolution:** Set DiagTrack service to automatic startup and start the service.
 
@@ -419,17 +419,17 @@ sc start DiagTrack
 
 ### Issue: Event ID 15 (Cloud Connectivity)
 
-**Cause:** Firewall blocking, proxy misconfiguration, or DNS issues [^8](https://learn.microsoft.com/en-us/defender-endpoint/event-error-codes)
+**Cause:** [Firewall blocking, proxy misconfiguration, or DNS issues][8]
 
 **Resolution:** Verify URLs whitelisted and configure proxy if applicable.
 
-1. Verify URLs whitelisted: `*.blob.core.windows.net`, `*.microsoft.com`, `crl.microsoft.com` [^9](https://learn.microsoft.com/en-us/defender-endpoint/verify-connectivity)
+1. Verify [URLs whitelisted][9]: `*.blob.core.windows.net`, `*.microsoft.com`, `crl.microsoft.com`
 2. Configure proxy if applicable
-3. Test connectivity: `Test-NetConnection -ComputerName au.vortex-win.data.microsoft.com -Port 443` [^9](https://learn.microsoft.com/en-us/defender-endpoint/verify-connectivity)
+3. Test [connectivity][9]: `Test-NetConnection -ComputerName au.vortex-win.data.microsoft.com -Port 443`
 
 ### Issue: Event ID 30 (Proxy Authentication)
 
-**Cause:** Proxy requires authentication [^8](https://learn.microsoft.com/en-us/defender-endpoint/event-error-codes)
+**Cause:** [Proxy requires authentication][8]
 
 **Resolution:** Configure proxy settings with authentication support.
 
@@ -481,7 +481,7 @@ Event Log:
 
 ### Confirm PowerShell Results
 
-After running Get-MpComputerStatus [^10](https://learn.microsoft.com/en-us/powershell/module/defender/get-mpcomputerstatus?view=windowsserver2025-ps) from [Method 1: PowerShell Validation](./01-PowerShell-Validation.md), confirm the onboarding state via registry:
+After running [Get-MpComputerStatus][10] from [Method 1: PowerShell Validation](./01-PowerShell-Validation.md), confirm the onboarding state via registry:
 
 ```powershell
 Get-MpComputerStatus  # Returns data
@@ -520,16 +520,16 @@ All scripts for this method:
 ## Best Practices
 
 1. ✅ Always check both registry AND service status
-2. ✅ Review event log for errors before assuming healthy [^8](https://learn.microsoft.com/en-us/defender-endpoint/event-error-codes)
-3. ✅ Verify OrgId matches your expected tenant ID [^3](https://learn.microsoft.com/en-us/defender-endpoint/configure-endpoints-sccm)
+2. ✅ Review [event log for errors][8] before assuming healthy
+3. ✅ Verify [OrgId matches your expected tenant ID][3]
 4. ✅ Use remote PowerShell for bulk validation (not RDP)
-5. ✅ Check DiagTrack service before troubleshooting SENSE [^6](https://learn.microsoft.com/en-us/windows/privacy/configure-windows-diagnostic-data-in-your-organization)
-6. ✅ Document Event ID patterns for recurring issues [^8](https://learn.microsoft.com/en-us/defender-endpoint/event-error-codes)
+5. ✅ Check [DiagTrack service][6] before troubleshooting SENSE
+6. ✅ Document [Event ID patterns][8] for recurring issues
 7. ✅ Combine registry check with [Method 1: PowerShell](./01-PowerShell-Validation.md) for complete picture
 
 ## Quick Reference Commands
 
-Check service status using Get-Service cmdlet [^7](https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.management/get-service?view=powershell-7.5):
+Check service status using [Get-Service cmdlet][7]:
 
 ```powershell
 # Check onboarding state
@@ -557,22 +557,24 @@ Restart-Service -Name SENSE
 
 ## References
 
-[^1]: [Troubleshoot Microsoft Defender for Endpoint onboarding issues](https://learn.microsoft.com/en-us/defender-endpoint/troubleshoot-onboarding)
+1. [Troubleshoot Microsoft Defender for Endpoint Onboarding Issues](https://learn.microsoft.com/en-us/defender-endpoint/troubleshoot-onboarding)
+2. [Minimum Requirements for Microsoft Defender for Endpoint](https://learn.microsoft.com/en-us/defender-endpoint/minimum-requirements)
+3. [Configure Endpoints Using SCCM](https://learn.microsoft.com/en-us/defender-endpoint/configure-endpoints-sccm)
+4. [Troubleshoot Security Configuration Management](https://learn.microsoft.com/en-us/defender-endpoint/troubleshoot-security-config-mgt)
+5. [Windows Defender Advanced Threat Protection Service](https://learn.microsoft.com/en-us/answers/questions/983229/windows-defender-advanced-threat-protection-servic)
+6. [Configure Windows Diagnostic Data in Your Organization](https://learn.microsoft.com/en-us/windows/privacy/configure-windows-diagnostic-data-in-your-organization)
+7. [Get-Service PowerShell Cmdlet Reference](https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.management/get-service?view=powershell-7.5)
+8. [Microsoft Defender for Endpoint Event Error Codes](https://learn.microsoft.com/en-us/defender-endpoint/event-error-codes)
+9. [Verify Connectivity to Microsoft Defender for Endpoint](https://learn.microsoft.com/en-us/defender-endpoint/verify-connectivity)
+10. [Get-MpComputerStatus PowerShell Cmdlet Reference](https://learn.microsoft.com/en-us/powershell/module/defender/get-mpcomputerstatus?view=windowsserver2025-ps)
 
-[^2]: [Minimum requirements for Microsoft Defender for Endpoint](https://learn.microsoft.com/en-us/defender-endpoint/minimum-requirements)
-
-[^3]: [Onboard Windows devices using Configuration Manager](https://learn.microsoft.com/en-us/defender-endpoint/configure-endpoints-sccm)
-
-[^4]: [Troubleshoot onboarding issues related to Security Management for Microsoft Defender for Endpoint](https://learn.microsoft.com/en-us/defender-endpoint/troubleshoot-security-config-mgt)
-
-[^5]: [Windows Defender Advanced Threat Protection Service troubleshooting](https://learn.microsoft.com/en-us/answers/questions/983229/windows-defender-advanced-threat-protection-servic)
-
-[^6]: [Configure Windows diagnostic data in your organization](https://learn.microsoft.com/en-us/windows/privacy/configure-windows-diagnostic-data-in-your-organization)
-
-[^7]: [Get-Service (Microsoft.PowerShell.Management)](https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.management/get-service?view=powershell-7.5)
-
-[^8]: [Review events and errors using Event Viewer](https://learn.microsoft.com/en-us/defender-endpoint/event-error-codes)
-
-[^9]: [Verify client connectivity to Microsoft Defender for Endpoint service URLs](https://learn.microsoft.com/en-us/defender-endpoint/verify-connectivity)
-
-[^10]: [Get-MpComputerStatus (Defender)](https://learn.microsoft.com/en-us/powershell/module/defender/get-mpcomputerstatus?view=windowsserver2025-ps)
+[1]: https://learn.microsoft.com/en-us/defender-endpoint/troubleshoot-onboarding
+[2]: https://learn.microsoft.com/en-us/defender-endpoint/minimum-requirements
+[3]: https://learn.microsoft.com/en-us/defender-endpoint/configure-endpoints-sccm
+[4]: https://learn.microsoft.com/en-us/defender-endpoint/troubleshoot-security-config-mgt
+[5]: https://learn.microsoft.com/en-us/answers/questions/983229/windows-defender-advanced-threat-protection-servic
+[6]: https://learn.microsoft.com/en-us/windows/privacy/configure-windows-diagnostic-data-in-your-organization
+[7]: https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.management/get-service?view=powershell-7.5
+[8]: https://learn.microsoft.com/en-us/defender-endpoint/event-error-codes
+[9]: https://learn.microsoft.com/en-us/defender-endpoint/verify-connectivity
+[10]: https://learn.microsoft.com/en-us/powershell/module/defender/get-mpcomputerstatus?view=windowsserver2025-ps

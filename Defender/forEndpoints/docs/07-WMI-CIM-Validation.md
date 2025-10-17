@@ -2,7 +2,7 @@
 
 ## Overview
 
-Windows Management Instrumentation (WMI) and Common Information Model (CIM) provide low-level query interfaces for accessing Microsoft Defender status[^1](https://learn.microsoft.com/en-us/powershell/scripting/learn/ps101/07-working-with-wmi?view=powershell-7.5). This method is ideal for legacy systems, scripted automation, and environments where PowerShell Defender module is unavailable.
+Windows Management Instrumentation (WMI) and Common Information Model (CIM) provide low-level query interfaces for accessing Microsoft Defender status[1]. This method is ideal for legacy systems, scripted automation, and environments where PowerShell Defender module is unavailable.
 
 ## Capabilities
 
@@ -11,13 +11,13 @@ Windows Management Instrumentation (WMI) and Common Information Model (CIM) prov
 - ✅ Cross-platform compatibility (CIM over WSMan)
 - ✅ Legacy system support (Windows 7, Server 2008 R2 with ESU)
 - ✅ Alternative to Get-MpComputerStatus
-- ✅ DCOM and WSMan protocol support[^2](https://learn.microsoft.com/en-us/windows/win32/winrm/installation-and-configuration-for-windows-remote-management)
+- ✅ DCOM and WSMan protocol support[2]
 
 ## Prerequisites
 
 ### Local Queries
 
-- Windows PowerShell 3.0+ (for CIM cmdlets)[^3](https://learn.microsoft.com/en-us/powershell/scripting/samples/getting-wmi-objects--get-ciminstance-?view=powershell-7.5)
+- Windows PowerShell 3.0+ (for CIM cmdlets) [3]
 - Standard user privileges (read-only WMI access)
 
 ### Remote Queries
@@ -26,17 +26,17 @@ Windows Management Instrumentation (WMI) and Common Information Model (CIM) prov
 - Network connectivity
 - Firewall rules:
   - **DCOM**: TCP 135 + dynamic RPC ports (49152-65535)
-  - **WSMan**: TCP 5985 (HTTP) or 5986 (HTTPS)[^4](https://learn.microsoft.com/en-us/windows/win32/winrm/installation-and-configuration-for-windows-remote-management)
+  - **WSMan**: TCP 5985 (HTTP) or 5986 (HTTPS) [2]
 
 ## WMI Namespace and Classes
 
 ### Primary Namespace
 
-`root\Microsoft\Windows\Defender`[^5](https://learn.microsoft.com/en-us/previous-versions/windows/desktop/defender/msft-mpcomputerstatus)
+`root\Microsoft\Windows\Defender` [4]
 
 ### Key WMI Classes
 
-The following WMI classes provide access to overall Defender status[^6](https://learn.microsoft.com/en-us/previous-versions/windows/desktop/defender/msft-mpcomputerstatus), configuration preferences[^7](<https://learn.microsoft.com/en-us/previous-versions/windows/desktop/legacy/dn455323(v=vs.85)>), and signature information[^8](https://learn.microsoft.com/en-us/previous-versions/windows/desktop/defender/msft-mpsignature):
+The following WMI classes provide access to overall Defender status[4], configuration preferences[5], and signature information[6]:
 
 | Class Name              | Description             | Key Properties                                 |
 | ----------------------- | ----------------------- | ---------------------------------------------- |
@@ -50,17 +50,17 @@ The following WMI classes provide access to overall Defender status[^6](https://
 
 ### CIM Cmdlets (Recommended)
 
-- **Protocol**: WSMan (WS-Management)[^9](https://learn.microsoft.com/en-us/windows/win32/winrm/installation-and-configuration-for-windows-remote-management)
+- **Protocol**: WSMan (WS-Management) [2]
 - **Performance**: Faster, persistent sessions
 - **Compatibility**: Cross-platform (Windows, Linux with OMI)
-- **Cmdlets**: `Get-CimInstance`[^10](https://learn.microsoft.com/en-us/powershell/module/cimcmdlets/get-ciminstance?view=powershell-7.5), `New-CimSession`
+- **Cmdlets**: `Get-CimInstance` [7], `New-CimSession`
 
 ### WMI Cmdlets (Legacy)
 
 - **Protocol**: DCOM (Distributed COM)
 - **Performance**: Slower, no session reuse
 - **Compatibility**: Windows only
-- **Cmdlets**: `Get-WmiObject`[^11](https://learn.microsoft.com/en-us/powershell/scripting/learn/ps101/07-working-with-wmi?view=powershell-7.5)
+- **Cmdlets**: `Get-WmiObject` [1]
 
 **Recommendation:** Use CIM cmdlets unless working with Windows 7/Server 2008 R2
 
@@ -74,12 +74,12 @@ Get-CimInstance -Namespace root/Microsoft/Windows/Defender -ClassName MSFT_MpCom
 
 #### Key Properties
 
-- `AMRunningMode` - Antivirus operational mode[^12](https://learn.microsoft.com/en-us/defender-endpoint/microsoft-defender-antivirus-compatibility)
+- `AMRunningMode` - Antivirus operational mode[8]
 - `AMServiceEnabled` - Defender service status
 - `AntivirusEnabled` - Antivirus protection active
 - `RealTimeProtectionEnabled` - Real-time scanning enabled
 - `BehaviorMonitorEnabled` - Behavior monitoring status
-- `IsTamperProtected` - Tamper protection enabled[^13](https://learn.microsoft.com/en-us/defender-endpoint/prevent-changes-to-security-settings-with-tamper-protection)
+- `IsTamperProtected` - Tamper protection enabled[9]
 
 ### Get Basic Defender Status (WMI - Legacy)
 
@@ -103,7 +103,7 @@ Write-Host "Tamper Protected: $($Status.IsTamperProtected)"
 Write-Host "Tamper Source: $($Status.TamperProtectionSource)"
 ```
 
-**Tamper Protection Sources:**[^14](https://learn.microsoft.com/en-us/defender-endpoint/prevent-changes-to-security-settings-with-tamper-protection)
+**Tamper Protection Sources:**[9]
 
 - `ATP` - Managed by Microsoft Defender for Endpoint
 - `Intune` - Managed by Intune policy
@@ -365,7 +365,7 @@ Get-CimInstance -Namespace root/Microsoft/Windows/Defender -ClassName MSFT_MpCom
 
 ## Comparison: WMI/CIM vs. Get-MpComputerStatus
 
-The following comparison shows WMI/CIM capabilities versus the Get-MpComputerStatus cmdlet[^15](https://learn.microsoft.com/en-us/powershell/module/defender/get-mpcomputerstatus?view=windowsserver2025-ps):
+The following comparison shows WMI/CIM capabilities versus the Get-MpComputerStatus cmdlet[10]:
 
 | Aspect              | WMI/CIM                         | Get-MpComputerStatus       |
 | ------------------- | ------------------------------- | -------------------------- |
@@ -405,7 +405,7 @@ IsTamperProtected              : False
 AntivirusSignatureLastUpdated  : 9/1/2025 8:00:00 AM
 ```
 
-**Action:** Third-party AV detected, Defender in Passive mode[^16](https://learn.microsoft.com/en-us/defender-endpoint/microsoft-defender-antivirus-compatibility)
+**Action:** Third-party AV detected, Defender in Passive mode[8]
 
 ## Integration with Other Methods
 
@@ -442,9 +442,9 @@ Production-ready scripts using WMI/CIM:
 
 ## Best Practices
 
-1. ✅ Prefer CIM cmdlets over WMI cmdlets (better performance)[^17](https://learn.microsoft.com/en-us/powershell/scripting/learn/ps101/07-working-with-wmi?view=powershell-7.5)
+1. ✅ Prefer CIM cmdlets over WMI cmdlets (better performance) [1]
 2. ✅ Use `New-CimSession` for multiple queries to same device
-3. ✅ Always remove CIM sessions after use (`Remove-CimSession`)[^18](https://learn.microsoft.com/en-us/powershell/module/cimcmdlets/remove-cimsession?view=powershell-7.4)
+3. ✅ Always remove CIM sessions after use (`Remove-CimSession`) [11]
 4. ✅ Implement error handling for network/permission issues
 5. ✅ Use `-ErrorAction SilentlyContinue` for non-existent classes
 6. ✅ Combine WMI query with registry validation for complete picture
@@ -527,38 +527,26 @@ Test-DefenderHealthWMI -ComputerName "WORKSTATION01"
 
 ## References
 
-[^1]: [Working with WMI - PowerShell | Microsoft Learn](https://learn.microsoft.com/en-us/powershell/scripting/learn/ps101/07-working-with-wmi?view=powershell-7.5)
+1. [PowerShell 101 - Working with WMI](https://learn.microsoft.com/en-us/powershell/scripting/learn/ps101/07-working-with-wmi?view=powershell-7.5)
+2. [Windows Remote Management Installation and Configuration](https://learn.microsoft.com/en-us/windows/win32/winrm/installation-and-configuration-for-windows-remote-management)
+3. [Getting WMI Objects - Get-CimInstance](https://learn.microsoft.com/en-us/powershell/scripting/samples/getting-wmi-objects--get-ciminstance-?view=powershell-7.5)
+4. [MSFT_MpComputerStatus WMI Class](https://learn.microsoft.com/en-us/previous-versions/windows/desktop/defender/msft-mpcomputerstatus)
+5. [MSFT_MpPreference WMI Class](https://learn.microsoft.com/en-us/previous-versions/windows/desktop/legacy/dn455323(v=vs.85))
+6. [MSFT_MpSignature WMI Class](https://learn.microsoft.com/en-us/previous-versions/windows/desktop/defender/msft-mpsignature)
+7. [Get-CimInstance PowerShell Cmdlet](https://learn.microsoft.com/en-us/powershell/module/cimcmdlets/get-ciminstance?view=powershell-7.5)
+8. [Microsoft Defender Antivirus Compatibility](https://learn.microsoft.com/en-us/defender-endpoint/microsoft-defender-antivirus-compatibility)
+9. [Tamper Protection in Microsoft Defender](https://learn.microsoft.com/en-us/defender-endpoint/prevent-changes-to-security-settings-with-tamper-protection)
+10. [Get-MpComputerStatus PowerShell Cmdlet](https://learn.microsoft.com/en-us/powershell/module/defender/get-mpcomputerstatus?view=windowsserver2025-ps)
+11. [Remove-CimSession PowerShell Cmdlet](https://learn.microsoft.com/en-us/powershell/module/cimcmdlets/remove-cimsession?view=powershell-7.4)
 
-[^2]: [Installation and configuration for Windows Remote Management - Win32 apps | Microsoft Learn](https://learn.microsoft.com/en-us/windows/win32/winrm/installation-and-configuration-for-windows-remote-management)
-
-[^3]: [Getting WMI objects with Get-CimInstance - PowerShell | Microsoft Learn](https://learn.microsoft.com/en-us/powershell/scripting/samples/getting-wmi-objects--get-ciminstance-?view=powershell-7.5)
-
-[^4]: [Installation and configuration for Windows Remote Management - Win32 apps | Microsoft Learn](https://learn.microsoft.com/en-us/windows/win32/winrm/installation-and-configuration-for-windows-remote-management)
-
-[^5]: [MSFT_MpComputerStatus class | Microsoft Learn](https://learn.microsoft.com/en-us/previous-versions/windows/desktop/defender/msft-mpcomputerstatus)
-
-[^6]: [MSFT_MpComputerStatus class | Microsoft Learn](https://learn.microsoft.com/en-us/previous-versions/windows/desktop/defender/msft-mpcomputerstatus)
-
-[^7]: [MSFT_MpPreference class (Windows) | Microsoft Learn](<https://learn.microsoft.com/en-us/previous-versions/windows/desktop/legacy/dn455323(v=vs.85)>)
-
-[^8]: [MSFT_MpSignature class | Microsoft Learn](https://learn.microsoft.com/en-us/previous-versions/windows/desktop/defender/msft-mpsignature)
-
-[^9]: [Installation and configuration for Windows Remote Management - Win32 apps | Microsoft Learn](https://learn.microsoft.com/en-us/windows/win32/winrm/installation-and-configuration-for-windows-remote-management)
-
-[^10]: [Get-CimInstance (CimCmdlets) - PowerShell | Microsoft Learn](https://learn.microsoft.com/en-us/powershell/module/cimcmdlets/get-ciminstance?view=powershell-7.5)
-
-[^11]: [Working with WMI - PowerShell | Microsoft Learn](https://learn.microsoft.com/en-us/powershell/scripting/learn/ps101/07-working-with-wmi?view=powershell-7.5)
-
-[^12]: [Microsoft Defender Antivirus compatibility with other security products - Microsoft Defender for Endpoint | Microsoft Learn](https://learn.microsoft.com/en-us/defender-endpoint/microsoft-defender-antivirus-compatibility)
-
-[^13]: [Protect security settings with tamper protection - Microsoft Defender for Endpoint | Microsoft Learn](https://learn.microsoft.com/en-us/defender-endpoint/prevent-changes-to-security-settings-with-tamper-protection)
-
-[^14]: [Protect security settings with tamper protection - Microsoft Defender for Endpoint | Microsoft Learn](https://learn.microsoft.com/en-us/defender-endpoint/prevent-changes-to-security-settings-with-tamper-protection)
-
-[^15]: [Get-MpComputerStatus (Defender) | Microsoft Learn](https://learn.microsoft.com/en-us/powershell/module/defender/get-mpcomputerstatus?view=windowsserver2025-ps)
-
-[^16]: [Microsoft Defender Antivirus compatibility with other security products - Microsoft Defender for Endpoint | Microsoft Learn](https://learn.microsoft.com/en-us/defender-endpoint/microsoft-defender-antivirus-compatibility)
-
-[^17]: [Working with WMI - PowerShell | Microsoft Learn](https://learn.microsoft.com/en-us/powershell/scripting/learn/ps101/07-working-with-wmi?view=powershell-7.5)
-
-[^18]: [Remove-CimSession (CimCmdlets) - PowerShell | Microsoft Learn](https://learn.microsoft.com/en-us/powershell/module/cimcmdlets/remove-cimsession?view=powershell-7.4)
+[1]: https://learn.microsoft.com/en-us/powershell/scripting/learn/ps101/07-working-with-wmi?view=powershell-7.5
+[2]: https://learn.microsoft.com/en-us/windows/win32/winrm/installation-and-configuration-for-windows-remote-management
+[3]: https://learn.microsoft.com/en-us/powershell/scripting/samples/getting-wmi-objects--get-ciminstance-?view=powershell-7.5
+[4]: https://learn.microsoft.com/en-us/previous-versions/windows/desktop/defender/msft-mpcomputerstatus
+[5]: https://learn.microsoft.com/en-us/previous-versions/windows/desktop/legacy/dn455323(v=vs.85)
+[6]: https://learn.microsoft.com/en-us/previous-versions/windows/desktop/defender/msft-mpsignature
+[7]: https://learn.microsoft.com/en-us/powershell/module/cimcmdlets/get-ciminstance?view=powershell-7.5
+[8]: https://learn.microsoft.com/en-us/defender-endpoint/microsoft-defender-antivirus-compatibility
+[9]: https://learn.microsoft.com/en-us/defender-endpoint/prevent-changes-to-security-settings-with-tamper-protection
+[10]: https://learn.microsoft.com/en-us/powershell/module/defender/get-mpcomputerstatus?view=windowsserver2025-ps
+[11]: https://learn.microsoft.com/en-us/powershell/module/cimcmdlets/remove-cimsession?view=powershell-7.4

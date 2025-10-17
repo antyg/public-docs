@@ -1,0 +1,92 @@
+# URL Consolidation Mapping for 07-WMI-CIM-Validation.md
+
+## Duplicate URL Groups
+
+duplicate_groups:
+  # Working with WMI - PowerShell (3 instances)
+  - url: https://learn.microsoft.com/en-us/powershell/scripting/learn/ps101/07-working-with-wmi?view=powershell-7.5
+    primary_ref: 1
+    duplicate_refs: [11, 17]
+    action: Consolidate [11] and [17] → [1]
+  
+  # Windows Remote Management Installation (3 instances)
+  - url: https://learn.microsoft.com/en-us/windows/win32/winrm/installation-and-configuration-for-windows-remote-management
+    primary_ref: 2
+    duplicate_refs: [4, 9]
+    action: Consolidate [4] and [9] → [2]
+  
+  # MSFT_MpComputerStatus WMI Class (2 instances)
+  - url: https://learn.microsoft.com/en-us/previous-versions/windows/desktop/defender/msft-mpcomputerstatus
+    primary_ref: 5
+    duplicate_refs: [6]
+    action: Consolidate [6] → [5]
+  
+  # Tamper Protection (2 instances)
+  - url: https://learn.microsoft.com/en-us/defender-endpoint/prevent-changes-to-security-settings-with-tamper-protection
+    primary_ref: 13
+    duplicate_refs: [14]
+    action: Consolidate [14] → [13]
+  
+  # Microsoft Defender Antivirus Compatibility (2 instances)
+  - url: https://learn.microsoft.com/en-us/defender-endpoint/microsoft-defender-antivirus-compatibility
+    primary_ref: 12
+    duplicate_refs: [16]
+    action: Consolidate [16] → [12]
+
+## Unique URLs (Keep as-is)
+unique_refs:
+  - ref: 3
+    url: https://learn.microsoft.com/en-us/powershell/scripting/samples/getting-wmi-objects--get-ciminstance-?view=powershell-7.5
+  - ref: 7
+    url: https://learn.microsoft.com/en-us/previous-versions/windows/desktop/legacy/dn455323(v=vs.85)
+  - ref: 8
+    url: https://learn.microsoft.com/en-us/previous-versions/windows/desktop/defender/msft-mpsignature
+  - ref: 10
+    url: https://learn.microsoft.com/en-us/powershell/module/cimcmdlets/get-ciminstance?view=powershell-7.5
+  - ref: 15
+    url: https://learn.microsoft.com/en-us/powershell/module/defender/get-mpcomputerstatus?view=windowsserver2025-ps
+  - ref: 18
+    url: https://learn.microsoft.com/en-us/powershell/module/cimcmdlets/remove-cimsession?view=powershell-7.4
+
+## Consolidation Summary
+- Original references: 18
+- Duplicate references to remove: 7 ([4, 6, 9, 11, 14, 16, 17])
+- Final unique references: 11
+- Reduction: 38.9%
+
+## Final Reference Numbering (After Consolidation)
+After removing duplicates and renumbering sequentially:
+1. Working with WMI - PowerShell
+2. Windows Remote Management Installation
+3. Getting WMI Objects - Get-CimInstance
+4. MSFT_MpComputerStatus WMI Class
+5. MSFT_MpPreference WMI Class
+6. MSFT_MpSignature WMI Class
+7. Get-CimInstance PowerShell Cmdlet
+8. Microsoft Defender Antivirus Compatibility
+9. Tamper Protection in Microsoft Defender
+10. Get-MpComputerStatus PowerShell Cmdlet
+11. Remove-CimSession PowerShell Cmdlet
+
+## Inline Citation Replacement Map
+This maps OLD reference numbers → NEW reference numbers after consolidation:
+
+replacement_map:
+  1 → 1  # No change
+  2 → 2  # No change
+  3 → 3  # No change
+  4 → 2  # Duplicate of [2]
+  5 → 4  # Renumbered (MSFT_MpComputerStatus)
+  6 → 4  # Duplicate of [5], now [4]
+  7 → 5  # Renumbered (MSFT_MpPreference)
+  8 → 6  # Renumbered (MSFT_MpSignature)
+  9 → 2  # Duplicate of [2]
+  10 → 7  # Renumbered (Get-CimInstance cmdlet)
+  11 → 1  # Duplicate of [1]
+  12 → 8  # Renumbered (AV Compatibility)
+  13 → 9  # Renumbered (Tamper Protection)
+  14 → 9  # Duplicate of [13], now [9]
+  15 → 10 # Renumbered (Get-MpComputerStatus)
+  16 → 8  # Duplicate of [12], now [8]
+  17 → 1  # Duplicate of [1]
+  18 → 11 # Renumbered (Remove-CimSession)

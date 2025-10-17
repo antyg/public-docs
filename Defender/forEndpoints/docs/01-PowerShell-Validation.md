@@ -2,7 +2,7 @@
 
 ## Overview
 
-PowerShell-based validation leverages the built-in Defender module (`Get-MpComputerStatus`) [^1](https://learn.microsoft.com/en-us/powershell/module/defender/get-mpcomputerstatus?view=windowsserver2025-ps) and remote execution capabilities to check MDE deployment status across single or multiple devices. This method is ideal for domain-joined Windows environments.
+PowerShell-based validation leverages the built-in Defender module ([`Get-MpComputerStatus`][1]) and remote execution capabilities to check MDE deployment status across single or multiple devices. This method is ideal for domain-joined Windows environments.
 
 ## Capabilities
 
@@ -26,15 +26,15 @@ PowerShell-based validation leverages the built-in Defender module (`Get-MpCompu
 
 - Administrator credentials for target devices
 - WinRM enabled on target devices
-- Network connectivity on port 5985 (HTTP) or 5986 (HTTPS) [^2](https://learn.microsoft.com/en-us/archive/blogs/wmi/new-default-ports-for-ws-management-and-powershell-remoting)
-- PowerShell Remoting enabled: `Enable-PSRemoting -Force` [^2](https://learn.microsoft.com/en-us/archive/blogs/wmi/new-default-ports-for-ws-management-and-powershell-remoting)
+- Network connectivity on port 5985 (HTTP) or 5986 (HTTPS) [2]
+- PowerShell Remoting enabled: `Enable-PSRemoting -Force` [2]
 - Firewall rules allowing WinRM traffic
 
 ## Key Cmdlets
 
 ### Get-MpComputerStatus
 
-Primary cmdlet for retrieving Microsoft Defender status information. [^1](https://learn.microsoft.com/en-us/powershell/module/defender/get-mpcomputerstatus?view=windowsserver2025-ps)
+Primary cmdlet for retrieving Microsoft Defender status information.[1]
 
 #### Syntax
 
@@ -44,7 +44,7 @@ Get-MpComputerStatus [-CimSession <CimSession[]>] [-ThrottleLimit <Int32>] [-AsJ
 
 #### Key Properties for MDE Validation
 
-The AMRunningMode property indicates antivirus operational compatibility with third-party solutions. [^3](https://learn.microsoft.com/en-us/defender-endpoint/microsoft-defender-antivirus-compatibility)
+The [AMRunningMode][3] property indicates antivirus operational compatibility with third-party solutions.
 
 | Property                        | Type     | Description                 | Valid States                         |
 | ------------------------------- | -------- | --------------------------- | ------------------------------------ |
@@ -163,7 +163,7 @@ if ($status.AMRunningMode -eq 'Passive') {
 
 ### Validate Cloud Connectivity
 
-Use MpCmdRun to validate cloud connectivity: [^5](https://learn.microsoft.com/en-us/defender-endpoint/command-line-arguments-microsoft-defender-antivirus)
+Use [MpCmdRun][5] to validate cloud connectivity:
 
 ```powershell
 & "C:\Program Files\Windows Defender\MpCmdRun.exe" -ValidateMapsConnection
@@ -173,7 +173,7 @@ Use MpCmdRun to validate cloud connectivity: [^5](https://learn.microsoft.com/en
 
 ### Force Signature Update and Verify
 
-Force signature updates using Update-MpSignature: [^6](https://learn.microsoft.com/en-us/powershell/module/defender/update-mpsignature?view=windowsserver2025-ps)
+Force signature updates using [`Update-MpSignature`][6]:
 
 ```powershell
 Update-MpSignature -UpdateSource MicrosoftUpdateServer
@@ -187,7 +187,7 @@ Write-Host "Last Updated: $($status.AntivirusSignatureLastUpdated)"
 
 ### Check for SENSE Service Errors
 
-Query the SENSE service operational log for errors: [^4](https://learn.microsoft.com/en-us/defender-endpoint/event-error-codes)
+Query the [SENSE service][4] operational log for errors:
 
 ```powershell
 Get-WinEvent -FilterHashtable @{
@@ -199,7 +199,7 @@ Get-WinEvent -FilterHashtable @{
     Format-Table -AutoSize
 ```
 
-**Common Event IDs:** [^4](https://learn.microsoft.com/en-us/defender-endpoint/event-error-codes)
+**Common Event IDs:**[4]
 
 - **Event ID 5**: Microsoft Defender for Endpoint service failed to connect to the server
 - **Event ID 6**: Microsoft Defender for Endpoint service isn't onboarded
@@ -248,7 +248,7 @@ Remove-CimSession $session
 
 **Resolution:** Restart the Windows Defender service to restore functionality.
 
-Restart the Windows Defender service: [^7](https://learn.microsoft.com/en-us/defender-endpoint/microsoft-defender-antivirus-windows)
+Restart the [Windows Defender service][7]:
 
 ```powershell
 Start-Service -Name WinDefend
@@ -321,7 +321,7 @@ ComputerState              : 4
 
 ### Combine with Registry Validation
 
-After PowerShell check, validate onboarding state using registry inspection: [^8](https://learn.microsoft.com/en-us/defender-endpoint/troubleshoot-onboarding)
+After PowerShell check, validate onboarding state using [registry inspection][8]:
 
 ```powershell
 Get-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows Advanced Threat Protection\Status" -Name OnboardingState -ErrorAction SilentlyContinue
@@ -371,18 +371,20 @@ All scripts for this method:
 
 ## References
 
-[^1]: [Get-MpComputerStatus (Defender) | Microsoft Learn](https://learn.microsoft.com/en-us/powershell/module/defender/get-mpcomputerstatus?view=windowsserver2025-ps)
+1. [Get-MpComputerStatus PowerShell Cmdlet](https://learn.microsoft.com/en-us/powershell/module/defender/get-mpcomputerstatus?view=windowsserver2025-ps)
+2. [Default Ports for WS-Management and PowerShell Remoting](https://learn.microsoft.com/en-us/archive/blogs/wmi/new-default-ports-for-ws-management-and-powershell-remoting)
+3. [Microsoft Defender Antivirus Compatibility](https://learn.microsoft.com/en-us/defender-endpoint/microsoft-defender-antivirus-compatibility)
+4. [Defender for Endpoint Event Error Codes](https://learn.microsoft.com/en-us/defender-endpoint/event-error-codes)
+5. [Microsoft Defender Antivirus Command Line Arguments](https://learn.microsoft.com/en-us/defender-endpoint/command-line-arguments-microsoft-defender-antivirus)
+6. [Update-MpSignature PowerShell Cmdlet](https://learn.microsoft.com/en-us/powershell/module/defender/update-mpsignature?view=windowsserver2025-ps)
+7. [Microsoft Defender Antivirus on Windows](https://learn.microsoft.com/en-us/defender-endpoint/microsoft-defender-antivirus-windows)
+8. [Troubleshoot Microsoft Defender for Endpoint Onboarding](https://learn.microsoft.com/en-us/defender-endpoint/troubleshoot-onboarding)
 
-[^2]: [New default ports for WS-Management and PowerShell remoting | Microsoft Learn](https://learn.microsoft.com/en-us/archive/blogs/wmi/new-default-ports-for-ws-management-and-powershell-remoting)
-
-[^3]: [Microsoft Defender Antivirus compatibility with other security products - Microsoft Defender for Endpoint | Microsoft Learn](https://learn.microsoft.com/en-us/defender-endpoint/microsoft-defender-antivirus-compatibility)
-
-[^4]: [Review events and errors using Event Viewer - Microsoft Defender for Endpoint | Microsoft Learn](https://learn.microsoft.com/en-us/defender-endpoint/event-error-codes)
-
-[^5]: [Use the command line to manage Microsoft Defender Antivirus - Microsoft Defender for Endpoint | Microsoft Learn](https://learn.microsoft.com/en-us/defender-endpoint/command-line-arguments-microsoft-defender-antivirus)
-
-[^6]: [Update-MpSignature (Defender) | Microsoft Learn](https://learn.microsoft.com/en-us/powershell/module/defender/update-mpsignature?view=windowsserver2025-ps)
-
-[^7]: [Microsoft Defender Antivirus in Windows Overview - Microsoft Defender for Endpoint | Microsoft Learn](https://learn.microsoft.com/en-us/defender-endpoint/microsoft-defender-antivirus-windows)
-
-[^8]: [Troubleshoot Microsoft Defender for Endpoint onboarding issues - Microsoft Defender for Endpoint | Microsoft Learn](https://learn.microsoft.com/en-us/defender-endpoint/troubleshoot-onboarding)
+[1]: https://learn.microsoft.com/en-us/powershell/module/defender/get-mpcomputerstatus?view=windowsserver2025-ps
+[2]: https://learn.microsoft.com/en-us/archive/blogs/wmi/new-default-ports-for-ws-management-and-powershell-remoting
+[3]: https://learn.microsoft.com/en-us/defender-endpoint/microsoft-defender-antivirus-compatibility
+[4]: https://learn.microsoft.com/en-us/defender-endpoint/event-error-codes
+[5]: https://learn.microsoft.com/en-us/defender-endpoint/command-line-arguments-microsoft-defender-antivirus
+[6]: https://learn.microsoft.com/en-us/powershell/module/defender/update-mpsignature?view=windowsserver2025-ps
+[7]: https://learn.microsoft.com/en-us/defender-endpoint/microsoft-defender-antivirus-windows
+[8]: https://learn.microsoft.com/en-us/defender-endpoint/troubleshoot-onboarding

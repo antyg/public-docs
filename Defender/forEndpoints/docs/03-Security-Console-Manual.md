@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Microsoft 365 Defender portal (Security Console) provides web-based access to MDE device inventory with manual validation capabilities and export functionality[^1](https://learn.microsoft.com/en-us/defender-xdr/microsoft-365-defender-portal). This method is ideal for ad-hoc checks, visual verification, and generating compliance reports without scripting.
+The Microsoft 365 Defender portal (Security Console) provides web-based access to MDE device inventory with manual validation capabilities and export functionality[1]. This method is ideal for ad-hoc checks, visual verification, and generating compliance reports without scripting.
 
 ## Capabilities
 
@@ -19,8 +19,8 @@ The Microsoft 365 Defender portal (Security Console) provides web-based access t
 
 ### Access Requirements
 
-- Microsoft 365 Defender portal access: [https://security.microsoft.com](https://security.microsoft.com) [^1](https://learn.microsoft.com/en-us/defender-xdr/microsoft-365-defender-portal)
-- One of the following roles [^2](https://learn.microsoft.com/en-us/defender-endpoint/basic-permissions):
+- Microsoft 365 Defender portal access: [https://security.microsoft.com](https://security.microsoft.com) [1]
+- One of the following roles [2]:
   - Security Administrator
   - Security Operator
   - Security Reader
@@ -40,13 +40,13 @@ The Microsoft 365 Defender portal (Security Console) provides web-based access t
 
 ### Navigation Path
 
-1. Navigate to [https://security.microsoft.com](https://security.microsoft.com) [^1](https://learn.microsoft.com/en-us/defender-xdr/microsoft-365-defender-portal)
+1. Navigate to [https://security.microsoft.com](https://security.microsoft.com) [1]
 2. Click **Assets** in left navigation
-3. Click **Devices** [^3](https://learn.microsoft.com/en-us/defender-endpoint/machines-view-overview)
+3. Click **Devices** [3]
 
 #### Alternative path
 
-- [https://security.microsoft.com/machines](https://security.microsoft.com/machines) [^3](https://learn.microsoft.com/en-us/defender-endpoint/machines-view-overview)
+- [https://security.microsoft.com/machines](https://security.microsoft.com/machines) [3]
 
 ### First-Time Access
 
@@ -56,7 +56,7 @@ On first access, device list may take 1-2 minutes to populate for large organiza
 
 ### Column Headers (Default)
 
-The device inventory interface displays various status indicators for onboarding [^4](https://learn.microsoft.com/en-us/defender-endpoint/machines-view-overview) and sensor health[^4](https://learn.microsoft.com/en-us/defender-endpoint/machines-view-overview):
+The device inventory interface displays various status indicators for onboarding [3] and sensor health[3]:
 
 | Column                  | Description                  | Values                                          |
 | ----------------------- | ---------------------------- | ----------------------------------------------- |
@@ -72,7 +72,7 @@ The device inventory interface displays various status indicators for onboarding
 
 ### Customizing Columns
 
-1. Click **Customize columns** (gear icon) [^3](https://learn.microsoft.com/en-us/defender-endpoint/machines-view-overview)
+1. Click **Customize columns** (gear icon) [3]
 2. Select additional columns:
    - IP addresses
    - Managed by
@@ -87,42 +87,42 @@ The device inventory interface displays various status indicators for onboarding
 
 ### Filter by Onboarding Status
 
-1. Click **Filters** button [^3](https://learn.microsoft.com/en-us/defender-endpoint/machines-view-overview)
+1. Click **Filters** button [3]
 2. Select **Onboarding status**
 3. Choose filter value:
    - **Onboarded** - Devices successfully enrolled
    - **Can be onboarded** - Discovered but not enrolled
-   - **Unsupported** - OS incompatible with MDE [^4](https://learn.microsoft.com/en-us/defender-endpoint/machines-view-overview)
+   - **Unsupported** - OS incompatible with MDE [3]
 4. Click **Apply**
 
 ### Filter by Sensor Health State
 
-1. Click **Filters** [^3](https://learn.microsoft.com/en-us/defender-endpoint/machines-view-overview)
+1. Click **Filters** [3]
 2. Select **Sensor health state**
 3. Choose:
    - **Active** - Reporting normally
    - **Inactive** - No communication >7 days
    - **Misconfigured** - Configuration issues
-   - **No sensor data** - Sensor not reporting [^4](https://learn.microsoft.com/en-us/defender-endpoint/machines-view-overview)
+   - **No sensor data** - Sensor not reporting [3]
 4. Click **Apply**
 
 ### Filter by OS Platform
 
-1. Click **Filters** [^3](https://learn.microsoft.com/en-us/defender-endpoint/machines-view-overview)
+1. Click **Filters** [3]
 2. Select **OS platform**
 3. Choose platform (Windows 10, Windows 11, Windows Server 2016, etc.)
 4. Click **Apply**
 
 ### Multiple Filters (AND Logic)
 
-Apply multiple filters simultaneously to narrow results [^3](https://learn.microsoft.com/en-us/defender-endpoint/machines-view-overview):
+Apply multiple filters simultaneously to narrow results [3]:
 
 - Example: **Onboarded** AND **Active** AND **Windows 11**
 - All conditions must match
 
 ### Search by Device Name
 
-1. Use search box at top of device list [^3](https://learn.microsoft.com/en-us/defender-endpoint/machines-view-overview)
+1. Use search box at top of device list [3]
 2. Enter device name (partial match supported)
 3. Press Enter
 4. Results update in real-time
@@ -131,21 +131,21 @@ Apply multiple filters simultaneously to narrow results [^3](https://learn.micro
 
 ### Full Export (All Devices)
 
-1. Navigate to **Assets** > **Devices** [^3](https://learn.microsoft.com/en-us/defender-endpoint/machines-view-overview)
+1. Navigate to **Assets** > **Devices** [3]
 2. Click **Export** button (top right)
 3. Choose **Export all devices**
 4. Download begins automatically
 
 #### Export Details
 
-- Format: CSV [^3](https://learn.microsoft.com/en-us/defender-endpoint/machines-view-overview)
+- Format: CSV [3]
 - Size: Depends on device count (can be large for 10,000+ devices)
 - Time: 30 seconds to 5 minutes for large exports
 - Columns: All available device properties
 
 ### Filtered Export (Current View)
 
-1. Apply desired filters (onboarding status, health state, etc.) [^3](https://learn.microsoft.com/en-us/defender-endpoint/machines-view-overview)
+1. Apply desired filters (onboarding status, health state, etc.) [3]
 2. Click **Export**
 3. Choose **Export filtered devices**
 4. Download filtered CSV
@@ -154,9 +154,9 @@ Apply multiple filters simultaneously to narrow results [^3](https://learn.micro
 
 ### Export Limitations
 
-- Maximum 100,000 devices per export [^5](https://learn.microsoft.com/en-us/defender-endpoint/api/get-assessment-software-inventory)
+- Maximum 100,000 devices per export [5]
 - For organizations >100,000 devices, use [Method 2: Graph API](./02-Graph-API-Validation.md)
-- Export represents snapshot at time of export (not real-time) [^3](https://learn.microsoft.com/en-us/defender-endpoint/machines-view-overview)
+- Export represents snapshot at time of export (not real-time) [3]
 
 ## CSV Export Format
 
@@ -173,36 +173,36 @@ SERVER01,10.0.2.50,Domain Controllers,Onboarded,Active,Medium,Low,Windows Server
 
 #### Onboarded Device
 
-- Onboarding status: `Onboarded` [^4](https://learn.microsoft.com/en-us/defender-endpoint/machines-view-overview)
-- Sensor health state: `Active` [^4](https://learn.microsoft.com/en-us/defender-endpoint/machines-view-overview)
+- Onboarding status: `Onboarded` [3]
+- Sensor health state: `Active` [3]
 - Last seen: Recent (within 24 hours)
 - Defender antivirus status: `Enabled`
 
 ##### Discoverable Device (Not Onboarded)
 
-- Onboarding status: `Can be onboarded` [^4](https://learn.microsoft.com/en-us/defender-endpoint/machines-view-overview)
+- Onboarding status: `Can be onboarded` [3]
 - Sensor health state: Empty
 - Managed by: `Device discovery`
 - Defender antivirus status: Empty
 
 ##### Problem Device
 
-- Onboarding status: `Onboarded` [^4](https://learn.microsoft.com/en-us/defender-endpoint/machines-view-overview)
-- Sensor health state: `Inactive` or `Misconfigured` [^4](https://learn.microsoft.com/en-us/defender-endpoint/machines-view-overview)
+- Onboarding status: `Onboarded` [3]
+- Sensor health state: `Inactive` or `Misconfigured` [3]
 - Last seen: >7 days ago
 
 ## Individual Device Details
 
 ### Accessing Device Page
 
-1. Click device name in inventory [^6](https://learn.microsoft.com/en-us/defender-xdr/entity-page-device)
+1. Click device name in inventory [6]
 2. Device details page opens
 
 ### Device Page Sections
 
 #### Overview Tab
 
-- **Device information** [^6](https://learn.microsoft.com/en-us/defender-xdr/entity-page-device)
+- **Device information** [6]
   - Device name
   - IP address(es)
   - Domain
@@ -220,7 +220,7 @@ SERVER01,10.0.2.50,Domain Controllers,Onboarded,Active,Medium,Low,Windows Server
 
 #### Timeline Tab
 
-- All security events chronologically [^6](https://learn.microsoft.com/en-us/defender-xdr/entity-page-device)
+- All security events chronologically [6]
 - User logons
 - Process executions
 - Network connections
@@ -229,26 +229,26 @@ SERVER01,10.0.2.50,Domain Controllers,Onboarded,Active,Medium,Low,Windows Server
 
 #### Alerts Tab
 
-- Active alerts for this device [^6](https://learn.microsoft.com/en-us/defender-xdr/entity-page-device)
+- Active alerts for this device [6]
 - Alert severity
 - Alert category
 - Investigation status
 
 #### Security Recommendations Tab
 
-- Applicable security recommendations [^6](https://learn.microsoft.com/en-us/defender-xdr/entity-page-device)
+- Applicable security recommendations [6]
 - Exposure score impact
 - Affected software
 
 #### Software Inventory Tab
 
-- Installed applications [^6](https://learn.microsoft.com/en-us/defender-xdr/entity-page-device)
+- Installed applications [6]
 - Version numbers
 - Vulnerabilities
 
 #### Discovered Vulnerabilities Tab
 
-- CVE IDs [^6](https://learn.microsoft.com/en-us/defender-xdr/entity-page-device)
+- CVE IDs [6]
 - Severity scores
 - Remediation guidance
 
@@ -260,7 +260,7 @@ SERVER01,10.0.2.50,Domain Controllers,Onboarded,Active,Medium,Low,Windows Server
 
 1. Import CSV containing device hostnames
 2. For each hostname:
-   a. Search device in portal [^3](https://learn.microsoft.com/en-us/defender-endpoint/machines-view-overview)
+   a. Search device in portal [3]
    b. Check onboarding status
    c. Verify sensor health state
    d. Note last seen time
@@ -270,9 +270,9 @@ SERVER01,10.0.2.50,Domain Controllers,Onboarded,Active,Medium,Low,Windows Server
 
 ### Identify Unmanaged Devices (Can Be Onboarded)
 
-1. Navigate to **Assets** > **Devices** [^3](https://learn.microsoft.com/en-us/defender-endpoint/machines-view-overview)
+1. Navigate to **Assets** > **Devices** [3]
 2. Click **Filters**
-3. Select **Onboarding status** = **Can be onboarded** [^4](https://learn.microsoft.com/en-us/defender-endpoint/machines-view-overview)
+3. Select **Onboarding status** = **Can be onboarded** [3]
 4. Click **Apply**
 5. Click **Export** > **Export filtered devices**
 6. Review CSV for deployment planning
@@ -281,9 +281,9 @@ SERVER01,10.0.2.50,Domain Controllers,Onboarded,Active,Medium,Low,Windows Server
 
 ### Check for Inactive Onboarded Devices
 
-1. Click **Filters** [^3](https://learn.microsoft.com/en-us/defender-endpoint/machines-view-overview)
-2. Set **Onboarding status** = **Onboarded** [^4](https://learn.microsoft.com/en-us/defender-endpoint/machines-view-overview)
-3. Set **Sensor health state** = **Inactive** [^4](https://learn.microsoft.com/en-us/defender-endpoint/machines-view-overview)
+1. Click **Filters** [3]
+2. Set **Onboarding status** = **Onboarded** [3]
+3. Set **Sensor health state** = **Inactive** [3]
 4. Click **Apply**
 5. Review devices with last seen >7 days
 6. Export for investigation
@@ -298,8 +298,8 @@ SERVER01,10.0.2.50,Domain Controllers,Onboarded,Active,Medium,Low,Windows Server
 
 ### Monitor Unsupported Devices
 
-1. Click **Filters** [^3](https://learn.microsoft.com/en-us/defender-endpoint/machines-view-overview)
-2. Set **Onboarding status** = **Unsupported** [^4](https://learn.microsoft.com/en-us/defender-endpoint/machines-view-overview)
+1. Click **Filters** [3]
+2. Set **Onboarding status** = **Unsupported** [3]
 3. Click **Apply**
 4. Review OS versions
 5. Export for OS upgrade planning
@@ -315,25 +315,25 @@ SERVER01,10.0.2.50,Domain Controllers,Onboarded,Active,Medium,Low,Windows Server
 
 ### What is Device Discovery?
 
-MDE can discover unmanaged devices on the network using onboarded devices as sensors [^7](https://learn.microsoft.com/en-us/defender-endpoint/configure-device-discovery).
+MDE can discover unmanaged devices on the network using onboarded devices as sensors [7].
 
 ### Viewing Discovered Devices
 
-1. Navigate to **Settings** > **Device discovery** [^7](https://learn.microsoft.com/en-us/defender-endpoint/configure-device-discovery)
+1. Navigate to **Settings** > **Device discovery** [7]
 2. View discovery mode (Basic or Standard)
 3. Click **Discovered devices** tab
 4. Review devices found but not onboarded
 
 ### Discovery Status Indicators
 
-- **Can be onboarded**: Supported OS, discovered via network [^7](https://learn.microsoft.com/en-us/defender-endpoint/configure-device-discovery)
+- **Can be onboarded**: Supported OS, discovered via network [6]
 - **First seen**: When device first discovered
 - **Last seen**: Most recent network observation
 - **Discovery method**: Standard discovery, Basic discovery
 
 ### Prioritizing Discovery Onboarding
 
-1. Filter **Can be onboarded** devices [^7](https://learn.microsoft.com/en-us/defender-endpoint/configure-device-discovery)
+1. Filter **Can be onboarded** devices [6]
 2. Sort by **First seen** (oldest first)
 3. Sort by **Last seen** (most recently active)
 4. Focus on frequently seen, long-discovered devices
@@ -342,7 +342,7 @@ MDE can discover unmanaged devices on the network using onboarded devices as sen
 
 ### Security Dashboard
 
-Navigate to **Home** dashboard for [^8](https://learn.microsoft.com/en-us/defender-business/mdb-get-started):
+Navigate to **Home** dashboard for [7]:
 
 - Devices at risk summary
 - Devices with active alerts
@@ -351,7 +351,7 @@ Navigate to **Home** dashboard for [^8](https://learn.microsoft.com/en-us/defend
 
 ### Threat Analytics
 
-Navigate to **Threat analytics** for [^9](https://learn.microsoft.com/en-us/defender-xdr/threat-analytics):
+Navigate to **Threat analytics** for [8]:
 
 - Exposure to specific threats
 - Vulnerable devices
@@ -359,7 +359,7 @@ Navigate to **Threat analytics** for [^9](https://learn.microsoft.com/en-us/defe
 
 ### Secure Score
 
-Navigate to **Secure score** for [^10](https://learn.microsoft.com/en-us/defender-xdr/microsoft-secure-score):
+Navigate to **Secure score** for [9]:
 
 - Improvement actions related to MDE
 - Score impact of onboarding additional devices
@@ -396,7 +396,7 @@ Navigate to **Secure score** for [^10](https://learn.microsoft.com/en-us/defende
 
 ### Issue: Export Button Grayed Out
 
-**Cause:** Insufficient permissions [^2](https://learn.microsoft.com/en-us/defender-endpoint/basic-permissions)
+**Cause:** Insufficient permissions [2]
 
 **Resolution:** Verify Security Reader role or higher and contact Global Administrator for role assignment.
 
@@ -409,7 +409,7 @@ Navigate to **Secure score** for [^10](https://learn.microsoft.com/en-us/defende
 
 **Resolution:** Search by IP address and verify Azure AD Device ID matches.
 
-1. Search by IP address instead of hostname [^3](https://learn.microsoft.com/en-us/defender-endpoint/machines-view-overview)
+1. Search by IP address instead of hostname [3]
 2. Check for multiple entries with similar names
 3. Verify Azure AD Device ID matches
 4. Wait 24 hours for synchronization
@@ -417,7 +417,7 @@ Navigate to **Secure score** for [^10](https://learn.microsoft.com/en-us/defende
 
 ## Best Practices
 
-1. ✅ Export device inventory weekly for audit trail [^3](https://learn.microsoft.com/en-us/defender-endpoint/machines-view-overview)
+1. ✅ Export device inventory weekly for audit trail [3]
 2. ✅ Create custom column views for different use cases:
    - Security review: Risk level, Exposure level, Active alerts
    - Compliance: Onboarding status, Sensor health, Last seen
@@ -453,12 +453,12 @@ For devices identified as problematic:
 ### Validate Graph API Results
 
 1. Export via [Method 2: Graph API](./02-Graph-API-Validation.md)
-2. Manually verify sample of devices in portal [^3](https://learn.microsoft.com/en-us/defender-endpoint/machines-view-overview)
+2. Manually verify sample of devices in portal [3]
 3. Check for discrepancies (RBAC filtering, sync delays)
 
 ### Historical Analysis
 
-1. Export current state from portal [^3](https://learn.microsoft.com/en-us/defender-endpoint/machines-view-overview)
+1. Export current state from portal [3]
 2. Use [Method 5: Advanced Hunting KQL](./05-Advanced-Hunting-KQL.md)
 3. Compare current vs. historical onboarding trends
 
@@ -475,7 +475,7 @@ For devices identified as problematic:
 ## Limitations
 
 - ❌ Manual process not suitable for large-scale automation
-- ❌ Export limited to 100,000 devices [^5](https://learn.microsoft.com/en-us/defender-endpoint/api/get-assessment-software-inventory)
+- ❌ Export limited to 100,000 devices [5]
 - ❌ No scheduled export capability
 - ❌ Synchronization delays (5-30 minutes for new devices)
 - ❌ Cannot validate local service status directly
@@ -490,22 +490,22 @@ For devices identified as problematic:
 
 ## References
 
-[^1]: [Microsoft Defender XDR in the Microsoft Defender portal](https://learn.microsoft.com/en-us/defender-xdr/microsoft-365-defender-portal)
+1. [Microsoft 365 Defender Portal](https://learn.microsoft.com/en-us/defender-xdr/microsoft-365-defender-portal)
+2. [Microsoft Defender for Endpoint Basic Permissions](https://learn.microsoft.com/en-us/defender-endpoint/basic-permissions)
+3. [Device Inventory Overview](https://learn.microsoft.com/en-us/defender-endpoint/machines-view-overview)
+4. [Software Inventory Assessment API](https://learn.microsoft.com/en-us/defender-endpoint/api/get-assessment-software-inventory)
+5. [Device Entity Page](https://learn.microsoft.com/en-us/defender-xdr/entity-page-device)
+6. [Configure Device Discovery](https://learn.microsoft.com/en-us/defender-endpoint/configure-device-discovery)
+7. [Microsoft Defender for Business Get Started](https://learn.microsoft.com/en-us/defender-business/mdb-get-started)
+8. [Threat Analytics](https://learn.microsoft.com/en-us/defender-xdr/threat-analytics)
+9. [Microsoft Secure Score](https://learn.microsoft.com/en-us/defender-xdr/microsoft-secure-score)
 
-[^2]: [Use basic permissions to access the portal - Microsoft Defender for Endpoint](https://learn.microsoft.com/en-us/defender-endpoint/basic-permissions)
-
-[^3]: [Device inventory - Microsoft Defender for Endpoint](https://learn.microsoft.com/en-us/defender-endpoint/machines-view-overview)
-
-[^4]: [Device inventory - Microsoft Defender for Endpoint](https://learn.microsoft.com/en-us/defender-endpoint/machines-view-overview)
-
-[^5]: [Export software inventory assessment per device - Microsoft Defender for Endpoint](https://learn.microsoft.com/en-us/defender-endpoint/api/get-assessment-software-inventory)
-
-[^6]: [Device entity page in Microsoft Defender](https://learn.microsoft.com/en-us/defender-xdr/entity-page-device)
-
-[^7]: [Configure device discovery in Defender for Endpoint](https://learn.microsoft.com/en-us/defender-endpoint/configure-device-discovery)
-
-[^8]: [Visit the Microsoft Defender portal - Microsoft Defender for Business](https://learn.microsoft.com/en-us/defender-business/mdb-get-started)
-
-[^9]: [Threat analytics in Microsoft Defender XDR](https://learn.microsoft.com/en-us/defender-xdr/threat-analytics)
-
-[^10]: [Microsoft Secure Score](https://learn.microsoft.com/en-us/defender-xdr/microsoft-secure-score)
+[1]: https://learn.microsoft.com/en-us/defender-xdr/microsoft-365-defender-portal
+[2]: https://learn.microsoft.com/en-us/defender-endpoint/basic-permissions
+[3]: https://learn.microsoft.com/en-us/defender-endpoint/machines-view-overview
+[4]: https://learn.microsoft.com/en-us/defender-endpoint/api/get-assessment-software-inventory
+[5]: https://learn.microsoft.com/en-us/defender-xdr/entity-page-device
+[6]: https://learn.microsoft.com/en-us/defender-endpoint/configure-device-discovery
+[7]: https://learn.microsoft.com/en-us/defender-business/mdb-get-started
+[8]: https://learn.microsoft.com/en-us/defender-xdr/threat-analytics
+[9]: https://learn.microsoft.com/en-us/defender-xdr/microsoft-secure-score

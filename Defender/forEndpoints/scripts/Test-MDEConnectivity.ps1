@@ -49,13 +49,18 @@
 
 .NOTES
     Author: Security Operations Team
-    Version: 1.1
+    Version: 2.0
     Requires: PowerShell 5.1+, Administrator privileges (for some tests)
+    Reference: MDEClientAnalyzer RegionsURLs.json (official Microsoft endpoint configuration)
 
-    Diagnostic Features:
-    - Automatically tests port 80 when HTTPS (port 443) fails
-    - Helps differentiate SSL/TLS issues from general network connectivity
-    - Provides detailed error context for troubleshooting firewall rules
+    Version 2.0 Features:
+    - Tests Gateway Architecture endpoints (*.endpoint.security.microsoft.com)
+    - Validates AU-specific blob storage endpoints (automatedirstrprdaus/aue)
+    - Distinguishes CRITICAL vs OPTIONAL endpoints
+    - Tests command/control, cyber data, AutoIR blobs, and sample upload endpoints
+    - Only fails (exit 1) on CRITICAL endpoint failures
+    - Port 80 fallback diagnostics for SSL/TLS troubleshooting
+    - Comprehensive reporting with criticality-based color coding
 #>
 
 [CmdletBinding()]
@@ -71,36 +76,79 @@ param(
 $ErrorActionPreference = 'Stop'
 
 # Reference: https://learn.microsoft.com/en-us/defender-endpoint/configure-environment
-# MDE regional endpoints for telemetry, cyber events, and command/control
+# Reference: MDEClientAnalyzer - RegionsURLs.json (official Microsoft endpoint configuration)
+# MDE regional endpoints - Gateway Architecture (GW_AU, GW_EU, GW_UK, GW_US)
+# Tests both legacy and new streamlined connectivity endpoints
 $RegionEndpoints = @{
     AU = @{
-        Telemetry = 'au.vortex-win.data.microsoft.com'
-        Cyber     = 'au-v20.events.data.microsoft.com'
-        Commands  = 'winatp-gw-aue.microsoft.com'
+        # Gateway Architecture - Streamlined Connectivity (2025+)
+        CommandsGW        = @(
+            @{ Url = 'edr-aus.au.endpoint.security.microsoft.com'; Critical = $true }
+            @{ Url = 'edr-aue.au.endpoint.security.microsoft.com'; Critical = $true }
+            @{ Url = 'mdav.au.endpoint.security.microsoft.com'; Critical = $true }
+        )
+        CyberDataGW       = @(
+            @{ Url = 'au-v20.events.endpoint.security.microsoft.com'; Critical = $true }
+        )
+        # Proxied blob storage through gateway endpoints (authentication required - 403/404 expected)
+        AutoIRBlobsGW     = @(
+            @{ Url = 'edr-aus.au.endpoint.security.microsoft.com/storage/automatedirstrprdaus/'; Critical = $false }
+            @{ Url = 'edr-aue.au.endpoint.security.microsoft.com/storage/automatedirstrprdaue/'; Critical = $false }
+        )
+        SampleUploadGW    = @(
+            @{ Url = 'edr-aue.au.endpoint.security.microsoft.com/storage/ussau1eastprod/'; Critical = $false }
+            @{ Url = 'edr-aus.au.endpoint.security.microsoft.com/storage/ussau1southeastprod/'; Critical = $false }
+        )
+        # Legacy Architecture - Direct blob storage (may be deprecated)
+        AutoIRBlobsLegacy = @(
+            @{ Url = 'automatedirstrprdaus.blob.core.windows.net'; Critical = $false }
+            @{ Url = 'automatedirstrprdaue.blob.core.windows.net'; Critical = $false }
+        )
+        SampleUploadLegacy = @(
+            @{ Url = 'ussau1eastprod.blob.core.windows.net'; Critical = $false }
+            @{ Url = 'ussau1southeastprod.blob.core.windows.net'; Critical = $false }
+        )
     }
     EU = @{
-        Telemetry = 'eu.vortex-win.data.microsoft.com'
-        Cyber     = 'eu-v20.events.data.microsoft.com'
-        Commands  = 'winatp-gw-neu.microsoft.com'
+        CommandsGW     = @(
+            @{ Url = 'edr-weu.eu.endpoint.security.microsoft.com'; Critical = $true }
+            @{ Url = 'edr-neu.eu.endpoint.security.microsoft.com'; Critical = $true }
+            @{ Url = 'mdav.eu.endpoint.security.microsoft.com'; Critical = $true }
+        )
+        CyberDataGW    = @(
+            @{ Url = 'eu-v20.events.endpoint.security.microsoft.com'; Critical = $true }
+        )
     }
     UK = @{
-        Telemetry = 'uk.vortex-win.data.microsoft.com'
-        Cyber     = 'uk-v20.events.data.microsoft.com'
-        Commands  = 'winatp-gw-uks.microsoft.com'
+        CommandsGW     = @(
+            @{ Url = 'edr-uks.uk.endpoint.security.microsoft.com'; Critical = $true }
+            @{ Url = 'edr-ukw.uk.endpoint.security.microsoft.com'; Critical = $true }
+            @{ Url = 'mdav.uk.endpoint.security.microsoft.com'; Critical = $true }
+        )
+        CyberDataGW    = @(
+            @{ Url = 'uk-v20.events.endpoint.security.microsoft.com'; Critical = $true }
+        )
     }
     US = @{
-        Telemetry = 'us.vortex-win.data.microsoft.com'
-        Cyber     = 'us-v20.events.data.microsoft.com'
-        Commands  = 'winatp-gw-cus.microsoft.com'
+        CommandsGW     = @(
+            @{ Url = 'edr-cus.us.endpoint.security.microsoft.com'; Critical = $true }
+            @{ Url = 'edr-eus.us.endpoint.security.microsoft.com'; Critical = $true }
+            @{ Url = 'mdav.us.endpoint.security.microsoft.com'; Critical = $true }
+        )
+        CyberDataGW    = @(
+            @{ Url = 'us-v20.events.endpoint.security.microsoft.com'; Critical = $true }
+        )
     }
 }
 
 # Reference: https://learn.microsoft.com/en-us/defender-endpoint/configure-environment
 # Common endpoints required for MDE cloud connectivity
 $CommonEndpoints = @(
-    # Blob storage may return 403/404 if authentication required - this is expected
-    # Reference: https://learn.microsoft.com/en-us/azure/storage/common/storage-network-security
-    @{ Name = 'Blob Storage'; Url = '*.blob.core.windows.net'; TestUrl = 'winatpmanagement.blob.core.windows.net' }
+    # NOTE: Blob storage connectivity removed as of 2025 streamlined connectivity model
+    # Reference: https://blog.sonnes.cloud/microsoft-defender-for-endpoint-new-and-more-streamlined-device-connectivity-on-the-way/
+    # Microsoft eliminated ~20 blob URLs in favor of consolidated MDE domains
+    # Use MDEClientAnalyzer.cmd for comprehensive connectivity validation including region-specific blob endpoints
+    # Reference: https://learn.microsoft.com/en-us/defender-endpoint/run-analyzer-windows
 
     # CRL Distribution uses HTTP (not HTTPS) per RFC 5280 - certificate validation infrastructure
     # Reference: https://www.rfc-editor.org/rfc/rfc5280#section-4.2.1.13
@@ -115,13 +163,15 @@ function Test-EndpointConnectivity {
     param(
         [string]$Hostname,
         [int]$Port = 443,
-        [string]$Name
+        [string]$Name,
+        [bool]$Critical = $true
     )
 
     $Result = [PSCustomObject]@{
         Name              = $Name
         Hostname          = $Hostname
         Port              = $Port
+        Critical          = $Critical
         DNSResolution     = $false
         IPAddress         = $null
         TCPConnection     = $false
@@ -282,33 +332,46 @@ try {
     $RegionTests = $RegionEndpoints[$Region]
 
     foreach ($EndpointType in $RegionTests.Keys) {
-        $Hostname = $RegionTests[$EndpointType]
-        Write-Host "Testing $EndpointType endpoint: $Hostname..." -NoNewline
+        $EndpointList = $RegionTests[$EndpointType]
 
-        $Result = Test-EndpointConnectivity -Hostname $Hostname -Name "$Region $EndpointType"
+        # Display endpoint category
+        $CategoryName = $EndpointType -replace 'GW$', ' (Gateway)' -replace 'Legacy$', ' (Legacy)'
+        Write-Host "`n[$CategoryName]" -ForegroundColor Cyan
 
-        if ($Result.Status -eq 'Success') {
-            Write-Host ' OK' -ForegroundColor Green
-        }
-        elseif ($Result.Status -eq 'Warning') {
-            Write-Host ' Warning' -ForegroundColor Yellow
-        }
-        else {
-            Write-Host ' FAILED' -ForegroundColor Red
-        }
+        foreach ($EndpointConfig in $EndpointList) {
+            $Hostname = $EndpointConfig.Url
+            $IsCritical = $EndpointConfig.Critical
 
-        if ($VerbosePreference -eq 'Continue') {
-            Write-Host "  DNS: $($Result.DNSResolution) | IP: $($Result.IPAddress)" -ForegroundColor Gray
-            Write-Host "  TCP:443: $($Result.TCPConnection) | HTTP: $($Result.HTTPStatusCode) | Time: $($Result.ResponseTime)ms" -ForegroundColor Gray
-            if ($null -ne $Result.Port80Reachable) {
-                Write-Host "  TCP:80: $($Result.Port80Reachable) (Fallback diagnostic)" -ForegroundColor $(if ($Result.Port80Reachable) { 'Yellow' } else { 'Gray' })
+            $CriticalityLabel = if ($IsCritical) { '[CRITICAL]' } else { '[OPTIONAL]' }
+            Write-Host "  $CriticalityLabel Testing $Hostname..." -NoNewline
+
+            $Result = Test-EndpointConnectivity -Hostname $Hostname -Name "$Region $EndpointType" -Critical $IsCritical
+
+            if ($Result.Status -eq 'Success') {
+                Write-Host ' OK' -ForegroundColor Green
             }
-            if ($Result.ErrorMessage) {
-                Write-Host "  Error: $($Result.ErrorMessage)" -ForegroundColor Red
+            elseif ($Result.Status -eq 'Warning') {
+                $WarnColor = if ($IsCritical) { 'Red' } else { 'Yellow' }
+                Write-Host ' Warning' -ForegroundColor $WarnColor
             }
-        }
+            else {
+                $FailColor = if ($IsCritical) { 'Red' } else { 'Yellow' }
+                Write-Host ' FAILED' -ForegroundColor $FailColor
+            }
 
-        $AllResults += $Result
+            if ($VerbosePreference -eq 'Continue') {
+                Write-Host "    DNS: $($Result.DNSResolution) | IP: $($Result.IPAddress)" -ForegroundColor Gray
+                Write-Host "    TCP:443: $($Result.TCPConnection) | HTTP: $($Result.HTTPStatusCode) | Time: $($Result.ResponseTime)ms" -ForegroundColor Gray
+                if ($null -ne $Result.Port80Reachable) {
+                    Write-Host "    TCP:80: $($Result.Port80Reachable) (Fallback diagnostic)" -ForegroundColor $(if ($Result.Port80Reachable) { 'Yellow' } else { 'Gray' })
+                }
+                if ($Result.ErrorMessage) {
+                    Write-Host "    Error: $($Result.ErrorMessage)" -ForegroundColor Red
+                }
+            }
+
+            $AllResults += $Result
+        }
     }
 
     Write-Host "`n=== Testing Common Endpoints ===" -ForegroundColor Yellow
@@ -346,37 +409,66 @@ try {
     $TotalCount = $AllResults.Count
     $SuccessPercent = [math]::Round(($SuccessCount / $TotalCount) * 100, 2)
 
+    # Separate critical and optional endpoints
+    $CriticalTests = $AllResults | Where-Object Critical -EQ $true
+    $OptionalTests = $AllResults | Where-Object Critical -EQ $false
+    $CriticalSuccess = ($CriticalTests | Where-Object Status -EQ 'Success').Count
+    $CriticalTotal = $CriticalTests.Count
+    $OptionalSuccess = ($OptionalTests | Where-Object Status -EQ 'Success').Count
+    $OptionalTotal = $OptionalTests.Count
+
     Write-Host "`n=== Connectivity Summary ===" -ForegroundColor Yellow
-    Write-Host "Successful: $SuccessCount / $TotalCount ($SuccessPercent%)" -ForegroundColor $(
+    Write-Host "Overall: $SuccessCount / $TotalCount ($SuccessPercent%)" -ForegroundColor $(
         if ($SuccessPercent -eq 100) { 'Green' } elseif ($SuccessPercent -ge 80) { 'Yellow' } else { 'Red' }
+    )
+    Write-Host "  Critical Endpoints: $CriticalSuccess / $CriticalTotal" -ForegroundColor $(
+        if ($CriticalSuccess -eq $CriticalTotal) { 'Green' } else { 'Red' }
+    )
+    Write-Host "  Optional Endpoints: $OptionalSuccess / $OptionalTotal" -ForegroundColor $(
+        if ($OptionalSuccess -eq $OptionalTotal) { 'Green' } elseif ($OptionalSuccess -gt 0) { 'Yellow' } else { 'Red' }
     )
 
     $FailedTests = $AllResults | Where-Object Status -EQ 'Failed'
-    if ($FailedTests.Count -gt 0) {
-        Write-Host "`n=== Failed Connectivity Tests ===" -ForegroundColor Red
-        $FailedTests | Select-Object Name, Hostname, Port80Reachable, ErrorMessage | Format-Table -AutoSize
+    $CriticalFailures = $FailedTests | Where-Object Critical -EQ $true
+    $OptionalFailures = $FailedTests | Where-Object Critical -EQ $false
 
-        $Port80Available = $FailedTests | Where-Object Port80Reachable -EQ $true
+    if ($CriticalFailures.Count -gt 0) {
+        Write-Host "`n=== ❌ CRITICAL FAILURES ===" -ForegroundColor Red
+        Write-Host 'These endpoints are REQUIRED for MDE functionality:' -ForegroundColor Red
+        $CriticalFailures | Select-Object Name, Hostname, Port80Reachable, ErrorMessage | Format-Table -AutoSize
+
+        $Port80Available = $CriticalFailures | Where-Object Port80Reachable -EQ $true
         if ($Port80Available.Count -gt 0) {
-            Write-Host "`n⚠️  Note: $($Port80Available.Count) endpoint(s) reachable on port 80 but failed HTTPS (443)" -ForegroundColor Yellow
+            Write-Host "⚠️  Note: $($Port80Available.Count) critical endpoint(s) reachable on port 80 but failed HTTPS (443)" -ForegroundColor Yellow
             Write-Host '   This suggests SSL/TLS or firewall policy blocking HTTPS traffic specifically' -ForegroundColor Yellow
         }
     }
 
+    if ($OptionalFailures.Count -gt 0) {
+        Write-Host "`n=== ⚠️  OPTIONAL ENDPOINT WARNINGS ===" -ForegroundColor Yellow
+        Write-Host 'These endpoints are optional (blob storage typically requires authentication):' -ForegroundColor Yellow
+        $OptionalFailures | Select-Object Name, Hostname, HTTPStatusCode, ErrorMessage | Format-Table -AutoSize
+    }
+
     Write-Host "`n=== Recommendations ===" -ForegroundColor Yellow
 
-    if ($FailedTests.Count -eq 0) {
+    if ($CriticalFailures.Count -eq 0 -and $OptionalFailures.Count -eq 0) {
         Write-Host '✅ All connectivity tests passed!' -ForegroundColor Green
         Write-Host '✅ MDE should have full cloud connectivity' -ForegroundColor Green
     }
+    elseif ($CriticalFailures.Count -eq 0) {
+        Write-Host '✅ All CRITICAL endpoints accessible' -ForegroundColor Green
+        Write-Host "⚠️  $($OptionalFailures.Count) optional endpoint(s) failed (blob storage - may require authentication)" -ForegroundColor Yellow
+        Write-Host '   MDE core functionality should work normally' -ForegroundColor Yellow
+    }
     else {
-        Write-Host '❌ Some connectivity tests failed' -ForegroundColor Red
-        Write-Host 'Action Items:' -ForegroundColor Yellow
-        Write-Host '  1. Verify firewall rules allow HTTPS (443) to MDE endpoints' -ForegroundColor White
+        Write-Host '❌ CRITICAL endpoint failures detected - MDE functionality will be impaired' -ForegroundColor Red
+        Write-Host 'URGENT Action Items:' -ForegroundColor Red
+        Write-Host '  1. Verify firewall rules allow HTTPS (443) to *.endpoint.security.microsoft.com' -ForegroundColor White
         Write-Host '  2. Check proxy configuration: netsh winhttp show proxy' -ForegroundColor White
         Write-Host '  3. Verify DNS resolution for failed endpoints' -ForegroundColor White
         Write-Host '  4. Review SSL/TLS inspection policies (may block certificate validation)' -ForegroundColor White
-        Write-Host '  5. Run MDEClientAnalyzer.cmd for detailed diagnostics' -ForegroundColor White
+        Write-Host '  5. Run MDEClientAnalyzer.cmd for comprehensive diagnostics' -ForegroundColor White
     }
 
     $ExportPath = "MDE-Connectivity-Test-$(Get-Date -Format 'yyyyMMdd-HHmmss').csv"
@@ -384,8 +476,18 @@ try {
     $AllResults | Export-Csv -Path $ExportPath -NoTypeInformation
     Write-Host "`nDetailed results exported to: $ExportPath" -ForegroundColor Cyan
 
-    if ($SuccessPercent -lt 100) {
+    # Exit with error code only if CRITICAL endpoints failed
+    if ($CriticalFailures.Count -gt 0) {
+        Write-Host "`n❌ Exiting with error code 1 due to critical endpoint failures" -ForegroundColor Red
         exit 1
+    }
+    elseif ($OptionalFailures.Count -gt 0) {
+        Write-Host "`n⚠️  Exiting with success (optional endpoint warnings only)" -ForegroundColor Yellow
+        exit 0
+    }
+    else {
+        Write-Host "`n✅ All tests passed successfully" -ForegroundColor Green
+        exit 0
     }
 }
 catch {

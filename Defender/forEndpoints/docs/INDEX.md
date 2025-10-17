@@ -86,24 +86,24 @@ SERVER01,Domain Controller
 
 ### Installed Status
 
-- ✅ SENSE service exists[^1](https://learn.microsoft.com/en-us/defender-endpoint/troubleshoot-onboarding)
-- ✅ Registry keys present at `HKLM\SOFTWARE\Microsoft\Windows Advanced Threat Protection`[^2](https://learn.microsoft.com/en-us/defender-endpoint/troubleshoot-onboarding)
+- ✅ SENSE service exists[1]
+- ✅ Registry keys present at `HKLM\SOFTWARE\Microsoft\Windows Advanced Threat Protection` [1]
 - ✅ Defender cmdlets available
 
 ### Onboarded Status
 
-- ✅ `OnboardingState` registry value = 1[^2](https://learn.microsoft.com/en-us/defender-endpoint/troubleshoot-onboarding)
-- ✅ Device appears in Security Console[^3](https://learn.microsoft.com/en-us/defender-xdr/microsoft-365-defender-portal)
-- ✅ Device accessible via Graph API with `onboardingStatus = "Onboarded"`[^4](https://learn.microsoft.com/en-us/defender-endpoint/api/get-machines)
-- ✅ Recent telemetry in DeviceInfo table[^5](https://learn.microsoft.com/en-us/defender-xdr/advanced-hunting-deviceinfo-table)
+- ✅ `OnboardingState` registry value = 1[1]
+- ✅ Device appears in Security Console[2]
+- ✅ Device accessible via Graph API with `onboardingStatus = "Onboarded"` [3]
+- ✅ Recent telemetry in DeviceInfo table[4]
 
 ### Functional Status
 
-- ✅ SENSE service running[^1](https://learn.microsoft.com/en-us/defender-endpoint/troubleshoot-onboarding)
-- ✅ DiagTrack service running (recommended for optimal reporting)[^6](https://learn.microsoft.com/en-us/defender-endpoint/troubleshoot-onboarding)
-- ✅ No critical errors in SENSE event log[^1](https://learn.microsoft.com/en-us/defender-endpoint/troubleshoot-onboarding)
+- ✅ SENSE service running[1]
+- ✅ DiagTrack service running (recommended for optimal reporting)[1]
+- ✅ No critical errors in SENSE event log[1]
 - ✅ Cloud connectivity successful
-- ✅ `healthStatus = "Active"` in Graph API[^4](https://learn.microsoft.com/en-us/defender-endpoint/api/get-machines)
+- ✅ `healthStatus = "Active"` in Graph API[3]
 - ✅ Recent signature updates
 - ✅ Real-time protection enabled
 
@@ -145,20 +145,20 @@ Device Not Showing in Portal?
 
 ### For Graph API Methods
 
-- Azure AD App Registration with permissions[^7](https://learn.microsoft.com/en-us/defender-endpoint/api/exposed-apis-create-app-nativeapp):
+- Azure AD App Registration with permissions[5]:
   - WindowsDefenderATP permissions including machine access
 - Microsoft.Graph PowerShell module (for scripts)
 - Security Administrator or Global Reader role
 
 ### For Security Console Methods
 
-- Access to Microsoft 365 Defender portal (https://security.microsoft.com)[^3](https://learn.microsoft.com/en-us/defender-xdr/microsoft-365-defender-portal)
+- Access to Microsoft 365 Defender portal (https://security.microsoft.com)[3]
 - Security Administrator, Security Reader, or Global Reader role
 - Modern web browser
 
 ### For Advanced Hunting Methods
 
-- Access to Microsoft 365 Defender portal[^3](https://learn.microsoft.com/en-us/defender-xdr/microsoft-365-defender-portal)
+- Access to Microsoft 365 Defender portal[3]
 - Advanced Hunting permissions
 - Understanding of KQL query language
 
@@ -182,22 +182,20 @@ For issues with these validation methods:
 
 1. Review troubleshooting section in specific method documentation
 2. Check Microsoft Defender for Endpoint service health
-3. Consult Microsoft Support with diagnostic logs from Client Analyzer[^8](https://learn.microsoft.com/en-us/defender-endpoint/run-analyzer-windows)
+3. Consult Microsoft Support with diagnostic logs from Client Analyzer[6]
 
 ## References
 
-[^1]: [Troubleshoot Microsoft Defender for Endpoint onboarding issues](https://learn.microsoft.com/en-us/defender-endpoint/troubleshoot-onboarding)
+1. [Troubleshoot Microsoft Defender for Endpoint onboarding issues](https://learn.microsoft.com/en-us/defender-endpoint/troubleshoot-onboarding)
+2. [Microsoft 365 Defender portal](https://learn.microsoft.com/en-us/defender-xdr/microsoft-365-defender-portal)
+3. [Get machines API](https://learn.microsoft.com/en-us/defender-endpoint/api/get-machines)
+4. [DeviceInfo table in the advanced hunting schema](https://learn.microsoft.com/en-us/defender-xdr/advanced-hunting-deviceinfo-table)
+5. [Create an app to access Microsoft Defender for Endpoint without a user](https://learn.microsoft.com/en-us/defender-endpoint/api/exposed-apis-create-app-nativeapp)
+6. [Run the client analyzer on Windows](https://learn.microsoft.com/en-us/defender-endpoint/run-analyzer-windows)
 
-[^2]: [Troubleshoot Microsoft Defender for Endpoint onboarding issues - Registry paths](https://learn.microsoft.com/en-us/defender-endpoint/troubleshoot-onboarding)
-
-[^3]: [Microsoft Defender XDR in the Microsoft Defender portal](https://learn.microsoft.com/en-us/defender-xdr/microsoft-365-defender-portal)
-
-[^4]: [List machines API - Microsoft Defender for Endpoint](https://learn.microsoft.com/en-us/defender-endpoint/api/get-machines)
-
-[^5]: [DeviceInfo table in the advanced hunting schema](https://learn.microsoft.com/en-us/defender-xdr/advanced-hunting-deviceinfo-table)
-
-[^6]: [Troubleshoot Microsoft Defender for Endpoint onboarding issues - DiagTrack service](https://learn.microsoft.com/en-us/defender-endpoint/troubleshoot-onboarding)
-
-[^7]: [Use Microsoft Defender for Endpoint APIs](https://learn.microsoft.com/en-us/defender-endpoint/api/exposed-apis-create-app-nativeapp)
-
-[^8]: [Run the client analyzer on Windows](https://learn.microsoft.com/en-us/defender-endpoint/run-analyzer-windows)
+[1]: https://learn.microsoft.com/en-us/defender-endpoint/troubleshoot-onboarding
+[2]: https://learn.microsoft.com/en-us/defender-xdr/microsoft-365-defender-portal
+[3]: https://learn.microsoft.com/en-us/defender-endpoint/api/get-machines
+[4]: https://learn.microsoft.com/en-us/defender-xdr/advanced-hunting-deviceinfo-table
+[5]: https://learn.microsoft.com/en-us/defender-endpoint/api/exposed-apis-create-app-nativeapp
+[6]: https://learn.microsoft.com/en-us/defender-endpoint/run-analyzer-windows

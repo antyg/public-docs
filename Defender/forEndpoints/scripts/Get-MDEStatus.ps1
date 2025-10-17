@@ -53,7 +53,7 @@
 
 .NOTES
     Author: Security Operations Team
-    Version: 2.3
+    Version: 2.4
     Requires: PowerShell 5.1+ (PowerShell 7.0+ recommended for parallel execution)
     Region: Australian localization (AU date format: dd/MM/yyyy HH:mm:ss)
 
@@ -61,6 +61,11 @@
     - PowerShell 7.0+: Parallel execution with configurable throttle limit (fast)
     - PowerShell 5.1: Sequential execution fallback (slower, but compatible)
     - Single device validation works on both versions
+
+    Features (v2.4):
+    - Comprehensive key=value log format with all result fields for intelligent parsing
+    - Console output now displays OnboardingState during bulk validation
+    - Structured logging enables advanced filtering and analysis
 
     Features (v2.3):
     - PowerShell 5.1 compatibility with sequential processing fallback
@@ -147,24 +152,43 @@ $LogFile = Join-Path -Path $ScriptPath -ChildPath 'Get-MDEStatus-Log.txt'
 
 function Write-MDELog {
     param(
-        [string]$Hostname,
-        [string]$ValidationMethod,
-        [string]$HealthStatus,
-        [string]$OnboardingState,
-        [string]$ErrorMessage
+        [PSCustomObject]$Result
     )
 
     try {
-        # Create log entry in Australian date/time format
-        # Format: [DD/MM/YYYY HH:MM:SS] Hostname | Method | Status | Onboarding | Error
+        # Create comprehensive log entry with key-value pairs for intelligent parsing
+        # Reference: https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.utility/add-content
         $Timestamp = Get-Date -Format 'dd/MM/yyyy HH:mm:ss'
-        $OnboardingDisplay = if ($OnboardingState) { $OnboardingState } else { 'Unknown' }
-        $ErrorDisplay = if ($ErrorMessage) { $ErrorMessage } else { 'None' }
+        
+        # Build structured log entry with all fields
+        $LogFields = [ordered]@{
+            Timestamp                  = $Timestamp
+            Hostname                   = $Result.Hostname
+            Reachable                  = $Result.Reachable
+            ValidationMethod           = $Result.ValidationMethod
+            HealthStatus               = $Result.HealthStatus
+            DefenderInstalled          = $Result.DefenderInstalled
+            OnboardingState            = if ($Result.OnboardingState) { $Result.OnboardingState } else { 'Unknown' }
+            OnboardingStateValue       = if ($null -ne $Result.OnboardingStateValue) { $Result.OnboardingStateValue } else { 'N/A' }
+            AMRunningMode              = if ($Result.AMRunningMode) { $Result.AMRunningMode } else { 'N/A' }
+            AMServiceEnabled           = if ($null -ne $Result.AMServiceEnabled) { $Result.AMServiceEnabled } else { 'N/A' }
+            RealTimeProtectionEnabled  = if ($null -ne $Result.RealTimeProtectionEnabled) { $Result.RealTimeProtectionEnabled } else { 'N/A' }
+            BehaviorMonitorEnabled     = if ($null -ne $Result.BehaviorMonitorEnabled) { $Result.BehaviorMonitorEnabled } else { 'N/A' }
+            IsTamperProtected          = if ($null -ne $Result.IsTamperProtected) { $Result.IsTamperProtected } else { 'N/A' }
+            TamperProtectionSource     = if ($Result.TamperProtectionSource) { $Result.TamperProtectionSource } else { 'N/A' }
+            AntivirusSignatureVersion  = if ($Result.AntivirusSignatureVersion) { $Result.AntivirusSignatureVersion } else { 'N/A' }
+            SignatureAgeHours          = if ($null -ne $Result.SignatureAgeHours) { $Result.SignatureAgeHours } else { 'N/A' }
+            SENSEServiceStatus         = if ($Result.SENSEServiceStatus) { $Result.SENSEServiceStatus } else { 'N/A' }
+            DiagTrackServiceStatus     = if ($Result.DiagTrackServiceStatus) { $Result.DiagTrackServiceStatus } else { 'N/A' }
+            RecentSENSEErrors          = if ($null -ne $Result.RecentSENSEErrors) { $Result.RecentSENSEErrors } else { '0' }
+            LastSENSEError             = if ($Result.LastSENSEError -and $Result.LastSENSEError -ne 'None') { $Result.LastSENSEError } else { 'None' }
+            ErrorMessage               = if ($Result.ErrorMessage) { $Result.ErrorMessage } else { 'None' }
+        }
 
-        $LogEntry = "[$Timestamp] $Hostname | $ValidationMethod | $HealthStatus | $OnboardingDisplay | $ErrorDisplay"
+        # Convert to structured key=value format for intelligent parsing
+        $LogEntry = ($LogFields.GetEnumerator() | ForEach-Object { "$($_.Key)=$($_.Value)" }) -join ' | '
 
         # Append to log file
-        # Reference: https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.utility/add-content
         Add-Content -Path $LogFile -Value $LogEntry -ErrorAction SilentlyContinue
     }
     catch {
@@ -779,11 +803,7 @@ try {
         $Result = Get-MDEStatus -Computer $ComputerName -Cred $Credential -Method $PreferredMethod
 
         # Log result to file
-        Write-MDELog -Hostname $Result.Hostname `
-            -ValidationMethod $Result.ValidationMethod `
-            -HealthStatus $Result.HealthStatus `
-            -OnboardingState $Result.OnboardingState `
-            -ErrorMessage $Result.ErrorMessage
+        Write-MDELog -Result $Result
 
         Write-Host "`n=== MDE Status ===" -ForegroundColor Yellow
         $Result | Format-List Hostname, ValidationMethod, HealthStatus, OnboardingState,
@@ -850,16 +870,37 @@ try {
                 ${function:Get-MDEStatusViaService} = ${using:function:Get-MDEStatusViaService}
                 ${function:Merge-MDEResult} = ${using:function:Merge-MDEResult}
                 ${function:Get-MDEHealthState} = ${using:function:Get-MDEHealthState}
+                ${function:Write-MDELog} = ${using:function:Write-MDELog}
 
                 Write-Host "Checking $($Device.Hostname)..." -NoNewline
                 $Result = Get-MDEStatus -Computer $Device.Hostname -Cred $Cred -Method $Method
 
-                # Add log entry to thread-safe queue (no file I/O during parallel execution)
+                # Build comprehensive log entry with all fields using Write-MDELog function
                 # Reference: https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1.add
-                $Timestamp = Get-Date -Format 'dd/MM/yyyy HH:mm:ss'
-                $OnboardingDisplay = if ($Result.OnboardingState) { $Result.OnboardingState } else { 'Unknown' }
-                $ErrorDisplay = if ($Result.ErrorMessage) { $Result.ErrorMessage } else { 'None' }
-                $LogEntry = "[$Timestamp] $($Result.Hostname) | $($Result.ValidationMethod) | $($Result.HealthStatus) | $OnboardingDisplay | $ErrorDisplay"
+                $LogFields = [ordered]@{
+                    Timestamp                  = (Get-Date -Format 'dd/MM/yyyy HH:mm:ss')
+                    Hostname                   = $Result.Hostname
+                    Reachable                  = $Result.Reachable
+                    ValidationMethod           = $Result.ValidationMethod
+                    HealthStatus               = $Result.HealthStatus
+                    DefenderInstalled          = $Result.DefenderInstalled
+                    OnboardingState            = if ($Result.OnboardingState) { $Result.OnboardingState } else { 'Unknown' }
+                    OnboardingStateValue       = if ($null -ne $Result.OnboardingStateValue) { $Result.OnboardingStateValue } else { 'N/A' }
+                    AMRunningMode              = if ($Result.AMRunningMode) { $Result.AMRunningMode } else { 'N/A' }
+                    AMServiceEnabled           = if ($null -ne $Result.AMServiceEnabled) { $Result.AMServiceEnabled } else { 'N/A' }
+                    RealTimeProtectionEnabled  = if ($null -ne $Result.RealTimeProtectionEnabled) { $Result.RealTimeProtectionEnabled } else { 'N/A' }
+                    BehaviorMonitorEnabled     = if ($null -ne $Result.BehaviorMonitorEnabled) { $Result.BehaviorMonitorEnabled } else { 'N/A' }
+                    IsTamperProtected          = if ($null -ne $Result.IsTamperProtected) { $Result.IsTamperProtected } else { 'N/A' }
+                    TamperProtectionSource     = if ($Result.TamperProtectionSource) { $Result.TamperProtectionSource } else { 'N/A' }
+                    AntivirusSignatureVersion  = if ($Result.AntivirusSignatureVersion) { $Result.AntivirusSignatureVersion } else { 'N/A' }
+                    SignatureAgeHours          = if ($null -ne $Result.SignatureAgeHours) { $Result.SignatureAgeHours } else { 'N/A' }
+                    SENSEServiceStatus         = if ($Result.SENSEServiceStatus) { $Result.SENSEServiceStatus } else { 'N/A' }
+                    DiagTrackServiceStatus     = if ($Result.DiagTrackServiceStatus) { $Result.DiagTrackServiceStatus } else { 'N/A' }
+                    RecentSENSEErrors          = if ($null -ne $Result.RecentSENSEErrors) { $Result.RecentSENSEErrors } else { '0' }
+                    LastSENSEError             = if ($Result.LastSENSEError -and $Result.LastSENSEError -ne 'None') { $Result.LastSENSEError } else { 'None' }
+                    ErrorMessage               = if ($Result.ErrorMessage) { $Result.ErrorMessage } else { 'None' }
+                }
+                $LogEntry = ($LogFields.GetEnumerator() | ForEach-Object { "$($_.Key)=$($_.Value)" }) -join ' | '
                 $SyncLogQueue.Add($LogEntry)
 
                 $StatusColor = switch ($Result.HealthStatus) {
@@ -868,7 +909,7 @@ try {
                     default { 'Red' }
                 }
 
-                Write-Host " $($Result.HealthStatus) [$($Result.ValidationMethod)]" -ForegroundColor $StatusColor
+                Write-Host " $($Result.HealthStatus) | $OnboardingDisplay [$($Result.ValidationMethod)]" -ForegroundColor $StatusColor
 
                 $Result
             }
@@ -890,11 +931,7 @@ try {
                 $Result = Get-MDEStatus -Computer $Device.Hostname -Cred $Credential -Method $PreferredMethod
 
                 # Log result to file (sequential, no threading concerns)
-                Write-MDELog -Hostname $Result.Hostname `
-                    -ValidationMethod $Result.ValidationMethod `
-                    -HealthStatus $Result.HealthStatus `
-                    -OnboardingState $Result.OnboardingState `
-                    -ErrorMessage $Result.ErrorMessage
+                Write-MDELog -Result $Result
 
                 $StatusColor = switch ($Result.HealthStatus) {
                     'Healthy' { 'Green' }
@@ -902,7 +939,8 @@ try {
                     default { 'Red' }
                 }
 
-                Write-Host " $($Result.HealthStatus) [$($Result.ValidationMethod)]" -ForegroundColor $StatusColor
+                $OnboardingDisplay = if ($Result.OnboardingState) { $Result.OnboardingState } else { 'Unknown' }
+                Write-Host " $($Result.HealthStatus) | $OnboardingDisplay [$($Result.ValidationMethod)]" -ForegroundColor $StatusColor
 
                 $Result
             }

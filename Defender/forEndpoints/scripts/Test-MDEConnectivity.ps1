@@ -56,7 +56,8 @@
     Version 2.1 Features:
     - Fixed CRL Distribution test to use HTTP port 80 (RFC 5280 requirement)
     - CRL endpoints must use HTTP to avoid circular dependency in certificate validation
-    - Tests now correctly validate DNS and TCP:80 connectivity for CRL distribution
+    - Function skips HTTPS test when port 80 specified - validates DNS + TCP connectivity only
+    - Test now passes for CRL distribution endpoints (returns Success for TCP:80)
 
     Version 2.0 Features:
     - Tests Gateway Architecture endpoints (*.endpoint.security.microsoft.com)
@@ -213,6 +214,16 @@ function Test-EndpointConnectivity {
         else {
             $Result.ErrorMessage = "TCP connection failed (Port $Port)"
             $Result.Status = 'Failed'
+            return $Result
+        }
+
+        # Skip HTTP/HTTPS request test for port 80 (used for CRL distribution)
+        # Port 80 connectivity is validated by DNS + TCP test above
+        # Reference: https://www.rfc-editor.org/rfc/rfc5280 (CRL uses HTTP, not HTTPS)
+        if ($Port -eq 80) {
+            # For port 80, DNS + TCP connectivity is sufficient
+            $Result.HTTPStatusCode = 'N/A (HTTP port 80)'
+            $Result.Status = 'Success'
             return $Result
         }
 
@@ -395,19 +406,7 @@ try {
         }
         if ($Endpoint.Port) { $TestParams.Port = $Endpoint.Port }
         
-        # For HTTP-only endpoints (like CRL), test port connectivity only
-        if ($Endpoint.UseHTTP) {
-            # CRL Distribution uses HTTP port 80 - just test DNS and TCP connectivity
-            $Result = Test-EndpointConnectivity @TestParams
-            # Override HTTPS test result since HTTP is expected
-            if ($Result.DNSResolution -and $Result.TCPConnection) {
-                $Result.Status = 'Success'
-                $Result.ErrorMessage = $null
-            }
-        }
-        else {
-            $Result = Test-EndpointConnectivity @TestParams
-        }
+        $Result = Test-EndpointConnectivity @TestParams
 
         if ($Result.Status -eq 'Success') {
             Write-Host ' OK' -ForegroundColor Green
@@ -423,10 +422,10 @@ try {
             $PortLabel = if ($Endpoint.Port) { $Endpoint.Port } else { 443 }
             Write-Host "  DNS: $($Result.DNSResolution) | IP: $($Result.IPAddress)" -ForegroundColor Gray
             Write-Host "  TCP:$PortLabel : $($Result.TCPConnection) | HTTP: $($Result.HTTPStatusCode) | Time: $($Result.ResponseTime)ms" -ForegroundColor Gray
-            if ($null -ne $Result.Port80Reachable -and -not $Endpoint.UseHTTP) {
+            if ($null -ne $Result.Port80Reachable) {
                 Write-Host "  TCP:80: $($Result.Port80Reachable) (Fallback diagnostic)" -ForegroundColor $(if ($Result.Port80Reachable) { 'Yellow' } else { 'Gray' })
             }
-            if ($Result.ErrorMessage -and -not $Endpoint.UseHTTP) {
+            if ($Result.ErrorMessage) {
                 Write-Host "  Error: $($Result.ErrorMessage)" -ForegroundColor Red
             }
         }

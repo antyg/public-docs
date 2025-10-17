@@ -1,0 +1,903 @@
+{
+  "version": "Notebook/1.0",
+  "items": [
+    {
+      "type": 1,
+      "content": {
+        "json": "# Microsoft Defender for Endpoint - Deployment Validation Dashboard\n\n## Overview\n\nThis workbook provides comprehensive validation and monitoring of MDE deployment across your organization. Use the interactive filters to drill down into specific device populations and identify onboarding gaps, health issues, and remediation opportunities.\n\n### Quick Links\n- [Documentation: MDE Validation Methods](https://github.com/your-org/SecOps/tree/main/docs/MDE-Validation-Methods)\n- [Scripts: PowerShell Validation Tools](https://github.com/your-org/SecOps/tree/main/scripts/MDE-Validation)\n\n---"
+      },
+      "name": "text - overview"
+    },
+    {
+      "type": 9,
+      "content": {
+        "version": "KqlParameterItem/1.0",
+        "parameters": [
+          {
+            "id": "38537d3d-a6f4-4d5f-8b3e-9c8f7e6d5a4b",
+            "version": "KqlParameterItem/1.0",
+            "name": "TimeRange",
+            "label": "Time Range",
+            "type": 4,
+            "isRequired": true,
+            "value": {
+              "durationMs": 2592000000
+            },
+            "typeSettings": {
+              "selectableValues": [
+                {
+                  "durationMs": 3600000,
+                  "createdTime": "2025-01-17T00:00:00.000Z",
+                  "isInitialTime": false,
+                  "grain": 1,
+                  "useDashboardTimeRange": false
+                },
+                {
+                  "durationMs": 86400000,
+                  "createdTime": "2025-01-17T00:00:00.000Z",
+                  "isInitialTime": false,
+                  "grain": 1,
+                  "useDashboardTimeRange": false
+                },
+                {
+                  "durationMs": 604800000,
+                  "createdTime": "2025-01-17T00:00:00.000Z",
+                  "isInitialTime": false,
+                  "grain": 1,
+                  "useDashboardTimeRange": false
+                },
+                {
+                  "durationMs": 2592000000,
+                  "createdTime": "2025-01-17T00:00:00.000Z",
+                  "isInitialTime": false,
+                  "grain": 1,
+                  "useDashboardTimeRange": false
+                }
+              ],
+              "allowCustom": true
+            }
+          },
+          {
+            "id": "c1d2e3f4-5a6b-7c8d-9e0f-1a2b3c4d5e6f",
+            "version": "KqlParameterItem/1.0",
+            "name": "OnboardingStatus",
+            "label": "Onboarding Status",
+            "type": 2,
+            "isRequired": false,
+            "multiSelect": true,
+            "quote": "'",
+            "delimiter": ",",
+            "query": "DeviceInfo\n| where Timestamp > ago(1d)\n| summarize by OnboardingStatus\n| project OnboardingStatus\n| order by OnboardingStatus asc",
+            "value": [
+              "value::all"
+            ],
+            "typeSettings": {
+              "additionalResourceOptions": [
+                "value::all"
+              ],
+              "selectAllValue": "*"
+            },
+            "queryType": 0,
+            "resourceType": "microsoft.operationalinsights/workspaces"
+          },
+          {
+            "id": "7f8e9d0c-1b2a-3c4d-5e6f-7a8b9c0d1e2f",
+            "version": "KqlParameterItem/1.0",
+            "name": "OSPlatform",
+            "label": "OS Platform",
+            "type": 2,
+            "isRequired": false,
+            "multiSelect": true,
+            "quote": "'",
+            "delimiter": ",",
+            "query": "DeviceInfo\n| where Timestamp > ago(1d)\n| summarize by OSPlatform\n| project OSPlatform\n| order by OSPlatform asc",
+            "value": [
+              "value::all"
+            ],
+            "typeSettings": {
+              "additionalResourceOptions": [
+                "value::all"
+              ],
+              "selectAllValue": "*"
+            },
+            "queryType": 0,
+            "resourceType": "microsoft.operationalinsights/workspaces"
+          }
+        ],
+        "style": "pills",
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces"
+      },
+      "name": "parameters - global filters"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "## 📊 Executive Summary\n\nHigh-level metrics for MDE deployment across your organization."
+      },
+      "name": "text - executive summary header"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "// Total Device Count\nDeviceInfo\n| where Timestamp > ago(1d)\n| summarize arg_max(Timestamp, *) by DeviceId\n| where OnboardingStatus in ({OnboardingStatus}) or '*' in ({OnboardingStatus})\n| where OSPlatform in ({OSPlatform}) or '*' in ({OSPlatform})\n| summarize TotalDevices = count()",
+        "size": 4,
+        "title": "Total Devices",
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "visualization": "card",
+        "textSettings": {
+          "style": "bignumber"
+        }
+      },
+      "customWidth": "25",
+      "name": "query - total devices"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "// Onboarded Devices Count\nDeviceInfo\n| where Timestamp > ago(1d)\n| summarize arg_max(Timestamp, *) by DeviceId\n| where OnboardingStatus in ({OnboardingStatus}) or '*' in ({OnboardingStatus})\n| where OSPlatform in ({OSPlatform}) or '*' in ({OSPlatform})\n| where OnboardingStatus == \"Onboarded\"\n| summarize OnboardedDevices = count()",
+        "size": 4,
+        "title": "Onboarded Devices",
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "visualization": "card",
+        "textSettings": {
+          "style": "bignumber"
+        },
+        "tileSettings": {
+          "titleContent": {
+            "columnMatch": "OnboardedDevices",
+            "formatter": 12,
+            "formatOptions": {
+              "palette": "green"
+            }
+          }
+        }
+      },
+      "customWidth": "25",
+      "name": "query - onboarded devices"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "// Can Be Onboarded Devices\nDeviceInfo\n| where Timestamp > ago(1d)\n| summarize arg_max(Timestamp, *) by DeviceId\n| where OnboardingStatus in ({OnboardingStatus}) or '*' in ({OnboardingStatus})\n| where OSPlatform in ({OSPlatform}) or '*' in ({OSPlatform})\n| where OnboardingStatus == \"Can be onboarded\"\n| summarize CanBeOnboarded = count()",
+        "size": 4,
+        "title": "Can Be Onboarded",
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "visualization": "card",
+        "textSettings": {
+          "style": "bignumber"
+        },
+        "tileSettings": {
+          "titleContent": {
+            "columnMatch": "CanBeOnboarded",
+            "formatter": 12,
+            "formatOptions": {
+              "palette": "yellow"
+            }
+          }
+        }
+      },
+      "customWidth": "25",
+      "name": "query - can be onboarded"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "// Onboarding Compliance Rate\nDeviceInfo\n| where Timestamp > ago(1d)\n| summarize arg_max(Timestamp, *) by DeviceId\n| where OnboardingStatus in ({OnboardingStatus}) or '*' in ({OnboardingStatus})\n| where OSPlatform in ({OSPlatform}) or '*' in ({OSPlatform})\n| summarize \n    Total = count(),\n    Onboarded = countif(OnboardingStatus == \"Onboarded\")\n| extend ComplianceRate = round((Onboarded * 100.0) / Total, 2)\n| project ComplianceRate",
+        "size": 4,
+        "title": "Onboarding Compliance %",
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "visualization": "card",
+        "textSettings": {
+          "style": "bignumber"
+        }
+      },
+      "customWidth": "25",
+      "name": "query - compliance rate"
+    },
+    {
+      "type": 11,
+      "content": {
+        "version": "LinkItem/1.0",
+        "style": "tabs",
+        "links": [
+          {
+            "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+            "cellValue": "selectedTab",
+            "linkTarget": "parameter",
+            "linkLabel": "📋 Device Inventory",
+            "subTarget": "DeviceInventory",
+            "style": "link"
+          },
+          {
+            "id": "b2c3d4e5-f6a7-8901-bcde-f12345678901",
+            "cellValue": "selectedTab",
+            "linkTarget": "parameter",
+            "linkLabel": "🎯 Onboarding Status",
+            "subTarget": "OnboardingStatus",
+            "style": "link"
+          },
+          {
+            "id": "c3d4e5f6-a7b8-9012-cdef-123456789012",
+            "cellValue": "selectedTab",
+            "linkTarget": "parameter",
+            "linkLabel": "❤️ Health & Connectivity",
+            "subTarget": "HealthConnectivity",
+            "style": "link"
+          },
+          {
+            "id": "d4e5f6a7-b8c9-0123-def1-234567890123",
+            "cellValue": "selectedTab",
+            "linkTarget": "parameter",
+            "linkLabel": "🔧 Troubleshooting",
+            "subTarget": "Troubleshooting",
+            "style": "link"
+          },
+          {
+            "id": "e5f6a7b8-c9d0-1234-ef12-345678901234",
+            "cellValue": "selectedTab",
+            "linkTarget": "parameter",
+            "linkLabel": "📈 Trending & Analytics",
+            "subTarget": "Trending",
+            "style": "link"
+          }
+        ]
+      },
+      "name": "links - navigation tabs"
+    },
+    {
+      "type": 12,
+      "content": {
+        "version": "NotebookGroup/1.0",
+        "groupType": "editable",
+        "items": [
+          {
+            "type": 1,
+            "content": {
+              "json": "## 📋 Device Inventory\n\nComplete inventory of all devices discovered in your organization, including onboarding status, OS details, and last seen information."
+            },
+            "name": "text - device inventory header"
+          },
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "// Complete Device Inventory\nDeviceInfo\n| where Timestamp > ago(1d)\n| summarize arg_max(Timestamp, *) by DeviceId\n| where OnboardingStatus in ({OnboardingStatus}) or '*' in ({OnboardingStatus})\n| where OSPlatform in ({OSPlatform}) or '*' in ({OSPlatform})\n| project \n    DeviceName,\n    OnboardingStatus,\n    OSPlatform,\n    OSVersion,\n    OSBuild,\n    ClientVersion,\n    IsAzureADJoined,\n    JoinType,\n    LastSeen = Timestamp\n| order by OnboardingStatus asc, DeviceName asc",
+              "size": 0,
+              "title": "Device Inventory List",
+              "exportFieldName": "DeviceName",
+              "exportParameterName": "SelectedDevice",
+              "exportDefaultValue": "All",
+              "queryType": 0,
+              "resourceType": "microsoft.operationalinsights/workspaces",
+              "gridSettings": {
+                "formatters": [
+                  {
+                    "columnMatch": "OnboardingStatus",
+                    "formatter": 18,
+                    "formatOptions": {
+                      "thresholdsOptions": "icons",
+                      "thresholdsGrid": [
+                        {
+                          "operator": "==",
+                          "thresholdValue": "Onboarded",
+                          "representation": "success",
+                          "text": "{0}{1}"
+                        },
+                        {
+                          "operator": "==",
+                          "thresholdValue": "Can be onboarded",
+                          "representation": "2",
+                          "text": "{0}{1}"
+                        },
+                        {
+                          "operator": "==",
+                          "thresholdValue": "Unsupported",
+                          "representation": "failed",
+                          "text": "{0}{1}"
+                        },
+                        {
+                          "operator": "Default",
+                          "thresholdValue": null,
+                          "representation": "unknown",
+                          "text": "{0}{1}"
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "columnMatch": "IsAzureADJoined",
+                    "formatter": 18,
+                    "formatOptions": {
+                      "thresholdsOptions": "icons",
+                      "thresholdsGrid": [
+                        {
+                          "operator": "==",
+                          "thresholdValue": "1",
+                          "representation": "success",
+                          "text": "Yes"
+                        },
+                        {
+                          "operator": "Default",
+                          "thresholdValue": null,
+                          "representation": "failed",
+                          "text": "No"
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "columnMatch": "LastSeen",
+                    "formatter": 6
+                  }
+                ],
+                "filter": true,
+                "sortBy": [
+                  {
+                    "itemKey": "OnboardingStatus",
+                    "sortOrder": 1
+                  }
+                ]
+              },
+              "sortBy": [
+                {
+                  "itemKey": "OnboardingStatus",
+                  "sortOrder": 1
+                }
+              ]
+            },
+            "name": "query - device inventory grid"
+          }
+        ]
+      },
+      "conditionalVisibility": {
+        "parameterName": "selectedTab",
+        "comparison": "isEqualTo",
+        "value": "DeviceInventory"
+      },
+      "name": "group - device inventory"
+    },
+    {
+      "type": 12,
+      "content": {
+        "version": "NotebookGroup/1.0",
+        "groupType": "editable",
+        "items": [
+          {
+            "type": 1,
+            "content": {
+              "json": "## 🎯 Onboarding Status Analysis\n\nDetailed breakdown of device onboarding status with actionable insights for deployment teams."
+            },
+            "name": "text - onboarding header"
+          },
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "// Onboarding Status Distribution\nDeviceInfo\n| where Timestamp > ago(1d)\n| summarize arg_max(Timestamp, *) by DeviceId\n| where OnboardingStatus in ({OnboardingStatus}) or '*' in ({OnboardingStatus})\n| where OSPlatform in ({OSPlatform}) or '*' in ({OSPlatform})\n| summarize DeviceCount = count() by OnboardingStatus\n| order by DeviceCount desc",
+              "size": 0,
+              "title": "Onboarding Status Distribution",
+              "queryType": 0,
+              "resourceType": "microsoft.operationalinsights/workspaces",
+              "visualization": "piechart"
+            },
+            "customWidth": "50",
+            "name": "query - onboarding pie chart"
+          },
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "// Onboarding Status by OS Platform\nDeviceInfo\n| where Timestamp > ago(1d)\n| summarize arg_max(Timestamp, *) by DeviceId\n| where OnboardingStatus in ({OnboardingStatus}) or '*' in ({OnboardingStatus})\n| where OSPlatform in ({OSPlatform}) or '*' in ({OSPlatform})\n| summarize DeviceCount = count() by OSPlatform, OnboardingStatus\n| order by OSPlatform asc, OnboardingStatus asc",
+              "size": 0,
+              "title": "Onboarding Status by OS Platform",
+              "queryType": 0,
+              "resourceType": "microsoft.operationalinsights/workspaces",
+              "visualization": "barchart"
+            },
+            "customWidth": "50",
+            "name": "query - onboarding by os"
+          },
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "// Devices That Can Be Onboarded - Priority List\nDeviceInfo\n| where Timestamp > ago(1d)\n| summarize arg_max(Timestamp, *) by DeviceId\n| where OnboardingStatus == \"Can be onboarded\"\n| where OSPlatform in ({OSPlatform}) or '*' in ({OSPlatform})\n| extend DaysSinceFirstSeen = datetime_diff('day', now(), Timestamp)\n| project \n    DeviceName,\n    OSPlatform,\n    OSVersion,\n    IsAzureADJoined,\n    JoinType,\n    FirstSeen = Timestamp,\n    DaysSinceFirstSeen\n| order by DaysSinceFirstSeen desc",
+              "size": 0,
+              "title": "⚠️ Devices Ready for Onboarding (Priority List)",
+              "noDataMessage": "No devices found that can be onboarded. All discovered devices are either already onboarded or unsupported.",
+              "queryType": 0,
+              "resourceType": "microsoft.operationalinsights/workspaces",
+              "gridSettings": {
+                "formatters": [
+                  {
+                    "columnMatch": "DaysSinceFirstSeen",
+                    "formatter": 18,
+                    "formatOptions": {
+                      "thresholdsOptions": "colors",
+                      "thresholdsGrid": [
+                        {
+                          "operator": ">",
+                          "thresholdValue": "30",
+                          "representation": "redBright",
+                          "text": "{0}{1}"
+                        },
+                        {
+                          "operator": ">",
+                          "thresholdValue": "7",
+                          "representation": "orange",
+                          "text": "{0}{1}"
+                        },
+                        {
+                          "operator": "Default",
+                          "thresholdValue": null,
+                          "representation": "yellow",
+                          "text": "{0}{1}"
+                        }
+                      ]
+                    },
+                    "numberFormat": {
+                      "unit": 0,
+                      "options": {
+                        "style": "decimal"
+                      }
+                    }
+                  }
+                ],
+                "filter": true
+              }
+            },
+            "name": "query - can be onboarded list"
+          },
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "// Unsupported Devices\nDeviceInfo\n| where Timestamp > ago(1d)\n| summarize arg_max(Timestamp, *) by DeviceId\n| where OnboardingStatus == \"Unsupported\"\n| where OSPlatform in ({OSPlatform}) or '*' in ({OSPlatform})\n| project \n    DeviceName,\n    OSPlatform,\n    OSVersion,\n    OSBuild,\n    Reason = \"OS version not supported by MDE\"\n| order by OSPlatform asc, DeviceName asc",
+              "size": 0,
+              "title": "❌ Unsupported Devices",
+              "noDataMessage": "No unsupported devices found. All discovered devices meet MDE requirements.",
+              "queryType": 0,
+              "resourceType": "microsoft.operationalinsights/workspaces",
+              "gridSettings": {
+                "filter": true
+              }
+            },
+            "name": "query - unsupported devices"
+          }
+        ]
+      },
+      "conditionalVisibility": {
+        "parameterName": "selectedTab",
+        "comparison": "isEqualTo",
+        "value": "OnboardingStatus"
+      },
+      "name": "group - onboarding status"
+    },
+    {
+      "type": 12,
+      "content": {
+        "version": "NotebookGroup/1.0",
+        "groupType": "editable",
+        "items": [
+          {
+            "type": 1,
+            "content": {
+              "json": "## ❤️ Device Health & Connectivity\n\nMonitor sensor health, communication status, and identify devices requiring attention."
+            },
+            "name": "text - health header"
+          },
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "// Active vs Inactive Devices\nDeviceInfo\n| where Timestamp > ago(1d)\n| summarize arg_max(Timestamp, *) by DeviceId\n| where OnboardingStatus == \"Onboarded\"\n| where OSPlatform in ({OSPlatform}) or '*' in ({OSPlatform})\n| extend DaysSinceLastSeen = datetime_diff('day', now(), Timestamp)\n| extend HealthCategory = case(\n    DaysSinceLastSeen == 0, \"Active (Today)\",\n    DaysSinceLastSeen <= 1, \"Active (Yesterday)\",\n    DaysSinceLastSeen <= 7, \"Inactive (1-7 days)\",\n    DaysSinceLastSeen <= 30, \"Inactive (8-30 days)\",\n    \"Inactive (>30 days)\"\n)\n| summarize DeviceCount = count() by HealthCategory\n| order by DeviceCount desc",
+              "size": 0,
+              "title": "Device Health Distribution",
+              "queryType": 0,
+              "resourceType": "microsoft.operationalinsights/workspaces",
+              "visualization": "piechart",
+              "chartSettings": {
+                "seriesLabelSettings": [
+                  {
+                    "seriesName": "Active (Today)",
+                    "color": "green"
+                  },
+                  {
+                    "seriesName": "Active (Yesterday)",
+                    "color": "greenDark"
+                  },
+                  {
+                    "seriesName": "Inactive (1-7 days)",
+                    "color": "yellow"
+                  },
+                  {
+                    "seriesName": "Inactive (8-30 days)",
+                    "color": "orange"
+                  },
+                  {
+                    "seriesName": "Inactive (>30 days)",
+                    "color": "redBright"
+                  }
+                ]
+              }
+            },
+            "customWidth": "50",
+            "name": "query - health distribution"
+          },
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "// Communication Frequency Analysis\nDeviceInfo\n| where Timestamp > {TimeRange:start}\n| where OnboardingStatus == \"Onboarded\"\n| where OSPlatform in ({OSPlatform}) or '*' in ({OSPlatform})\n| summarize \n    LastSeen = max(Timestamp),\n    ReportCount = count() \n    by DeviceId, DeviceName\n| extend DaysSinceLastSeen = datetime_diff('day', now(), LastSeen)\n| extend HealthStatus = case(\n    DaysSinceLastSeen == 0, \"Healthy\",\n    DaysSinceLastSeen <= 7, \"Warning\",\n    \"Critical\"\n)\n| summarize DeviceCount = count() by HealthStatus",
+              "size": 0,
+              "title": "Health Status Summary",
+              "queryType": 0,
+              "resourceType": "microsoft.operationalinsights/workspaces",
+              "visualization": "barchart",
+              "chartSettings": {
+                "seriesLabelSettings": [
+                  {
+                    "seriesName": "Healthy",
+                    "color": "green"
+                  },
+                  {
+                    "seriesName": "Warning",
+                    "color": "yellow"
+                  },
+                  {
+                    "seriesName": "Critical",
+                    "color": "redBright"
+                  }
+                ]
+              }
+            },
+            "customWidth": "50",
+            "name": "query - health status summary"
+          },
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "// Inactive Devices (No Communication >7 days)\nDeviceInfo\n| where Timestamp > ago(30d)\n| where OnboardingStatus == \"Onboarded\"\n| where OSPlatform in ({OSPlatform}) or '*' in ({OSPlatform})\n| summarize LastSeen = max(Timestamp) by DeviceId, DeviceName, OSPlatform, ClientVersion\n| extend DaysSinceLastSeen = datetime_diff('day', now(), LastSeen)\n| where DaysSinceLastSeen > 7\n| project \n    DeviceName,\n    OSPlatform,\n    ClientVersion,\n    LastSeen,\n    DaysSinceLastSeen,\n    Status = case(\n        DaysSinceLastSeen > 30, \"Critical - Investigate\",\n        DaysSinceLastSeen > 14, \"Warning - Check Soon\",\n        \"Attention Required\"\n    )\n| order by DaysSinceLastSeen desc",
+              "size": 0,
+              "title": "⚠️ Inactive Devices (No Communication >7 Days)",
+              "noDataMessage": "All onboarded devices are actively communicating. No inactive devices detected.",
+              "queryType": 0,
+              "resourceType": "microsoft.operationalinsights/workspaces",
+              "gridSettings": {
+                "formatters": [
+                  {
+                    "columnMatch": "DaysSinceLastSeen",
+                    "formatter": 18,
+                    "formatOptions": {
+                      "thresholdsOptions": "colors",
+                      "thresholdsGrid": [
+                        {
+                          "operator": ">",
+                          "thresholdValue": "30",
+                          "representation": "redBright",
+                          "text": "{0}{1}"
+                        },
+                        {
+                          "operator": ">",
+                          "thresholdValue": "14",
+                          "representation": "orange",
+                          "text": "{0}{1}"
+                        },
+                        {
+                          "operator": "Default",
+                          "thresholdValue": null,
+                          "representation": "yellow",
+                          "text": "{0}{1}"
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "columnMatch": "Status",
+                    "formatter": 18,
+                    "formatOptions": {
+                      "thresholdsOptions": "icons",
+                      "thresholdsGrid": [
+                        {
+                          "operator": "contains",
+                          "thresholdValue": "Critical",
+                          "representation": "4",
+                          "text": "{0}{1}"
+                        },
+                        {
+                          "operator": "contains",
+                          "thresholdValue": "Warning",
+                          "representation": "2",
+                          "text": "{0}{1}"
+                        },
+                        {
+                          "operator": "Default",
+                          "thresholdValue": null,
+                          "representation": "warning",
+                          "text": "{0}{1}"
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "columnMatch": "LastSeen",
+                    "formatter": 6
+                  }
+                ],
+                "filter": true,
+                "sortBy": [
+                  {
+                    "itemKey": "DaysSinceLastSeen",
+                    "sortOrder": 2
+                  }
+                ]
+              },
+              "sortBy": [
+                {
+                  "itemKey": "DaysSinceLastSeen",
+                  "sortOrder": 2
+                }
+              ]
+            },
+            "name": "query - inactive devices"
+          },
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "// Client Version Distribution\nDeviceInfo\n| where Timestamp > ago(1d)\n| summarize arg_max(Timestamp, *) by DeviceId\n| where OnboardingStatus == \"Onboarded\"\n| where OSPlatform in ({OSPlatform}) or '*' in ({OSPlatform})\n| where isnotempty(ClientVersion)\n| summarize DeviceCount = count() by ClientVersion\n| order by ClientVersion desc",
+              "size": 0,
+              "title": "MDE Client Version Distribution",
+              "queryType": 0,
+              "resourceType": "microsoft.operationalinsights/workspaces",
+              "visualization": "barchart"
+            },
+            "name": "query - client versions"
+          }
+        ]
+      },
+      "conditionalVisibility": {
+        "parameterName": "selectedTab",
+        "comparison": "isEqualTo",
+        "value": "HealthConnectivity"
+      },
+      "name": "group - health connectivity"
+    },
+    {
+      "type": 12,
+      "content": {
+        "version": "NotebookGroup/1.0",
+        "groupType": "editable",
+        "items": [
+          {
+            "type": 1,
+            "content": {
+              "json": "## 🔧 Troubleshooting & Diagnostics\n\nIdentify devices with communication gaps, sensor issues, and missing telemetry."
+            },
+            "name": "text - troubleshooting header"
+          },
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "// Devices with Communication Gaps\nlet LookbackPeriod = {TimeRange:end} - {TimeRange:start};\nDeviceInfo\n| where Timestamp between ({TimeRange:start} .. {TimeRange:end})\n| where OnboardingStatus == \"Onboarded\"\n| where OSPlatform in ({OSPlatform}) or '*' in ({OSPlatform})\n| summarize \n    ReportCount = count(),\n    FirstReport = min(Timestamp),\n    LastReport = max(Timestamp),\n    AvgGapHours = avg(datetime_diff('hour', next(Timestamp), Timestamp))\n    by DeviceId, DeviceName\n| extend ExpectedReports = datetime_diff('hour', LastReport, FirstReport) / 24\n| where ReportCount < ExpectedReports * 0.5  // Less than 50% expected reports\n| project \n    DeviceName,\n    ReportCount,\n    ExpectedReports = round(ExpectedReports, 0),\n    ReportingGap = round((1 - (ReportCount / ExpectedReports)) * 100, 1),\n    LastReport,\n    Issue = \"Intermittent communication - possible network or service issues\"\n| order by ReportingGap desc",
+              "size": 0,
+              "title": "🔴 Devices with Communication Gaps",
+              "noDataMessage": "No communication gaps detected. All devices reporting consistently.",
+              "queryType": 0,
+              "resourceType": "microsoft.operationalinsights/workspaces",
+              "gridSettings": {
+                "formatters": [
+                  {
+                    "columnMatch": "ReportingGap",
+                    "formatter": 18,
+                    "formatOptions": {
+                      "thresholdsOptions": "colors",
+                      "thresholdsGrid": [
+                        {
+                          "operator": ">",
+                          "thresholdValue": "75",
+                          "representation": "redBright",
+                          "text": "{0}{1}%"
+                        },
+                        {
+                          "operator": ">",
+                          "thresholdValue": "50",
+                          "representation": "orange",
+                          "text": "{0}{1}%"
+                        },
+                        {
+                          "operator": "Default",
+                          "thresholdValue": null,
+                          "representation": "yellow",
+                          "text": "{0}{1}%"
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "columnMatch": "LastReport",
+                    "formatter": 6
+                  }
+                ],
+                "filter": true
+              }
+            },
+            "name": "query - communication gaps"
+          },
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "// Devices Missing Recent Process Events (Sensor Health Check)\nlet OnboardedDevices = \n    DeviceInfo\n    | where Timestamp > ago(1d)\n    | summarize arg_max(Timestamp, *) by DeviceId\n    | where OnboardingStatus == \"Onboarded\"\n    | where OSPlatform in ({OSPlatform}) or '*' in ({OSPlatform})\n    | project DeviceId, DeviceName, LastDeviceInfoReport = Timestamp;\nlet DevicesWithProcessEvents = \n    DeviceProcessEvents\n    | where Timestamp > ago(1d)\n    | summarize LastProcessEvent = max(Timestamp) by DeviceId;\nOnboardedDevices\n| join kind=leftouter DevicesWithProcessEvents on DeviceId\n| where isnull(LastProcessEvent) or datetime_diff('hour', now(), LastProcessEvent) > 24\n| project \n    DeviceName,\n    LastDeviceInfoReport,\n    LastProcessEvent,\n    Issue = case(\n        isnull(LastProcessEvent), \"No process events in last 24h - SENSE service may be stopped\",\n        \"Process events delayed - check sensor health\"\n    )\n| order by DeviceName asc",
+              "size": 0,
+              "title": "🔴 Devices with No Recent Telemetry (Possible SENSE Service Issues)",
+              "noDataMessage": "All onboarded devices are reporting telemetry. No sensor issues detected.",
+              "queryType": 0,
+              "resourceType": "microsoft.operationalinsights/workspaces",
+              "gridSettings": {
+                "formatters": [
+                  {
+                    "columnMatch": "LastDeviceInfoReport",
+                    "formatter": 6
+                  },
+                  {
+                    "columnMatch": "LastProcessEvent",
+                    "formatter": 6
+                  }
+                ],
+                "filter": true
+              }
+            },
+            "name": "query - missing telemetry"
+          },
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "// Network Connectivity Test Results\nDeviceNetworkInfo\n| where Timestamp > ago(1d)\n| summarize arg_max(Timestamp, *) by DeviceId\n| where OSPlatform in ({OSPlatform}) or '*' in ({OSPlatform})\n| join kind=inner (\n    DeviceInfo\n    | where Timestamp > ago(1d)\n    | summarize arg_max(Timestamp, *) by DeviceId\n    | where OnboardingStatus == \"Onboarded\"\n    | project DeviceId, DeviceName\n) on DeviceId\n| extend HasConnectivity = isnotempty(IPAddresses)\n| summarize DeviceCount = count() by HasConnectivity\n| extend Status = case(HasConnectivity == true, \"Connected\", \"No Network Info\")",
+              "size": 0,
+              "title": "Network Connectivity Status",
+              "queryType": 0,
+              "resourceType": "microsoft.operationalinsights/workspaces",
+              "visualization": "piechart"
+            },
+            "customWidth": "50",
+            "name": "query - network connectivity"
+          },
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "// Azure AD Join Status Distribution\nDeviceInfo\n| where Timestamp > ago(1d)\n| summarize arg_max(Timestamp, *) by DeviceId\n| where OnboardingStatus == \"Onboarded\"\n| where OSPlatform in ({OSPlatform}) or '*' in ({OSPlatform})\n| extend JoinStatus = case(\n    IsAzureADJoined == 1 and JoinType == \"AzureADJoined\", \"Azure AD Joined\",\n    IsAzureADJoined == 1 and JoinType == \"AzureADRegistered\", \"Azure AD Registered\",\n    IsAzureADJoined == 1 and JoinType == \"Hybrid\", \"Hybrid Azure AD Joined\",\n    \"Not Azure AD Joined\"\n)\n| summarize DeviceCount = count() by JoinStatus",
+              "size": 0,
+              "title": "Azure AD Join Status",
+              "queryType": 0,
+              "resourceType": "microsoft.operationalinsights/workspaces",
+              "visualization": "piechart"
+            },
+            "customWidth": "50",
+            "name": "query - aad join status"
+          },
+          {
+            "type": 1,
+            "content": {
+              "json": "### 📖 Remediation Guidance\n\n**For devices with communication gaps or missing telemetry:**\n\n1. **Verify SENSE service status** - Use [Method 4: Registry/Service Validation](https://github.com/your-org/SecOps/blob/main/docs/MDE-Validation-Methods/04-Registry-Service-Validation.md)\n2. **Check network connectivity** - Use [Test-MDEConnectivity.ps1](https://github.com/your-org/SecOps/blob/main/scripts/MDE-Validation/Test-MDEConnectivity.ps1)\n3. **Run Client Analyzer** - Use [Method 6: MDE Client Analyzer](https://github.com/your-org/SecOps/blob/main/docs/MDE-Validation-Methods/06-MDE-Client-Analyzer.md)\n4. **Review event logs** - Check `Microsoft-Windows-SENSE/Operational` for error codes\n\n**Common Issues:**\n- Event ID 15: Cloud connectivity blocked by firewall/proxy\n- Event ID 7: Onboarding configuration missing or corrupt\n- Event ID 5: Failed to connect to server (network/DNS issue)"
+            },
+            "name": "text - remediation guidance"
+          }
+        ]
+      },
+      "conditionalVisibility": {
+        "parameterName": "selectedTab",
+        "comparison": "isEqualTo",
+        "value": "Troubleshooting"
+      },
+      "name": "group - troubleshooting"
+    },
+    {
+      "type": 12,
+      "content": {
+        "version": "NotebookGroup/1.0",
+        "groupType": "editable",
+        "items": [
+          {
+            "type": 1,
+            "content": {
+              "json": "## 📈 Trending & Analytics\n\nHistorical trends for onboarding progress, device growth, and deployment velocity."
+            },
+            "name": "text - trending header"
+          },
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "// Onboarding Progress Over Time\nDeviceInfo\n| where Timestamp between ({TimeRange:start} .. {TimeRange:end})\n| where OSPlatform in ({OSPlatform}) or '*' in ({OSPlatform})\n| summarize \n    TotalDevices = dcount(DeviceId),\n    OnboardedDevices = dcountif(DeviceId, OnboardingStatus == \"Onboarded\"),\n    CanBeOnboarded = dcountif(DeviceId, OnboardingStatus == \"Can be onboarded\")\n    by bin(Timestamp, 1d)\n| extend OnboardingRate = round((OnboardedDevices * 100.0) / TotalDevices, 2)\n| project \n    Date = Timestamp,\n    TotalDevices,\n    OnboardedDevices,\n    CanBeOnboarded,\n    OnboardingRate\n| order by Date asc",
+              "size": 0,
+              "title": "Onboarding Progress Trend",
+              "queryType": 0,
+              "resourceType": "microsoft.operationalinsights/workspaces",
+              "visualization": "linechart",
+              "chartSettings": {
+                "yAxis": [
+                  "TotalDevices",
+                  "OnboardedDevices",
+                  "CanBeOnboarded"
+                ]
+              }
+            },
+            "name": "query - onboarding trend"
+          },
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "// New Devices Discovered Per Day\nDeviceInfo\n| where Timestamp between ({TimeRange:start} .. {TimeRange:end})\n| where OSPlatform in ({OSPlatform}) or '*' in ({OSPlatform})\n| summarize FirstSeen = min(Timestamp) by DeviceId, DeviceName\n| summarize NewDevices = count() by bin(FirstSeen, 1d)\n| project Date = FirstSeen, NewDevices\n| order by Date asc",
+              "size": 0,
+              "title": "Device Discovery Rate (New Devices Per Day)",
+              "queryType": 0,
+              "resourceType": "microsoft.operationalinsights/workspaces",
+              "visualization": "barchart"
+            },
+            "customWidth": "50",
+            "name": "query - discovery rate"
+          },
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "// Devices Onboarded Per Day\nDeviceInfo\n| where Timestamp between ({TimeRange:start} .. {TimeRange:end})\n| where OnboardingStatus == \"Onboarded\"\n| where OSPlatform in ({OSPlatform}) or '*' in ({OSPlatform})\n| summarize FirstOnboarded = min(Timestamp) by DeviceId\n| summarize OnboardedCount = count() by bin(FirstOnboarded, 1d)\n| project Date = FirstOnboarded, OnboardedCount\n| order by Date asc",
+              "size": 0,
+              "title": "Onboarding Velocity (Devices Onboarded Per Day)",
+              "queryType": 0,
+              "resourceType": "microsoft.operationalinsights/workspaces",
+              "visualization": "barchart"
+            },
+            "customWidth": "50",
+            "name": "query - onboarding velocity"
+          },
+          {
+            "type": 3,
+            "content": {
+              "version": "KqlItem/1.0",
+              "query": "// OS Platform Growth Trend\nDeviceInfo\n| where Timestamp between ({TimeRange:start} .. {TimeRange:end})\n| where OSPlatform in ({OSPlatform}) or '*' in ({OSPlatform})\n| summarize DeviceCount = dcount(DeviceId) by bin(Timestamp, 1d), OSPlatform\n| order by Timestamp asc",
+              "size": 0,
+              "title": "Device Growth by OS Platform",
+              "queryType": 0,
+              "resourceType": "microsoft.operationalinsights/workspaces",
+              "visualization": "areachart"
+            },
+            "name": "query - os platform growth"
+          }
+        ]
+      },
+      "conditionalVisibility": {
+        "parameterName": "selectedTab",
+        "comparison": "isEqualTo",
+        "value": "Trending"
+      },
+      "name": "group - trending"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "---\n\n## 📥 Export & Automation\n\n### Export Options\n\n- **Excel Export**: Click the \"Export to Excel\" button on any grid to download data\n- **PowerShell Scripts**: Use [Export-MDEStatusFromGraph.ps1](https://github.com/your-org/SecOps/blob/main/scripts/MDE-Validation/Export-MDEStatusFromGraph.ps1) for automated exports\n- **API Integration**: Query Advanced Hunting programmatically via Microsoft 365 Defender API\n\n### Documentation\n\n- **Validation Methods**: [Complete MDE Validation Documentation](https://github.com/your-org/SecOps/tree/main/docs/MDE-Validation-Methods)\n- **PowerShell Scripts**: [MDE Validation Scripts](https://github.com/your-org/SecOps/tree/main/scripts/MDE-Validation)\n- **KQL Queries**: All queries in this workbook are based on [Method 5: Advanced Hunting KQL](https://github.com/your-org/SecOps/blob/main/docs/MDE-Validation-Methods/05-Advanced-Hunting-KQL.md)\n\n### Support\n\nFor issues or questions, refer to the [troubleshooting documentation](https://github.com/your-org/SecOps/blob/main/docs/MDE-Validation-Methods/INDEX.md#troubleshooting-decision-tree)."
+      },
+      "name": "text - footer documentation"
+    }
+  ],
+  "fallbackResourceIds": [
+    "azure monitor"
+  ],
+  "$schema": "https://github.com/Microsoft/Application-Insights-Workbooks/blob/master/schema/workbook.json"
+}

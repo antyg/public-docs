@@ -1,0 +1,755 @@
+<#
+.SYNOPSIS
+    Intelligent multi-method MDE status validation with automatic fallback.
+
+.DESCRIPTION
+    Validates Microsoft Defender for Endpoint status using multiple methods with automatic
+    fallback chain. Attempts validation in order of efficiency and reliability:
+
+    1. CIM/WSMan (fastest, modern systems Windows 10/11, Server 2016+)
+    2. WMI/DCOM (legacy compatibility Windows 7, Server 2008 R2)
+    3. Registry (works when WMI/CIM unavailable)
+    4. Service (minimal validation when registry locked down)
+
+    Automatically detects best method per device and falls back gracefully on failure.
+    Supports single device and CSV bulk validation with parallel execution.
+
+.PARAMETER ComputerName
+    Target computer name. Defaults to local computer.
+
+.PARAMETER CsvPath
+    Path to CSV file containing device hostnames. Must have 'Hostname' column.
+
+.PARAMETER OutputPath
+    Path for output CSV report. Defaults to current directory with timestamp.
+
+.PARAMETER Credential
+    PSCredential for remote access. If not provided, uses current context.
+
+.PARAMETER ThrottleLimit
+    Maximum number of parallel sessions when processing CSV (default: 10).
+
+.PARAMETER PreferredMethod
+    Force specific validation method: 'CIM', 'WMI', 'Registry', 'Service', or 'Auto' (default).
+
+.EXAMPLE
+    .\Get-MDEStatus.ps1
+
+.EXAMPLE
+    .\Get-MDEStatus.ps1 -ComputerName "WORKSTATION01"
+
+.EXAMPLE
+    $Cred = Get-Credential
+    .\Get-MDEStatus.ps1 -CsvPath "C:\devices.csv" -Credential $Cred -OutputPath "C:\mde-status.csv"
+
+.EXAMPLE
+    .\Get-MDEStatus.ps1 -CsvPath "C:\devices.csv" -ThrottleLimit 20
+
+.EXAMPLE
+    .\Get-MDEStatus.ps1 -ComputerName "SERVER01" -PreferredMethod Registry
+
+.NOTES
+    Author: Security Operations Team
+    Version: 2.0
+    Requires: PowerShell 5.1+
+
+.REFERENCES
+    Troubleshoot Microsoft Defender for Endpoint onboarding issues
+    https://learn.microsoft.com/en-us/defender-endpoint/troubleshoot-onboarding
+
+    MSFT_MpComputerStatus class - Defender WMI/CIM Provider
+    https://learn.microsoft.com/en-us/previous-versions/windows/desktop/defender/msft-mpcomputerstatus
+
+    Get-CimInstance cmdlet - PowerShell CIM Cmdlets
+    https://learn.microsoft.com/en-us/powershell/module/cimcmdlets/get-ciminstance
+
+    New-CimSession cmdlet - PowerShell CIM Cmdlets
+    https://learn.microsoft.com/en-us/powershell/module/cimcmdlets/new-cimsession
+
+    Get-WmiObject cmdlet - PowerShell Management
+    https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.management/get-wmiobject
+
+    Get-Service cmdlet - PowerShell Management
+    https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.management/get-service
+
+    Get-ItemProperty cmdlet - Registry Access
+    https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.management/get-itemproperty
+
+    Get-WinEvent cmdlet - Event Log Queries
+    https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.diagnostics/get-winevent
+
+    Review events and errors using Event Viewer - MDE
+    https://learn.microsoft.com/en-us/defender-endpoint/event-error-codes
+
+    Invoke-Command cmdlet - PowerShell Remoting
+    https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/invoke-command
+
+    ForEach-Object -Parallel - PowerShell Parallel Processing
+    https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/foreach-object
+
+    Import-Csv cmdlet - PowerShell
+    https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.utility/import-csv
+
+    Export-Csv cmdlet - PowerShell
+    https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.utility/export-csv
+#>
+
+[CmdletBinding(DefaultParameterSetName = 'Single')]
+param(
+    [Parameter(Mandatory = $false, ParameterSetName = 'Single')]
+    [string]$ComputerName = $env:COMPUTERNAME,
+
+    [Parameter(Mandatory = $true, ParameterSetName = 'Bulk')]
+    [ValidateScript({ Test-Path $_ })]
+    [string]$CsvPath,
+
+    [Parameter(Mandatory = $false, ParameterSetName = 'Bulk')]
+    [string]$OutputPath,
+
+    [Parameter(Mandatory = $false)]
+    [System.Management.Automation.PSCredential]$Credential,
+
+    [Parameter(Mandatory = $false, ParameterSetName = 'Bulk')]
+    [ValidateRange(1, 50)]
+    [int]$ThrottleLimit = 10,
+
+    [Parameter(Mandatory = $false)]
+    [ValidateSet('Auto', 'CIM', 'WMI', 'Registry', 'Service')]
+    [string]$PreferredMethod = 'Auto'
+)
+
+$ErrorActionPreference = 'Stop'
+
+function Get-SENSEEventLog {
+    param(
+        [string]$Computer,
+        [System.Management.Automation.PSCredential]$Cred
+    )
+
+    try {
+        $ScriptBlock = {
+            try {
+                # Query SENSE operational log for errors and warnings in last 7 days
+                # Reference: https://learn.microsoft.com/en-us/defender-endpoint/event-error-codes
+                # Reference: https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.diagnostics/get-winevent
+                $ErrorEvents = Get-WinEvent -FilterHashtable @{
+                    LogName   = 'Microsoft-Windows-SENSE/Operational'
+                    Level     = 2, 3
+                    StartTime = (Get-Date).AddDays(-7)
+                } -MaxEvents 50 -ErrorAction SilentlyContinue
+
+                $ErrorCount = if ($ErrorEvents) { $ErrorEvents.Count } else { 0 }
+                $LastError = if ($ErrorEvents) {
+                    $Latest = $ErrorEvents[0]
+                    "$($Latest.TimeCreated) - Event $($Latest.Id): $($Latest.Message)"
+                }
+                else {
+                    'None'
+                }
+
+                [PSCustomObject]@{
+                    ErrorCount = $ErrorCount
+                    LastError  = $LastError
+                }
+            }
+            catch {
+                [PSCustomObject]@{
+                    ErrorCount = 0
+                    LastError  = 'None'
+                }
+            }
+        }
+
+        if ($Computer -eq $env:COMPUTERNAME) {
+            $Data = & $ScriptBlock
+        }
+        else {
+            $InvokeParams = @{
+                ComputerName = $Computer
+                ScriptBlock  = $ScriptBlock
+                ErrorAction  = 'SilentlyContinue'
+            }
+
+            if ($Cred) {
+                $InvokeParams.Credential = $Cred
+            }
+
+            $Data = Invoke-Command @InvokeParams
+        }
+
+        return $Data
+    }
+    catch {
+        return $null
+    }
+}
+
+function Get-MDEStatus {
+    param(
+        [string]$Computer,
+        [System.Management.Automation.PSCredential]$Cred,
+        [string]$Method = 'Auto'
+    )
+
+    $Result = [PSCustomObject]@{
+        Hostname                      = $Computer
+        Reachable                     = $false
+        ValidationMethod              = 'None'
+        DefenderInstalled             = $false
+        OnboardingState               = $null
+        OnboardingStateValue          = $null
+        AMRunningMode                 = $null
+        AMServiceEnabled              = $null
+        RealTimeProtectionEnabled     = $null
+        BehaviorMonitorEnabled        = $null
+        IsTamperProtected             = $null
+        TamperProtectionSource        = $null
+        AntivirusSignatureVersion     = $null
+        SignatureAgeHours             = $null
+        SENSEServiceStatus            = $null
+        DiagTrackServiceStatus        = $null
+        RecentSENSEErrors             = $null
+        LastSENSEError                = $null
+        HealthStatus                  = 'Unknown'
+        ErrorMessage                  = ''
+        Timestamp                     = (Get-Date -Format 'yyyy-MM-dd HH:mm:ss')
+    }
+
+    try {
+        $Result.Reachable = Test-Connection -ComputerName $Computer -Count 1 -Quiet -ErrorAction SilentlyContinue
+
+        if (-not $Result.Reachable) {
+            $Result.ErrorMessage = 'Device not reachable'
+            $Result.HealthStatus = 'Offline'
+            return $Result
+        }
+
+        if ($Method -eq 'Auto') {
+            $MethodsToTry = @('CIM', 'WMI', 'Registry', 'Service')
+        }
+        else {
+            $MethodsToTry = @($Method)
+        }
+
+        foreach ($CurrentMethod in $MethodsToTry) {
+            try {
+                switch ($CurrentMethod) {
+                    'CIM' {
+                        $CimResult = Get-MDEStatusViaCIM -Computer $Computer -Cred $Cred
+                        if ($CimResult.Success) {
+                            $Result = Merge-MDEResult -Target $Result -Source $CimResult.Data
+                            $Result.ValidationMethod = 'CIM-WSMan'
+                            break
+                        }
+                    }
+                    'WMI' {
+                        $WmiResult = Get-MDEStatusViaWMI -Computer $Computer -Cred $Cred
+                        if ($WmiResult.Success) {
+                            $Result = Merge-MDEResult -Target $Result -Source $WmiResult.Data
+                            $Result.ValidationMethod = 'WMI-DCOM'
+                            break
+                        }
+                    }
+                    'Registry' {
+                        $RegResult = Get-MDEStatusViaRegistry -Computer $Computer -Cred $Cred
+                        if ($RegResult.Success) {
+                            $Result = Merge-MDEResult -Target $Result -Source $RegResult.Data
+                            $Result.ValidationMethod = 'Registry'
+                            break
+                        }
+                    }
+                    'Service' {
+                        $SvcResult = Get-MDEStatusViaService -Computer $Computer -Cred $Cred
+                        if ($SvcResult.Success) {
+                            $Result = Merge-MDEResult -Target $Result -Source $SvcResult.Data
+                            $Result.ValidationMethod = 'Service'
+                            break
+                        }
+                    }
+                }
+
+                if ($Result.ValidationMethod -ne 'None') {
+                    break
+                }
+            }
+            catch {
+                continue
+            }
+        }
+
+        if ($Result.ValidationMethod -eq 'None') {
+            $Result.ErrorMessage = 'All validation methods failed'
+            $Result.HealthStatus = 'ValidationFailed'
+        }
+        else {
+            $EventLogData = Get-SENSEEventLog -Computer $Computer -Cred $Cred
+            if ($EventLogData) {
+                $Result.RecentSENSEErrors = $EventLogData.ErrorCount
+                $Result.LastSENSEError = $EventLogData.LastError
+            }
+
+            $Result = Get-MDEHealthState -Result $Result
+        }
+    }
+    catch {
+        $Result.ErrorMessage = $_.Exception.Message
+        $Result.HealthStatus = 'Error'
+    }
+
+    return $Result
+}
+
+function Get-MDEStatusViaCIM {
+    param(
+        [string]$Computer,
+        [System.Management.Automation.PSCredential]$Cred
+    )
+
+    $Session = $null
+    try {
+        # Create CIM session using WSMan protocol (modern Windows 10/11, Server 2016+)
+        # Reference: https://learn.microsoft.com/en-us/powershell/module/cimcmdlets/new-cimsession
+        $SessionParams = @{
+            ComputerName = $Computer
+            ErrorAction  = 'Stop'
+        }
+
+        if ($Cred) {
+            $SessionParams.Credential = $Cred
+        }
+
+        $Session = New-CimSession @SessionParams
+
+        # Query Defender status via WMI namespace using CIM
+        # Reference: https://learn.microsoft.com/en-us/previous-versions/windows/desktop/defender/msft-mpcomputerstatus
+        # Reference: https://learn.microsoft.com/en-us/powershell/module/cimcmdlets/get-ciminstance
+        $Status = Get-CimInstance -CimSession $Session `
+            -Namespace 'root/Microsoft/Windows/Defender' `
+            -ClassName 'MSFT_MpComputerStatus' `
+            -ErrorAction Stop
+
+        if ($Status) {
+            return @{
+                Success = $true
+                Data    = $Status
+            }
+        }
+
+        return @{ Success = $false }
+    }
+    catch {
+        return @{ Success = $false }
+    }
+    finally {
+        if ($Session) {
+            Remove-CimSession -CimSession $Session -ErrorAction SilentlyContinue
+        }
+    }
+}
+
+function Get-MDEStatusViaWMI {
+    param(
+        [string]$Computer,
+        [System.Management.Automation.PSCredential]$Cred
+    )
+
+    try {
+        # Legacy WMI/DCOM query for Windows 7, Server 2008 R2 compatibility
+        # Reference: https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.management/get-wmiobject
+        # Reference: https://learn.microsoft.com/en-us/previous-versions/windows/desktop/defender/msft-mpcomputerstatus
+        $WmiParams = @{
+            ComputerName = $Computer
+            Namespace    = 'root/Microsoft/Windows/Defender'
+            Class        = 'MSFT_MpComputerStatus'
+            ErrorAction  = 'Stop'
+        }
+
+        if ($Cred) {
+            $WmiParams.Credential = $Cred
+        }
+
+        $Status = Get-WmiObject @WmiParams
+
+        if ($Status) {
+            return @{
+                Success = $true
+                Data    = $Status
+            }
+        }
+
+        return @{ Success = $false }
+    }
+    catch {
+        return @{ Success = $false }
+    }
+}
+
+function Get-MDEStatusViaRegistry {
+    param(
+        [string]$Computer,
+        [System.Management.Automation.PSCredential]$Cred
+    )
+
+    try {
+        $ScriptBlock = {
+            # Query MDE registry keys and service status when WMI/CIM unavailable
+            # Reference: https://learn.microsoft.com/en-us/defender-endpoint/troubleshoot-onboarding
+            # Reference: https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.management/get-itemproperty
+            $RegData = [PSCustomObject]@{
+                DefenderInstalled    = $false
+                OnboardingState      = $null
+                OnboardingStateValue = $null
+                SENSEServiceStatus   = $null
+                DiagTrackServiceStatus = $null
+            }
+
+            # Check MDE installation registry key
+            # Reference: https://learn.microsoft.com/en-us/defender-endpoint/troubleshoot-onboarding
+            $InstallPath = Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Windows Advanced Threat Protection' -Name 'InstallLocation' -ErrorAction SilentlyContinue
+            if ($InstallPath) {
+                $RegData.DefenderInstalled = $true
+            }
+
+            # Check onboarding state from registry (0 = not onboarded, 1 = onboarded)
+            # Reference: https://learn.microsoft.com/en-us/defender-endpoint/troubleshoot-onboarding
+            $StatusPath = 'HKLM:\SOFTWARE\Microsoft\Windows Advanced Threat Protection\Status'
+            $OnboardingValue = Get-ItemProperty $StatusPath -Name 'OnboardingState' -ErrorAction SilentlyContinue | Select-Object -ExpandProperty 'OnboardingState'
+
+            if ($null -ne $OnboardingValue) {
+                $RegData.OnboardingStateValue = $OnboardingValue
+                $RegData.OnboardingState = if ($OnboardingValue -eq 1) { 'Onboarded' } else { 'NotOnboarded' }
+            }
+
+            # Check SENSE service (MDE behavioral sensor)
+            # Reference: https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.management/get-service
+            $SenseService = Get-Service -Name 'SENSE' -ErrorAction SilentlyContinue
+            if ($SenseService) {
+                $RegData.SENSEServiceStatus = $SenseService.Status
+            }
+
+            # Check DiagTrack service (required for MDE telemetry)
+            # Reference: https://learn.microsoft.com/en-us/windows/privacy/configure-windows-diagnostic-data-in-your-organization
+            $DiagService = Get-Service -Name 'DiagTrack' -ErrorAction SilentlyContinue
+            if ($DiagService) {
+                $RegData.DiagTrackServiceStatus = $DiagService.Status
+            }
+
+            return $RegData
+        }
+
+        if ($Computer -eq $env:COMPUTERNAME) {
+            $Data = & $ScriptBlock
+        }
+        else {
+            # Execute registry query remotely via PowerShell Remoting
+            # Reference: https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/invoke-command
+            $InvokeParams = @{
+                ComputerName = $Computer
+                ScriptBlock  = $ScriptBlock
+                ErrorAction  = 'Stop'
+            }
+
+            if ($Cred) {
+                $InvokeParams.Credential = $Cred
+            }
+
+            $Data = Invoke-Command @InvokeParams
+        }
+
+        if ($Data.DefenderInstalled) {
+            return @{
+                Success = $true
+                Data    = $Data
+            }
+        }
+
+        return @{ Success = $false }
+    }
+    catch {
+        return @{ Success = $false }
+    }
+}
+
+function Get-MDEStatusViaService {
+    param(
+        [string]$Computer,
+        [System.Management.Automation.PSCredential]$Cred
+    )
+
+    try {
+        $ScriptBlock = {
+            # Minimal validation via service status only (when registry unavailable)
+            # Reference: https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.management/get-service
+            $SvcData = [PSCustomObject]@{
+                DefenderInstalled      = $false
+                SENSEServiceStatus     = $null
+                DiagTrackServiceStatus = $null
+            }
+
+            $SenseService = Get-Service -Name 'SENSE' -ErrorAction SilentlyContinue
+            if ($SenseService) {
+                $SvcData.DefenderInstalled = $true
+                $SvcData.SENSEServiceStatus = $SenseService.Status
+            }
+
+            $DiagService = Get-Service -Name 'DiagTrack' -ErrorAction SilentlyContinue
+            if ($DiagService) {
+                $SvcData.DiagTrackServiceStatus = $DiagService.Status
+            }
+
+            return $SvcData
+        }
+
+        if ($Computer -eq $env:COMPUTERNAME) {
+            $Data = & $ScriptBlock
+        }
+        else {
+            $InvokeParams = @{
+                ComputerName = $Computer
+                ScriptBlock  = $ScriptBlock
+                ErrorAction  = 'Stop'
+            }
+
+            if ($Cred) {
+                $InvokeParams.Credential = $Cred
+            }
+
+            $Data = Invoke-Command @InvokeParams
+        }
+
+        if ($Data.DefenderInstalled) {
+            return @{
+                Success = $true
+                Data    = $Data
+            }
+        }
+
+        return @{ Success = $false }
+    }
+    catch {
+        return @{ Success = $false }
+    }
+}
+
+function Merge-MDEResult {
+    param(
+        [PSCustomObject]$Target,
+        [PSCustomObject]$Source
+    )
+
+    if ($Source.DefenderInstalled) {
+        $Target.DefenderInstalled = $Source.DefenderInstalled
+    }
+
+    if ($Source.OnboardingState) {
+        $Target.OnboardingState = $Source.OnboardingState
+        $Target.OnboardingStateValue = $Source.OnboardingStateValue
+    }
+
+    if ($Source.AMRunningMode) {
+        $Target.AMRunningMode = $Source.AMRunningMode
+    }
+
+    if ($null -ne $Source.AMServiceEnabled) {
+        $Target.AMServiceEnabled = $Source.AMServiceEnabled
+    }
+
+    if ($null -ne $Source.RealTimeProtectionEnabled) {
+        $Target.RealTimeProtectionEnabled = $Source.RealTimeProtectionEnabled
+    }
+
+    if ($null -ne $Source.BehaviorMonitorEnabled) {
+        $Target.BehaviorMonitorEnabled = $Source.BehaviorMonitorEnabled
+    }
+
+    if ($null -ne $Source.IsTamperProtected) {
+        $Target.IsTamperProtected = $Source.IsTamperProtected
+    }
+
+    if ($Source.TamperProtectionSource) {
+        $Target.TamperProtectionSource = $Source.TamperProtectionSource
+    }
+
+    if ($Source.AntivirusSignatureVersion) {
+        $Target.AntivirusSignatureVersion = $Source.AntivirusSignatureVersion
+    }
+
+    if ($Source.AntivirusSignatureLastUpdated) {
+        $Target.SignatureAgeHours = [math]::Round(((Get-Date) - $Source.AntivirusSignatureLastUpdated).TotalHours, 2)
+    }
+
+    if ($Source.SENSEServiceStatus) {
+        $Target.SENSEServiceStatus = $Source.SENSEServiceStatus
+    }
+
+    if ($Source.DiagTrackServiceStatus) {
+        $Target.DiagTrackServiceStatus = $Source.DiagTrackServiceStatus
+    }
+
+    return $Target
+}
+
+function Get-MDEHealthState {
+    param(
+        [PSCustomObject]$Result
+    )
+
+    # Determine overall health status based on validation results
+    # Health states: Healthy, Passive, RealTimeProtectionDisabled, OutdatedSignatures,
+    #                Degraded, NotOnboarded, NotInstalled, EventLogErrors, 
+    #                SenseServiceNotRunning, ValidationFailed, Offline
+    # Reference: https://learn.microsoft.com/en-us/defender-endpoint/troubleshoot-onboarding
+    if (-not $Result.DefenderInstalled) {
+        $Result.HealthStatus = 'NotInstalled'
+        return $Result
+    }
+
+    if ($Result.OnboardingState -eq 'NotOnboarded') {
+        $Result.HealthStatus = 'NotOnboarded'
+        return $Result
+    }
+
+    if ($Result.AMRunningMode -eq 'Normal' -and
+        $Result.RealTimeProtectionEnabled -eq $true -and
+        $Result.BehaviorMonitorEnabled -eq $true -and
+        $Result.SignatureAgeHours -lt 48 -and
+        ($null -eq $Result.RecentSENSEErrors -or $Result.RecentSENSEErrors -lt 10)) {
+        $Result.HealthStatus = 'Healthy'
+    }
+    elseif ($Result.AMRunningMode -eq 'Passive') {
+        $Result.HealthStatus = 'Passive'
+    }
+    elseif ($Result.RealTimeProtectionEnabled -eq $false) {
+        $Result.HealthStatus = 'RealTimeProtectionDisabled'
+    }
+    elseif ($Result.SignatureAgeHours -ge 48) {
+        $Result.HealthStatus = 'OutdatedSignatures'
+    }
+    elseif ($Result.SENSEServiceStatus -ne 'Running') {
+        $Result.HealthStatus = 'SenseServiceNotRunning'
+    }
+    elseif ($Result.RecentSENSEErrors -ge 10) {
+        $Result.HealthStatus = 'EventLogErrors'
+    }
+    elseif ($Result.OnboardingState -eq 'Onboarded' -and $Result.SENSEServiceStatus -eq 'Running') {
+        $Result.HealthStatus = 'Healthy'
+    }
+    else {
+        $Result.HealthStatus = 'Degraded'
+    }
+
+    return $Result
+}
+
+try {
+    if ($PSCmdlet.ParameterSetName -eq 'Single') {
+        # Single device validation mode
+        Write-Host "Validating MDE status on: $ComputerName" -ForegroundColor Cyan
+        if ($PreferredMethod -ne 'Auto') {
+            Write-Host "Using preferred method: $PreferredMethod" -ForegroundColor Cyan
+        }
+
+        $Result = Get-MDEStatus -Computer $ComputerName -Cred $Credential -Method $PreferredMethod
+
+        Write-Host "`n=== MDE Status ===" -ForegroundColor Yellow
+        $Result | Format-List Hostname, ValidationMethod, HealthStatus, OnboardingState,
+        AMRunningMode, RealTimeProtectionEnabled, BehaviorMonitorEnabled,
+        IsTamperProtected, AntivirusSignatureVersion, SignatureAgeHours,
+        SENSEServiceStatus, DiagTrackServiceStatus, RecentSENSEErrors, LastSENSEError, ErrorMessage
+
+        switch ($Result.HealthStatus) {
+            'Healthy' { Write-Host "`n✅ MDE is healthy and functional" -ForegroundColor Green }
+            { $_ -in @('Passive', 'RealTimeProtectionDisabled', 'OutdatedSignatures', 'Degraded') } {
+                Write-Host "`n⚠️ MDE has configuration issues: $_" -ForegroundColor Yellow
+            }
+            default { Write-Host "`n❌ MDE is not functional: $_" -ForegroundColor Red }
+        }
+
+        Write-Host "`nValidation completed using: $($Result.ValidationMethod)" -ForegroundColor Cyan
+    }
+    else {
+        # Bulk validation mode with CSV input
+        # Reference: https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.utility/import-csv
+        $Devices = Import-Csv -Path $CsvPath
+
+        if (-not ($Devices | Get-Member -Name 'Hostname' -MemberType NoteProperty)) {
+            throw "CSV file must contain 'Hostname' column"
+        }
+
+        Write-Host "Loaded $($Devices.Count) devices from CSV" -ForegroundColor Cyan
+        Write-Host "Processing with ThrottleLimit: $ThrottleLimit" -ForegroundColor Cyan
+        if ($PreferredMethod -ne 'Auto') {
+            Write-Host "Using preferred method: $PreferredMethod" -ForegroundColor Cyan
+        }
+
+        if (-not $OutputPath) {
+            $Timestamp = Get-Date -Format 'yyyyMMdd-HHmmss'
+            $OutputPath = "MDE-Status-Report-$Timestamp.csv"
+        }
+
+        # Process devices in parallel for performance
+        # Reference: https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/foreach-object
+        $Results = $Devices | ForEach-Object -ThrottleLimit $ThrottleLimit -Parallel {
+            $Device = $_
+            $Cred = $using:Credential
+            $Method = $using:PreferredMethod
+
+            ${function:Get-SENSEEventLog} = ${using:function:Get-SENSEEventLog}
+            ${function:Get-MDEStatus} = ${using:function:Get-MDEStatus}
+            ${function:Get-MDEStatusViaCIM} = ${using:function:Get-MDEStatusViaCIM}
+            ${function:Get-MDEStatusViaWMI} = ${using:function:Get-MDEStatusViaWMI}
+            ${function:Get-MDEStatusViaRegistry} = ${using:function:Get-MDEStatusViaRegistry}
+            ${function:Get-MDEStatusViaService} = ${using:function:Get-MDEStatusViaService}
+            ${function:Merge-MDEResult} = ${using:function:Merge-MDEResult}
+            ${function:Get-MDEHealthState} = ${using:function:Get-MDEHealthState}
+
+            Write-Host "Checking $($Device.Hostname)..." -NoNewline
+            $Result = Get-MDEStatus -Computer $Device.Hostname -Cred $Cred -Method $Method
+
+            $StatusColor = switch ($Result.HealthStatus) {
+                'Healthy' { 'Green' }
+                { $_ -in @('Passive', 'RealTimeProtectionDisabled', 'OutdatedSignatures', 'Degraded') } { 'Yellow' }
+                default { 'Red' }
+            }
+
+            Write-Host " $($Result.HealthStatus) [$($Result.ValidationMethod)]" -ForegroundColor $StatusColor
+
+            $Result
+        }
+
+        # Export results to CSV
+        # Reference: https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.utility/export-csv
+        $Results | Export-Csv -Path $OutputPath -NoTypeInformation
+
+        Write-Host "`nValidation complete!" -ForegroundColor Green
+        Write-Host "Results exported to: $OutputPath" -ForegroundColor Cyan
+
+        $Summary = $Results | Group-Object -Property HealthStatus | Select-Object Name, Count
+        Write-Host "`n=== Health Status Summary ===" -ForegroundColor Yellow
+        $Summary | Format-Table -AutoSize
+
+        $MethodSummary = $Results | Where-Object Reachable -EQ $true | Group-Object -Property ValidationMethod | Select-Object Name, Count
+        Write-Host "`n=== Validation Methods Used ===" -ForegroundColor Yellow
+        $MethodSummary | Format-Table -AutoSize
+
+        $HealthyCount = ($Results | Where-Object HealthStatus -EQ 'Healthy').Count
+        $TotalCount = ($Results | Where-Object Reachable -EQ $true).Count
+
+        if ($TotalCount -gt 0) {
+            $HealthyPercent = [math]::Round(($HealthyCount / $TotalCount) * 100, 2)
+            Write-Host "Healthy Devices: $HealthyCount / $TotalCount reachable devices ($HealthyPercent%)" -ForegroundColor $(
+                if ($HealthyPercent -ge 90) { 'Green' } elseif ($HealthyPercent -ge 75) { 'Yellow' } else { 'Red' }
+            )
+        }
+
+        $IssueDevices = $Results | Where-Object { $_.HealthStatus -notin @('Healthy', 'Offline') }
+        if ($IssueDevices.Count -gt 0) {
+            Write-Host "`n=== Devices Requiring Attention ===" -ForegroundColor Red
+            $IssueDevices | Select-Object Hostname, HealthStatus, ValidationMethod, OnboardingState, AMRunningMode | Format-Table -AutoSize
+        }
+    }
+}
+catch {
+    Write-Error "Script execution failed: $_"
+    exit 1
+}

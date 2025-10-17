@@ -53,7 +53,7 @@
 
 .NOTES
     Author: Security Operations Team
-    Version: 2.4
+    Version: 2.5
     Requires: PowerShell 5.1+ (PowerShell 7.0+ recommended for parallel execution)
     Region: Australian localization (AU date format: dd/MM/yyyy HH:mm:ss)
 
@@ -61,6 +61,12 @@
     - PowerShell 7.0+: Parallel execution with configurable throttle limit (fast)
     - PowerShell 5.1: Sequential execution fallback (slower, but compatible)
     - Single device validation works on both versions
+
+    Bug Fixes (v2.5):
+    - Fixed OnboardingState collection when using CIM/WMI validation methods
+    - MSFT_MpComputerStatus doesn't include MDE onboarding state - now supplements with registry query
+    - Console output now correctly displays OnboardingState for all validation methods
+    - Resolved undefined variable error in parallel execution block
 
     Features (v2.4):
     - Comprehensive key=value log format with all result fields for intelligent parsing
@@ -359,9 +365,20 @@ function Get-MDEStatus {
             $Result.HealthStatus = 'ValidationFailed'
         }
         else {
-            # Supplement CIM/WMI validation with service status (since MSFT_MpComputerStatus doesn't include services)
+            # Supplement CIM/WMI validation with registry and service data
+            # MSFT_MpComputerStatus doesn't include MDE onboarding state or service status
             # Reference: https://learn.microsoft.com/en-us/defender-endpoint/troubleshoot-onboarding
             if ($Result.ValidationMethod -in @('CIM-WSMan', 'WMI-DCOM')) {
+                # Get onboarding state from registry (CIM/WMI doesn't provide this)
+                $RegData = Get-MDEStatusViaRegistry -Computer $Computer -Cred $Cred
+                if ($RegData.Success -and $RegData.Data) {
+                    if ($RegData.Data.OnboardingState) {
+                        $Result.OnboardingState = $RegData.Data.OnboardingState
+                        $Result.OnboardingStateValue = $RegData.Data.OnboardingStateValue
+                    }
+                }
+
+                # Get service status (CIM/WMI doesn't provide this either)
                 $ServiceData = Get-ServiceStatus -Computer $Computer -Cred $Cred
                 if ($ServiceData) {
                     if ($ServiceData.SENSEServiceStatus) {
@@ -909,6 +926,7 @@ try {
                     default { 'Red' }
                 }
 
+                $OnboardingDisplay = if ($Result.OnboardingState) { $Result.OnboardingState } else { 'Unknown' }
                 Write-Host " $($Result.HealthStatus) | $OnboardingDisplay [$($Result.ValidationMethod)]" -ForegroundColor $StatusColor
 
                 $Result

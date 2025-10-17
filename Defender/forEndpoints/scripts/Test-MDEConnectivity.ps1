@@ -90,14 +90,17 @@ $RegionEndpoints = @{
         CyberDataGW       = @(
             @{ Url = 'au-v20.events.endpoint.security.microsoft.com'; Critical = $true }
         )
-        # Proxied blob storage through gateway endpoints (authentication required - 403/404 expected)
+        # Proxied blob storage through gateway endpoints (tests base hostname only - paths require authentication)
+        # Full paths from RegionsURLs.json: /storage/automatedirstrprdaus/, /storage/ussau1eastprod/, etc.
+        # Note: These share the same base hostnames as CommandsGW, so connectivity is already validated above
+        # Including here for documentation purposes only - marked as non-critical
         AutoIRBlobsGW     = @(
-            @{ Url = 'edr-aus.au.endpoint.security.microsoft.com/storage/automatedirstrprdaus/'; Critical = $false }
-            @{ Url = 'edr-aue.au.endpoint.security.microsoft.com/storage/automatedirstrprdaue/'; Critical = $false }
+            @{ Url = 'edr-aus.au.endpoint.security.microsoft.com'; Critical = $false; Note = 'Blob path: /storage/automatedirstrprdaus/' }
+            @{ Url = 'edr-aue.au.endpoint.security.microsoft.com'; Critical = $false; Note = 'Blob path: /storage/automatedirstrprdaue/' }
         )
         SampleUploadGW    = @(
-            @{ Url = 'edr-aue.au.endpoint.security.microsoft.com/storage/ussau1eastprod/'; Critical = $false }
-            @{ Url = 'edr-aus.au.endpoint.security.microsoft.com/storage/ussau1southeastprod/'; Critical = $false }
+            @{ Url = 'edr-aue.au.endpoint.security.microsoft.com'; Critical = $false; Note = 'Blob path: /storage/ussau1eastprod/' }
+            @{ Url = 'edr-aus.au.endpoint.security.microsoft.com'; Critical = $false; Note = 'Blob path: /storage/ussau1southeastprod/' }
         )
         # Legacy Architecture - Direct blob storage (may be deprecated)
         AutoIRBlobsLegacy = @(

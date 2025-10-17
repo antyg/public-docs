@@ -8,7 +8,7 @@
     Tests DNS resolution, TCP connectivity, and HTTPS response codes.
 
 .PARAMETER Region
-    MDE service region. Valid values: US, EU, UK, AU. Default: US
+    MDE service region. Valid values: AU, EU, UK, US. Default: AU
 
 .PARAMETER TestProxy
     Switch to test proxy configuration and connectivity through proxy.
@@ -20,7 +20,7 @@
     .\Test-MDEConnectivity.ps1
 
 .EXAMPLE
-    .\Test-MDEConnectivity.ps1 -Region EU -Verbose
+    .\Test-MDEConnectivity.ps1 -Region AU -Verbose
 
 .EXAMPLE
     .\Test-MDEConnectivity.ps1 -TestProxy
@@ -53,7 +53,7 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory = $false)]
-    [ValidateSet('US', 'EU', 'UK', 'AU')]
+    [ValidateSet('AU', 'EU', 'UK', 'US')]
     [string]$Region = 'AU',
 
     [Parameter(Mandatory = $false)]
@@ -65,10 +65,10 @@ $ErrorActionPreference = 'Stop'
 # Reference: https://learn.microsoft.com/en-us/defender-endpoint/configure-environment
 # MDE regional endpoints for telemetry, cyber events, and command/control
 $RegionEndpoints = @{
-    US = @{
-        Telemetry = 'us.vortex-win.data.microsoft.com'
-        Cyber     = 'us-v20.events.data.microsoft.com'
-        Commands  = 'winatp-gw-cus.microsoft.com'
+    AU = @{
+        Telemetry = 'au.vortex-win.data.microsoft.com'
+        Cyber     = 'au-v20.events.data.microsoft.com'
+        Commands  = 'winatp-gw-aue.microsoft.com'
     }
     EU = @{
         Telemetry = 'eu.vortex-win.data.microsoft.com'
@@ -80,10 +80,10 @@ $RegionEndpoints = @{
         Cyber     = 'uk-v20.events.data.microsoft.com'
         Commands  = 'winatp-gw-uks.microsoft.com'
     }
-    AU = @{
-        Telemetry = 'au.vortex-win.data.microsoft.com'
-        Cyber     = 'au-v20.events.data.microsoft.com'
-        Commands  = 'winatp-gw-aue.microsoft.com'
+    US = @{
+        Telemetry = 'us.vortex-win.data.microsoft.com'
+        Cyber     = 'us-v20.events.data.microsoft.com'
+        Commands  = 'winatp-gw-cus.microsoft.com'
     }
 }
 

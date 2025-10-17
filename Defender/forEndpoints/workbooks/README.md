@@ -90,7 +90,7 @@ This Azure Workbook provides comprehensive monitoring and reporting for Microsof
 $SubscriptionId = "your-subscription-id"
 $ResourceGroup = "your-resource-group"
 $WorkbookName = "MDE-Deployment-Validation"
-$Location = "eastus"
+$Location = "australiaeast"
 $WorkbookJsonPath = ".\MDE-Deployment-Validation-Workbook.json"
 
 # Connect to Azure
@@ -130,7 +130,7 @@ New-AzResourceGroupDeployment -ResourceGroupName $ResourceGroup -TemplateBody @"
 SUBSCRIPTION_ID="your-subscription-id"
 RESOURCE_GROUP="your-resource-group"
 WORKBOOK_NAME="MDE-Deployment-Validation"
-LOCATION="eastus"
+LOCATION="australiaeast"
 WORKBOOK_JSON_PATH="./MDE-Deployment-Validation-Workbook.json"
 
 # Set subscription

@@ -149,7 +149,7 @@ The following properties are available from the [machine resource type][5] for v
 Connect-MgGraph -Scopes "Machine.Read.All"
 ```
 
-Use the [Connect-MgGraph cmdlet][7] for interactive authentication with delegated permissions.
+Use the [Connect-MgGraph cmdlet][6] for interactive authentication with delegated permissions.
 
 ## PowerShell Query Examples
 
@@ -302,7 +302,7 @@ SERVER01,Onboarded,Inactive,2025-10-01T08:15:00Z,Medium,Low,10.8230
 GET https://api.securitycenter.microsoft.com/api/deviceavinfo
 ```
 
-The [device antivirus health export API][8] provides detailed antivirus status information.
+The [device antivirus health export API][7] provides detailed antivirus status information.
 
 ### Key AV Properties
 

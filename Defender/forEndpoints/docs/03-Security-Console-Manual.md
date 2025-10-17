@@ -154,7 +154,7 @@ Apply multiple filters simultaneously to narrow results [3]:
 
 ### Export Limitations
 
-- Maximum 100,000 devices per export [5]
+- Maximum 100,000 devices per export [4]
 - For organizations >100,000 devices, use [Method 2: Graph API](./02-Graph-API-Validation.md)
 - Export represents snapshot at time of export (not real-time) [3]
 
@@ -195,14 +195,14 @@ SERVER01,10.0.2.50,Domain Controllers,Onboarded,Active,Medium,Low,Windows Server
 
 ### Accessing Device Page
 
-1. Click device name in inventory [6]
+1. Click device name in inventory [5]
 2. Device details page opens
 
 ### Device Page Sections
 
 #### Overview Tab
 
-- **Device information** [6]
+- **Device information** [5]
   - Device name
   - IP address(es)
   - Domain
@@ -220,7 +220,7 @@ SERVER01,10.0.2.50,Domain Controllers,Onboarded,Active,Medium,Low,Windows Server
 
 #### Timeline Tab
 
-- All security events chronologically [6]
+- All security events chronologically [5]
 - User logons
 - Process executions
 - Network connections
@@ -229,26 +229,26 @@ SERVER01,10.0.2.50,Domain Controllers,Onboarded,Active,Medium,Low,Windows Server
 
 #### Alerts Tab
 
-- Active alerts for this device [6]
+- Active alerts for this device [5]
 - Alert severity
 - Alert category
 - Investigation status
 
 #### Security Recommendations Tab
 
-- Applicable security recommendations [6]
+- Applicable security recommendations [5]
 - Exposure score impact
 - Affected software
 
 #### Software Inventory Tab
 
-- Installed applications [6]
+- Installed applications [5]
 - Version numbers
 - Vulnerabilities
 
 #### Discovered Vulnerabilities Tab
 
-- CVE IDs [6]
+- CVE IDs [5]
 - Severity scores
 - Remediation guidance
 
@@ -315,11 +315,11 @@ SERVER01,10.0.2.50,Domain Controllers,Onboarded,Active,Medium,Low,Windows Server
 
 ### What is Device Discovery?
 
-MDE can discover unmanaged devices on the network using onboarded devices as sensors [7].
+MDE can discover unmanaged devices on the network using onboarded devices as sensors [6].
 
 ### Viewing Discovered Devices
 
-1. Navigate to **Settings** > **Device discovery** [7]
+1. Navigate to **Settings** > **Device discovery** [6]
 2. View discovery mode (Basic or Standard)
 3. Click **Discovered devices** tab
 4. Review devices found but not onboarded
@@ -475,7 +475,7 @@ For devices identified as problematic:
 ## Limitations
 
 - ❌ Manual process not suitable for large-scale automation
-- ❌ Export limited to 100,000 devices [5]
+- ❌ Export limited to 100,000 devices [4]
 - ❌ No scheduled export capability
 - ❌ Synchronization delays (5-30 minutes for new devices)
 - ❌ Cannot validate local service status directly

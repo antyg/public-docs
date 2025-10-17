@@ -49,9 +49,14 @@
 
 .NOTES
     Author: Security Operations Team
-    Version: 2.0
+    Version: 2.1
     Requires: PowerShell 5.1+, Administrator privileges (for some tests)
     Reference: MDEClientAnalyzer RegionsURLs.json (official Microsoft endpoint configuration)
+
+    Version 2.1 Features:
+    - Fixed CRL Distribution test to use HTTP port 80 (RFC 5280 requirement)
+    - CRL endpoints must use HTTP to avoid circular dependency in certificate validation
+    - Tests now correctly validate DNS and TCP:80 connectivity for CRL distribution
 
     Version 2.0 Features:
     - Tests Gateway Architecture endpoints (*.endpoint.security.microsoft.com)
@@ -153,10 +158,11 @@ $CommonEndpoints = @(
     # Use MDEClientAnalyzer.cmd for comprehensive connectivity validation including region-specific blob endpoints
     # Reference: https://learn.microsoft.com/en-us/defender-endpoint/run-analyzer-windows
 
-    # CRL Distribution uses HTTP (not HTTPS) per RFC 5280 - certificate validation infrastructure
+    # CRL Distribution uses HTTP port 80 ONLY (NOT HTTPS port 443) per RFC 5280
+    # RFC 5280: "CAs SHOULD NOT include URIs that specify https" to avoid circular dependency
     # Reference: https://www.rfc-editor.org/rfc/rfc5280#section-4.2.1.13
-    # Reference: https://learn.microsoft.com/en-us/troubleshoot/windows-server/windows-security/configure-revocation-checking-certificate-validation
-    @{ Name = 'CRL Distribution'; Url = 'crl.microsoft.com'; TestUrl = 'crl.microsoft.com' }
+    # CRLs are digitally signed, so HTTPS encryption is unnecessary and creates validation loops
+    @{ Name = 'CRL Distribution (HTTP:80)'; Url = 'crl.microsoft.com'; TestUrl = 'crl.microsoft.com'; Port = 80; UseHTTP = $true }
 
     @{ Name = 'Certificate Validation'; Url = 'www.microsoft.com'; TestUrl = 'www.microsoft.com' }
     @{ Name = 'Windows Update'; Url = '*.windowsupdate.com'; TestUrl = 'fe3.delivery.mp.microsoft.com' }
@@ -382,7 +388,26 @@ try {
     foreach ($Endpoint in $CommonEndpoints) {
         Write-Host "Testing $($Endpoint.Name): $($Endpoint.TestUrl)..." -NoNewline
 
-        $Result = Test-EndpointConnectivity -Hostname $Endpoint.TestUrl -Name $Endpoint.Name
+        # Handle special port/protocol requirements (e.g., CRL uses HTTP port 80)
+        $TestParams = @{
+            Hostname = $Endpoint.TestUrl
+            Name     = $Endpoint.Name
+        }
+        if ($Endpoint.Port) { $TestParams.Port = $Endpoint.Port }
+        
+        # For HTTP-only endpoints (like CRL), test port connectivity only
+        if ($Endpoint.UseHTTP) {
+            # CRL Distribution uses HTTP port 80 - just test DNS and TCP connectivity
+            $Result = Test-EndpointConnectivity @TestParams
+            # Override HTTPS test result since HTTP is expected
+            if ($Result.DNSResolution -and $Result.TCPConnection) {
+                $Result.Status = 'Success'
+                $Result.ErrorMessage = $null
+            }
+        }
+        else {
+            $Result = Test-EndpointConnectivity @TestParams
+        }
 
         if ($Result.Status -eq 'Success') {
             Write-Host ' OK' -ForegroundColor Green
@@ -395,12 +420,13 @@ try {
         }
 
         if ($VerbosePreference -eq 'Continue') {
+            $PortLabel = if ($Endpoint.Port) { $Endpoint.Port } else { 443 }
             Write-Host "  DNS: $($Result.DNSResolution) | IP: $($Result.IPAddress)" -ForegroundColor Gray
-            Write-Host "  TCP:443: $($Result.TCPConnection) | HTTP: $($Result.HTTPStatusCode) | Time: $($Result.ResponseTime)ms" -ForegroundColor Gray
-            if ($null -ne $Result.Port80Reachable) {
+            Write-Host "  TCP:$PortLabel : $($Result.TCPConnection) | HTTP: $($Result.HTTPStatusCode) | Time: $($Result.ResponseTime)ms" -ForegroundColor Gray
+            if ($null -ne $Result.Port80Reachable -and -not $Endpoint.UseHTTP) {
                 Write-Host "  TCP:80: $($Result.Port80Reachable) (Fallback diagnostic)" -ForegroundColor $(if ($Result.Port80Reachable) { 'Yellow' } else { 'Gray' })
             }
-            if ($Result.ErrorMessage) {
+            if ($Result.ErrorMessage -and -not $Endpoint.UseHTTP) {
                 Write-Host "  Error: $($Result.ErrorMessage)" -ForegroundColor Red
             }
         }

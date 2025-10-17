@@ -1,6 +1,6 @@
 # Microsoft Defender for Endpoint (MDE) Deployment Validation Toolkit
 
-**Comprehensive validation methods, PowerShell automation, and Azure Workbooks for Microsoft Defender for Endpoint deployment verification**
+Comprehensive validation methods, PowerShell automation, and Azure Workbooks for Microsoft Defender for Endpoint deployment verification
 
 [![Documentation](https://img.shields.io/badge/docs-latest-blue.svg)](./docs/INDEX.md)
 [![PowerShell](https://img.shields.io/badge/PowerShell-5.1%2B-blue.svg)](https://docs.microsoft.com/en-us/powershell/)
@@ -24,8 +24,8 @@ This toolkit provides enterprise-grade resources for validating Microsoft Defend
 
 ## 📁 Repository Structure
 
-```
-D:\antyg\docs\antyg-public\Defender\forEndpoints\
+```text
+.\Defender\forEndpoints\
 │
 ├── README.md                           # This file - complete toolkit guide
 │
@@ -62,21 +62,24 @@ D:\antyg\docs\antyg-public\Defender\forEndpoints\
 ### For First-Time Users
 
 1. **Start with Documentation**
+
    ```powershell
    # Open the main documentation hub
    Get-Content .\docs\INDEX.md
    ```
 
 2. **Validate a Single Device**
+
    ```powershell
    # Test local device MDE status
    .\scripts\Get-MDEStatus.ps1
-   
+
    # Test remote device
    .\scripts\Get-MDEStatus.ps1 -ComputerName "WORKSTATION01"
    ```
 
 3. **Validate Multiple Devices**
+
    ```powershell
    # Create CSV with device list
    @"
@@ -85,18 +88,20 @@ D:\antyg\docs\antyg-public\Defender\forEndpoints\
    WORKSTATION02,HR Dept
    SERVER01,File Server
    "@ | Out-File devices.csv
-   
+
    # Run bulk validation
    .\scripts\Get-MDEStatus.ps1 -CsvPath .\devices.csv -OutputPath .\results.csv
    ```
 
 4. **Test Network Connectivity**
+
    ```powershell
    # Validate connectivity to MDE cloud endpoints (AU region)
    .\scripts\Test-MDEConnectivity.ps1 -Region AU -Verbose
    ```
 
 5. **Export Tenant-Wide Inventory**
+
    ```powershell
    # Export all devices from Microsoft Graph API
    .\scripts\Export-MDEInventoryFromGraph.ps1 `
@@ -120,16 +125,16 @@ All documentation follows the **[Diátaxis Framework](https://diataxis.fr/)** fo
 
 ### Documentation Files
 
-| File | Type | Purpose | Audience |
-|------|------|---------|----------|
-| [**INDEX.md**](./docs/INDEX.md) | Hub | Quick start guide, validation criteria, troubleshooting decision tree | All users |
-| [**01-PowerShell-Validation.md**](./docs/01-PowerShell-Validation.md) | Tutorial | PowerShell-based local and remote validation using `Get-MpComputerStatus` | PowerShell users |
-| [**02-Graph-API-Validation.md**](./docs/02-Graph-API-Validation.md) | Tutorial | Microsoft Graph API programmatic access for organization-wide reporting | Developers, automation engineers |
-| [**03-Security-Console-Manual.md**](./docs/03-Security-Console-Manual.md) | How-to | Web-based manual validation via Microsoft 365 Defender portal | Security analysts, ad-hoc checks |
-| [**04-Registry-Service-Validation.md**](./docs/04-Registry-Service-Validation.md) | How-to | Direct registry and service validation for definitive status checks | Troubleshooting, support engineers |
-| [**05-Advanced-Hunting-KQL.md**](./docs/05-Advanced-Hunting-KQL.md) | How-to | KQL queries for historical analysis and trending | Security operations, analysts |
-| [**06-MDE-Client-Analyzer.md**](./docs/06-MDE-Client-Analyzer.md) | How-to | Official Microsoft diagnostic tool for deep troubleshooting | Advanced troubleshooting |
-| [**07-WMI-CIM-Validation.md**](./docs/07-WMI-CIM-Validation.md) | Reference | Legacy WMI/CIM queries for Windows 7, Server 2008 R2 compatibility | Legacy system administrators |
+| File                                                                              | Type      | Purpose                                                                   | Audience                           |
+| --------------------------------------------------------------------------------- | --------- | ------------------------------------------------------------------------- | ---------------------------------- |
+| [**INDEX.md**](./docs/INDEX.md)                                                   | Hub       | Quick start guide, validation criteria, troubleshooting decision tree     | All users                          |
+| [**01-PowerShell-Validation.md**](./docs/01-PowerShell-Validation.md)             | Tutorial  | PowerShell-based local and remote validation using `Get-MpComputerStatus` | PowerShell users                   |
+| [**02-Graph-API-Validation.md**](./docs/02-Graph-API-Validation.md)               | Tutorial  | Microsoft Graph API programmatic access for organization-wide reporting   | Developers, automation engineers   |
+| [**03-Security-Console-Manual.md**](./docs/03-Security-Console-Manual.md)         | How-to    | Web-based manual validation via Microsoft 365 Defender portal             | Security analysts, ad-hoc checks   |
+| [**04-Registry-Service-Validation.md**](./docs/04-Registry-Service-Validation.md) | How-to    | Direct registry and service validation for definitive status checks       | Troubleshooting, support engineers |
+| [**05-Advanced-Hunting-KQL.md**](./docs/05-Advanced-Hunting-KQL.md)               | How-to    | KQL queries for historical analysis and trending                          | Security operations, analysts      |
+| [**06-MDE-Client-Analyzer.md**](./docs/06-MDE-Client-Analyzer.md)                 | How-to    | Official Microsoft diagnostic tool for deep troubleshooting               | Advanced troubleshooting           |
+| [**07-WMI-CIM-Validation.md**](./docs/07-WMI-CIM-Validation.md)                   | Reference | Legacy WMI/CIM queries for Windows 7, Server 2008 R2 compatibility        | Legacy system administrators       |
 
 ### Key Validation Criteria
 
@@ -152,6 +157,7 @@ All documentation references these universal validation states:
 **Purpose:** Intelligent multi-method MDE status validation with automatic fallback
 
 **Features:**
+
 - Automatic method detection and fallback chain:
   1. CIM/WSMan (fastest, modern systems Windows 10/11, Server 2016+)
   2. WMI/DCOM (legacy Windows 7, Server 2008 R2)
@@ -161,6 +167,7 @@ All documentation references these universal validation states:
 - Single device and bulk CSV validation
 - Parallel processing with configurable throttle limit
 - Comprehensive health status determination
+- **Automatic logging** to `Get-MDEStatus-Log.txt` in script directory (AU date format)
 
 **Usage Examples:**
 
@@ -183,6 +190,7 @@ $Cred = Get-Credential
 ```
 
 **Output Properties:**
+
 - Hostname, ValidationMethod, HealthStatus
 - OnboardingState, AMRunningMode, RealTimeProtectionEnabled
 - AntivirusSignatureVersion, SignatureAgeHours
@@ -191,6 +199,7 @@ $Cred = Get-Credential
 - Timestamp
 
 **Health Status Values:**
+
 - `Healthy`, `Passive`, `RealTimeProtectionDisabled`, `OutdatedSignatures`
 - `Degraded`, `NotOnboarded`, `NotInstalled`, `EventLogErrors`
 - `SenseServiceNotRunning`, `ValidationFailed`, `Offline`
@@ -202,6 +211,7 @@ $Cred = Get-Credential
 **Purpose:** Export MDE onboarding status from Microsoft Graph API
 
 **Features:**
+
 - Three operation modes:
   1. CSV validation - compare CSV list against MDE tenant
   2. Full inventory export - retrieve all tenant devices
@@ -238,12 +248,14 @@ $Cred = Get-Credential
 ```
 
 **Output Properties:**
+
 - ComputerDnsName, OnboardingStatus, HealthStatus
 - RiskScore, ExposureLevel, OSPlatform, OSVersion
 - LastSeen, FirstSeen, AzureADDeviceId
 - MDEAgentVersion, DeviceId, MachineGroups, Tags
 
 **API Permissions Required:**
+
 - `Machine.Read.All` (Application) **OR**
 - `Machine.ReadWrite.All` (Delegated)
 
@@ -254,10 +266,13 @@ $Cred = Get-Credential
 **Purpose:** Test network connectivity to MDE cloud endpoints
 
 **Features:**
+
 - Region-specific endpoint testing (US, EU, UK, **AU** - default)
 - DNS resolution validation
 - TCP connectivity testing (port 443)
 - HTTPS response code validation
+- **Port 80 fallback diagnostics** - automatically tests HTTP when HTTPS fails
+- SSL/TLS vs general connectivity issue differentiation
 - Proxy configuration detection
 - AU regional endpoints:
   - Telemetry: `au.vortex-win.data.microsoft.com`
@@ -281,10 +296,12 @@ $Cred = Get-Credential
 ```
 
 **Output:**
-- Per-endpoint connectivity status (DNS, TCP, HTTPS)
+
+- Per-endpoint connectivity status (DNS, TCP:443, HTTPS, TCP:80 fallback)
+- SSL/TLS issue identification (when port 80 succeeds but port 443 fails)
 - Proxy configuration details
 - Failed test summary with remediation guidance
-- CSV export with detailed results
+- CSV export with detailed results including diagnostic information
 
 ---
 
@@ -292,15 +309,16 @@ $Cred = Get-Credential
 
 These scripts have been consolidated into **Get-MDEStatus.ps1** for simplified maintenance:
 
-| Archived Script | Replacement Command |
-|----------------|---------------------|
-| `Get-MDECimStatus.ps1` | `Get-MDEStatus.ps1` (CIM is default) |
-| `Get-MDEWmiStatus.ps1` | `Get-MDEStatus.ps1 -PreferredMethod WMI` |
-| `Get-MDERegistryStatus.ps1` | `Get-MDEStatus.ps1 -PreferredMethod Registry` |
-| `Get-MDEServiceStatus.ps1` | `Get-MDEStatus.ps1 -PreferredMethod Service` |
-| `Test-MDEDeploymentStatus.ps1` | `Get-MDEStatus.ps1 -CsvPath <path>` |
+| Archived Script                | Replacement Command                           |
+| ------------------------------ | --------------------------------------------- |
+| `Get-MDECimStatus.ps1`         | `Get-MDEStatus.ps1` (CIM is default)          |
+| `Get-MDEWmiStatus.ps1`         | `Get-MDEStatus.ps1 -PreferredMethod WMI`      |
+| `Get-MDERegistryStatus.ps1`    | `Get-MDEStatus.ps1 -PreferredMethod Registry` |
+| `Get-MDEServiceStatus.ps1`     | `Get-MDEStatus.ps1 -PreferredMethod Service`  |
+| `Test-MDEDeploymentStatus.ps1` | `Get-MDEStatus.ps1 -CsvPath <path>`           |
 
 **Why Consolidated?**
+
 - Single script to maintain and update
 - Intelligent automatic fallback reduces need for method selection
 - Event log checking now integrated by default
@@ -348,11 +366,13 @@ Set-AzContext -SubscriptionId $SubscriptionId
 ### Data Source
 
 All workbook queries use **Advanced Hunting** KQL queries against:
+
 - `DeviceInfo` - Device inventory, onboarding status, OS details
 - `DeviceProcessEvents` - Sensor health validation
 - `DeviceNetworkInfo` - Connectivity status
 
 **Prerequisites:**
+
 - Microsoft 365 Defender with Advanced Hunting enabled
 - Security Reader role (minimum)
 
@@ -369,10 +389,12 @@ Full deployment guide, usage instructions, and troubleshooting: [workbooks/READM
 **Scenario:** Monitor MDE deployment health across enterprise
 
 **Tools:**
+
 - Azure Workbook for daily dashboard review
 - `Get-MDEStatus.ps1` for spot-checking problematic devices
 
 **Workflow:**
+
 ```powershell
 # 1. Check workbook "Devices Ready for Onboarding" tab
 # 2. Export list of inactive devices
@@ -387,13 +409,15 @@ Full deployment guide, usage instructions, and troubleshooting: [workbooks/READM
 **Scenario:** Validate MDE deployment to 500 new workstations
 
 **Tools:**
+
 - `Get-MDEStatus.ps1` with CSV bulk validation
 - `Test-MDEConnectivity.ps1` for network validation
 
 **Workflow:**
+
 ```powershell
 # 1. Create device list from AD
-Get-ADComputer -Filter "Name -like 'WS-*'" | 
+Get-ADComputer -Filter "Name -like 'WS-*'" |
     Select-Object @{N='Hostname';E={$_.Name}},@{N='Notes';E={'New Deployment'}} |
     Export-Csv devices.csv -NoTypeInformation
 
@@ -404,8 +428,8 @@ Get-ADComputer -Filter "Name -like 'WS-*'" |
 .\Get-MDEStatus.ps1 -CsvPath .\devices.csv -OutputPath .\deployment-results.csv -ThrottleLimit 20
 
 # 4. Review results
-Import-Csv .\deployment-results.csv | 
-    Where-Object HealthStatus -ne 'Healthy' | 
+Import-Csv .\deployment-results.csv |
+    Where-Object HealthStatus -ne 'Healthy' |
     Format-Table Hostname, HealthStatus, ValidationMethod, ErrorMessage
 ```
 
@@ -416,10 +440,12 @@ Import-Csv .\deployment-results.csv |
 **Scenario:** Generate monthly MDE compliance report for management
 
 **Tools:**
+
 - `Export-MDEInventoryFromGraph.ps1` for tenant-wide data
 - Azure Workbook for visual reports
 
 **Workflow:**
+
 ```powershell
 # 1. Export complete inventory
 .\Export-MDEInventoryFromGraph.ps1 `
@@ -453,11 +479,13 @@ Compliance Rate: $Compliance%
 **Scenario:** Device shows as "Can Be Onboarded" but won't onboard
 
 **Tools:**
+
 - Documentation: [Method 4: Registry/Service Validation](./docs/04-Registry-Service-Validation.md)
 - `Get-MDEStatus.ps1 -PreferredMethod Registry`
 - Documentation: [Method 6: MDE Client Analyzer](./docs/06-MDE-Client-Analyzer.md)
 
 **Workflow:**
+
 ```powershell
 # 1. Check local status
 .\Get-MDEStatus.ps1 -ComputerName "PROBLEM-DEVICE" -PreferredMethod Registry
@@ -484,10 +512,12 @@ MDEClientAnalyzer.cmd
 **Scenario:** Find all devices that can be onboarded to MDE
 
 **Tools:**
+
 - `Export-MDEInventoryFromGraph.ps1 -OnlyUnmanaged`
 - Azure Workbook "Onboarding Status Analysis" tab
 
 **Workflow:**
+
 ```powershell
 # 1. Export unmanaged devices
 .\Export-MDEInventoryFromGraph.ps1 `
@@ -498,8 +528,8 @@ MDEClientAnalyzer.cmd
     -OutputPath "Unmanaged-Devices.csv"
 
 # 2. Review and prioritize
-Import-Csv "Unmanaged-Devices.csv" | 
-    Sort-Object FirstSeen | 
+Import-Csv "Unmanaged-Devices.csv" |
+    Sort-Object FirstSeen |
     Format-Table ComputerDnsName, OSPlatform, OSVersion, FirstSeen
 
 # 3. Create deployment plan
@@ -518,16 +548,19 @@ Import-Csv "Unmanaged-Devices.csv" |
 ### For PowerShell Scripts
 
 **Local Execution:**
+
 - Windows PowerShell 5.1 or PowerShell 7+
 - Administrator privileges on target devices
 - Defender module (built-in on Windows 10/11, Server 2016+)
 
 **Remote Execution:**
+
 - WinRM enabled on target devices (`Enable-PSRemoting -Force`)
 - Network connectivity on port 5985 (HTTP) or 5986 (HTTPS)
 - Administrator credentials for target devices
 
 **Graph API Scripts:**
+
 - Azure AD App Registration with API permissions:
   - `Machine.Read.All` (Application) **OR**
   - `Machine.ReadWrite.All` (Delegated)
@@ -578,20 +611,31 @@ All scripts and documentation are configured for **Australian (AU) region** by d
 ### Regional Endpoints
 
 **Test-MDEConnectivity.ps1:**
+
 - Default region: `AU`
 - Telemetry: `au.vortex-win.data.microsoft.com`
 - Cyber events: `au-v20.events.data.microsoft.com`
 - Commands: `winatp-gw-aue.microsoft.com`
 
+### Date/Time Format
+
+All PowerShell scripts use **Australian date/time format**:
+
+- **Display Format**: `dd/MM/yyyy HH:mm:ss` (e.g., "17/01/2025 14:30:45")
+- **Filename Format**: `yyyyMMdd-HHmmss` (e.g., "20250117-143045")
+- Applies to: Timestamp fields, CSV exports, log entries
+
 ### Documentation Updates
 
 All example endpoints reference AU services:
+
 - ✅ `au.vortex-win.data.microsoft.com` (not `us.vortex-win.data.microsoft.com`)
 - ✅ `Test-NetConnection au.vortex-win.data.microsoft.com -Port 443`
 
 ### Global Services (Tenant-Based Routing)
 
 These remain global as they route based on tenant location:
+
 - `security.microsoft.com` (Microsoft 365 Defender portal)
 - `api.security.microsoft.com` (Graph API endpoint)
 - `login.microsoftonline.com` (Authentication)
@@ -605,6 +649,7 @@ If you're using the archived scripts, migrate to **Get-MDEStatus.ps1**:
 ### Migration Guide
 
 **Before (5 separate scripts):**
+
 ```powershell
 # CIM validation
 .\Get-MDECimStatus.ps1 -ComputerName "DEVICE01"
@@ -620,6 +665,7 @@ If you're using the archived scripts, migrate to **Get-MDEStatus.ps1**:
 ```
 
 **After (1 unified script):**
+
 ```powershell
 # Automatic method selection (tries CIM → WMI → Registry → Service)
 .\Get-MDEStatus.ps1 -ComputerName "DEVICE01"
@@ -688,6 +734,7 @@ If you're using the archived scripts, migrate to **Get-MDEStatus.ps1**:
 **Cause:** Insufficient permissions or execution policy
 
 **Resolution:**
+
 ```powershell
 # Check current execution policy
 Get-ExecutionPolicy
@@ -706,6 +753,7 @@ PowerShell.exe -ExecutionPolicy Bypass -File .\Get-MDEStatus.ps1
 **Cause:** WinRM not enabled on target device
 
 **Resolution:**
+
 ```powershell
 # On target device (run as Administrator)
 Enable-PSRemoting -Force
@@ -721,25 +769,27 @@ Test-WSMan -ComputerName "TARGET-DEVICE"
 **Cause:** Incorrect tenant ID, client ID, or insufficient permissions
 
 **Resolution:**
+
 1. Verify App Registration in Azure Portal → Azure AD → App registrations
 2. Check API permissions:
    - Required: `Machine.Read.All` (Application permission)
    - Ensure admin consent granted
 3. Verify client secret hasn't expired
 4. Test authentication:
+
    ```powershell
    # Copy authentication code from script and test
    $TenantId = "your-tenant-id"
    $ClientId = "your-client-id"
    $ClientSecret = "your-client-secret"
-   
+
    $Body = @{
        Grant_Type = 'client_credentials'
        Scope = 'https://api.securitycenter.microsoft.com/.default'
        Client_Id = $ClientId
        Client_Secret = $ClientSecret
    }
-   
+
    Invoke-RestMethod -Method Post `
        -Uri "https://login.microsoftonline.com/$TenantId/oauth2/v2.0/token" `
        -Body $Body
@@ -752,6 +802,7 @@ Test-WSMan -ComputerName "TARGET-DEVICE"
 **Cause:** Firewall blocking or proxy misconfiguration
 
 **Resolution:**
+
 ```powershell
 # 1. Test connectivity
 .\Test-MDEConnectivity.ps1 -Region AU -Verbose -TestProxy
@@ -773,6 +824,7 @@ netsh winhttp set proxy proxy-server="proxy.contoso.com:8080" bypass-list="<loca
 **Cause:** Advanced Hunting has no data for selected time range
 
 **Resolution:**
+
 1. Verify devices are onboarded and reporting to MDE
 2. Increase time range to "Last 30 days"
 3. Check Advanced Hunting permissions (Security Reader required)
@@ -783,11 +835,13 @@ netsh winhttp set proxy proxy-server="proxy.contoso.com:8080" bypass-list="<loca
 ### Getting Help
 
 **Documentation:**
+
 - [Documentation Hub](./docs/INDEX.md)
 - Method-specific guides in [docs/](./docs/) folder
 - Script help: `Get-Help .\Get-MDEStatus.ps1 -Full`
 
 **Microsoft Resources:**
+
 - [MDE Troubleshooting](https://learn.microsoft.com/en-us/defender-endpoint/troubleshoot-onboarding)
 - [MDE Client Analyzer](https://learn.microsoft.com/en-us/defender-endpoint/run-analyzer-windows)
 - [Advanced Hunting Schema](https://learn.microsoft.com/en-us/defender-xdr/advanced-hunting-schema-tables)
@@ -810,6 +864,7 @@ This toolkit follows enterprise documentation standards:
 - Comprehensive inline citations with authoritative sources
 
 When contributing:
+
 1. Follow existing citation standards (see [Citation Standards](#-citation-standards))
 2. Test all code on PowerShell 5.1 and 7.x
 3. Update relevant documentation
@@ -819,11 +874,15 @@ When contributing:
 
 ## 📅 Version History
 
-| Version | Date | Changes |
-|---------|------|---------|
-| 2.0.0 | 2025-01-17 | Consolidated 5 scripts into Get-MDEStatus.ps1 with intelligent fallback |
-| 1.1.0 | 2025-01-16 | Added Export-MDEInventoryFromGraph.ps1 -OnlyUnmanaged switch |
-| 1.0.0 | 2025-01-15 | Initial release with 7 validation methods, 3 scripts, Azure Workbook |
+| Version | Date       | Changes                                                                 |
+| ------- | ---------- | ----------------------------------------------------------------------- |
+| 2.4.0   | 2025-01-17 | Added thread-safe logging with synchronized collections                 |
+| 2.3.0   | 2025-01-17 | Fixed CIM/WMI DefenderInstalled detection and service status collection |
+| 2.2.0   | 2025-01-17 | Updated all date/time formats to Australian standard (dd/MM/yyyy)       |
+| 2.1.0   | 2025-01-17 | Added port 80 fallback diagnostics to Test-MDEConnectivity.ps1          |
+| 2.0.0   | 2025-01-17 | Consolidated 5 scripts into Get-MDEStatus.ps1 with intelligent fallback |
+| 1.1.0   | 2025-01-16 | Added Export-MDEInventoryFromGraph.ps1 -OnlyUnmanaged switch            |
+| 1.0.0   | 2025-01-15 | Initial release with 7 validation methods, 3 scripts, Azure Workbook    |
 
 ---
 

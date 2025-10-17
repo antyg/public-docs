@@ -14,6 +14,9 @@
     Automatically detects best method per device and falls back gracefully on failure.
     Supports single device and CSV bulk validation with parallel execution.
 
+    All validation results are automatically logged to Get-MDEStatus-Log.txt in the script
+    directory with Australian date/time format for tracking and audit purposes.
+
 .PARAMETER ComputerName
     Target computer name. Defaults to local computer.
 
@@ -50,8 +53,24 @@
 
 .NOTES
     Author: Security Operations Team
-    Version: 2.0
-    Requires: PowerShell 5.1+
+    Version: 2.3
+    Requires: PowerShell 5.1+ (PowerShell 7.0+ recommended for parallel execution)
+    Region: Australian localization (AU date format: dd/MM/yyyy HH:mm:ss)
+
+    PowerShell Version Behavior:
+    - PowerShell 7.0+: Parallel execution with configurable throttle limit (fast)
+    - PowerShell 5.1: Sequential execution fallback (slower, but compatible)
+    - Single device validation works on both versions
+
+    Features (v2.3):
+    - PowerShell 5.1 compatibility with sequential processing fallback
+    - Thread-safe logging using synchronized collections (PS7+) or sequential writes (PS5.1)
+    - Automatic logging to Get-MDEStatus-Log.txt with AU date/time format
+
+    Bug Fixes (v2.1):
+    - Fixed DefenderInstalled detection when using CIM/WMI validation methods
+    - Added service status queries to supplement CIM/WMI data (SENSE, DiagTrack)
+    - CIM/WMI now correctly infers installation from MSFT_MpComputerStatus presence
 
 .REFERENCES
     Troubleshoot Microsoft Defender for Endpoint onboarding issues
@@ -119,6 +138,40 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
+
+# Initialize log file in script directory
+# Reference: https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.management/split-path
+$ScriptPath = Split-Path -Parent $MyInvocation.MyCommand.Path
+if (-not $ScriptPath) { $ScriptPath = $PWD.Path }
+$LogFile = Join-Path -Path $ScriptPath -ChildPath 'Get-MDEStatus-Log.txt'
+
+function Write-MDELog {
+    param(
+        [string]$Hostname,
+        [string]$ValidationMethod,
+        [string]$HealthStatus,
+        [string]$OnboardingState,
+        [string]$ErrorMessage
+    )
+
+    try {
+        # Create log entry in Australian date/time format
+        # Format: [DD/MM/YYYY HH:MM:SS] Hostname | Method | Status | Onboarding | Error
+        $Timestamp = Get-Date -Format 'dd/MM/yyyy HH:mm:ss'
+        $OnboardingDisplay = if ($OnboardingState) { $OnboardingState } else { 'Unknown' }
+        $ErrorDisplay = if ($ErrorMessage) { $ErrorMessage } else { 'None' }
+
+        $LogEntry = "[$Timestamp] $Hostname | $ValidationMethod | $HealthStatus | $OnboardingDisplay | $ErrorDisplay"
+
+        # Append to log file
+        # Reference: https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.utility/add-content
+        Add-Content -Path $LogFile -Value $LogEntry -ErrorAction SilentlyContinue
+    }
+    catch {
+        # Silently continue if logging fails - don't break validation
+        Write-Verbose "Failed to write to log file: $_"
+    }
+}
 
 function Get-SENSEEventLog {
     param(
@@ -212,7 +265,7 @@ function Get-MDEStatus {
         LastSENSEError                = $null
         HealthStatus                  = 'Unknown'
         ErrorMessage                  = ''
-        Timestamp                     = (Get-Date -Format 'yyyy-MM-dd HH:mm:ss')
+        Timestamp                     = (Get-Date -Format 'dd/MM/yyyy HH:mm:ss')  # Australian date format: DD/MM/YYYY HH:MM:SS
     }
 
     try {
@@ -282,6 +335,20 @@ function Get-MDEStatus {
             $Result.HealthStatus = 'ValidationFailed'
         }
         else {
+            # Supplement CIM/WMI validation with service status (since MSFT_MpComputerStatus doesn't include services)
+            # Reference: https://learn.microsoft.com/en-us/defender-endpoint/troubleshoot-onboarding
+            if ($Result.ValidationMethod -in @('CIM-WSMan', 'WMI-DCOM')) {
+                $ServiceData = Get-ServiceStatus -Computer $Computer -Cred $Cred
+                if ($ServiceData) {
+                    if ($ServiceData.SENSEServiceStatus) {
+                        $Result.SENSEServiceStatus = $ServiceData.SENSEServiceStatus
+                    }
+                    if ($ServiceData.DiagTrackServiceStatus) {
+                        $Result.DiagTrackServiceStatus = $ServiceData.DiagTrackServiceStatus
+                    }
+                }
+            }
+
             $EventLogData = Get-SENSEEventLog -Computer $Computer -Cred $Cred
             if ($EventLogData) {
                 $Result.RecentSENSEErrors = $EventLogData.ErrorCount
@@ -470,6 +537,58 @@ function Get-MDEStatusViaRegistry {
     }
 }
 
+function Get-ServiceStatus {
+    param(
+        [string]$Computer,
+        [System.Management.Automation.PSCredential]$Cred
+    )
+
+    try {
+        $ScriptBlock = {
+            # Query MDE service status to supplement CIM/WMI/Registry validation
+            # Reference: https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.management/get-service
+            $SvcData = [PSCustomObject]@{
+                SENSEServiceStatus     = $null
+                DiagTrackServiceStatus = $null
+            }
+
+            $SenseService = Get-Service -Name 'SENSE' -ErrorAction SilentlyContinue
+            if ($SenseService) {
+                $SvcData.SENSEServiceStatus = $SenseService.Status
+            }
+
+            $DiagService = Get-Service -Name 'DiagTrack' -ErrorAction SilentlyContinue
+            if ($DiagService) {
+                $SvcData.DiagTrackServiceStatus = $DiagService.Status
+            }
+
+            return $SvcData
+        }
+
+        if ($Computer -eq $env:COMPUTERNAME) {
+            $Data = & $ScriptBlock
+        }
+        else {
+            $InvokeParams = @{
+                ComputerName = $Computer
+                ScriptBlock  = $ScriptBlock
+                ErrorAction  = 'SilentlyContinue'
+            }
+
+            if ($Cred) {
+                $InvokeParams.Credential = $Cred
+            }
+
+            $Data = Invoke-Command @InvokeParams
+        }
+
+        return $Data
+    }
+    catch {
+        return $null
+    }
+}
+
 function Get-MDEStatusViaService {
     param(
         [string]$Computer,
@@ -537,6 +656,14 @@ function Merge-MDEResult {
         [PSCustomObject]$Source
     )
 
+    # If we successfully retrieved data from CIM/WMI (MSFT_MpComputerStatus), infer Defender is installed
+    # The WMI class wouldn't exist if Defender wasn't installed
+    # Reference: https://learn.microsoft.com/en-us/previous-versions/windows/desktop/defender/msft-mpcomputerstatus
+    if ($Source.AMRunningMode -or  $null -ne $Source.RealTimeProtectionEnabled) {
+        $Target.DefenderInstalled = $true
+    }
+
+    # Registry/Service methods explicitly set DefenderInstalled
     if ($Source.DefenderInstalled) {
         $Target.DefenderInstalled = $Source.DefenderInstalled
     }
@@ -596,7 +723,7 @@ function Get-MDEHealthState {
 
     # Determine overall health status based on validation results
     # Health states: Healthy, Passive, RealTimeProtectionDisabled, OutdatedSignatures,
-    #                Degraded, NotOnboarded, NotInstalled, EventLogErrors, 
+    #                Degraded, NotOnboarded, NotInstalled, EventLogErrors,
     #                SenseServiceNotRunning, ValidationFailed, Offline
     # Reference: https://learn.microsoft.com/en-us/defender-endpoint/troubleshoot-onboarding
     if (-not $Result.DefenderInstalled) {
@@ -651,6 +778,13 @@ try {
 
         $Result = Get-MDEStatus -Computer $ComputerName -Cred $Credential -Method $PreferredMethod
 
+        # Log result to file
+        Write-MDELog -Hostname $Result.Hostname `
+            -ValidationMethod $Result.ValidationMethod `
+            -HealthStatus $Result.HealthStatus `
+            -OnboardingState $Result.OnboardingState `
+            -ErrorMessage $Result.ErrorMessage
+
         Write-Host "`n=== MDE Status ===" -ForegroundColor Yellow
         $Result | Format-List Hostname, ValidationMethod, HealthStatus, OnboardingState,
         AMRunningMode, RealTimeProtectionEnabled, BehaviorMonitorEnabled,
@@ -666,6 +800,7 @@ try {
         }
 
         Write-Host "`nValidation completed using: $($Result.ValidationMethod)" -ForegroundColor Cyan
+        Write-Host "Log file: $LogFile" -ForegroundColor Gray
     }
     else {
         # Bulk validation mode with CSV input
@@ -687,34 +822,90 @@ try {
             $OutputPath = "MDE-Status-Report-$Timestamp.csv"
         }
 
-        # Process devices in parallel for performance
-        # Reference: https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/foreach-object
-        $Results = $Devices | ForEach-Object -ThrottleLimit $ThrottleLimit -Parallel {
-            $Device = $_
-            $Cred = $using:Credential
-            $Method = $using:PreferredMethod
+        # Check PowerShell version for parallel execution support
+        # Reference: https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/foreach-object?view=powershell-7.4#-parallel
+        $UsesParallel = $PSVersionTable.PSVersion.Major -ge 7
 
-            ${function:Get-SENSEEventLog} = ${using:function:Get-SENSEEventLog}
-            ${function:Get-MDEStatus} = ${using:function:Get-MDEStatus}
-            ${function:Get-MDEStatusViaCIM} = ${using:function:Get-MDEStatusViaCIM}
-            ${function:Get-MDEStatusViaWMI} = ${using:function:Get-MDEStatusViaWMI}
-            ${function:Get-MDEStatusViaRegistry} = ${using:function:Get-MDEStatusViaRegistry}
-            ${function:Get-MDEStatusViaService} = ${using:function:Get-MDEStatusViaService}
-            ${function:Merge-MDEResult} = ${using:function:Merge-MDEResult}
-            ${function:Get-MDEHealthState} = ${using:function:Get-MDEHealthState}
+        if ($UsesParallel) {
+            Write-Host "Using parallel execution (PowerShell 7+) with ThrottleLimit: $ThrottleLimit" -ForegroundColor Cyan
 
-            Write-Host "Checking $($Device.Hostname)..." -NoNewline
-            $Result = Get-MDEStatus -Computer $Device.Hostname -Cred $Cred -Method $Method
+            # Create thread-safe synchronized list for log entries
+            # Reference: https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1
+            $LogQueue = [System.Collections.Generic.List[string]]::Synchronized((New-Object System.Collections.Generic.List[string]))
 
-            $StatusColor = switch ($Result.HealthStatus) {
-                'Healthy' { 'Green' }
-                { $_ -in @('Passive', 'RealTimeProtectionDisabled', 'OutdatedSignatures', 'Degraded') } { 'Yellow' }
-                default { 'Red' }
+            # Process devices in parallel for performance (PowerShell 7+)
+            # Reference: https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/foreach-object
+            $Results = $Devices | ForEach-Object -ThrottleLimit $ThrottleLimit -Parallel {
+                $Device = $_
+                $Cred = $using:Credential
+                $Method = $using:PreferredMethod
+                $SyncLogQueue = $using:LogQueue
+
+                ${function:Get-SENSEEventLog} = ${using:function:Get-SENSEEventLog}
+                ${function:Get-ServiceStatus} = ${using:function:Get-ServiceStatus}
+                ${function:Get-MDEStatus} = ${using:function:Get-MDEStatus}
+                ${function:Get-MDEStatusViaCIM} = ${using:function:Get-MDEStatusViaCIM}
+                ${function:Get-MDEStatusViaWMI} = ${using:function:Get-MDEStatusViaWMI}
+                ${function:Get-MDEStatusViaRegistry} = ${using:function:Get-MDEStatusViaRegistry}
+                ${function:Get-MDEStatusViaService} = ${using:function:Get-MDEStatusViaService}
+                ${function:Merge-MDEResult} = ${using:function:Merge-MDEResult}
+                ${function:Get-MDEHealthState} = ${using:function:Get-MDEHealthState}
+
+                Write-Host "Checking $($Device.Hostname)..." -NoNewline
+                $Result = Get-MDEStatus -Computer $Device.Hostname -Cred $Cred -Method $Method
+
+                # Add log entry to thread-safe queue (no file I/O during parallel execution)
+                # Reference: https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1.add
+                $Timestamp = Get-Date -Format 'dd/MM/yyyy HH:mm:ss'
+                $OnboardingDisplay = if ($Result.OnboardingState) { $Result.OnboardingState } else { 'Unknown' }
+                $ErrorDisplay = if ($Result.ErrorMessage) { $Result.ErrorMessage } else { 'None' }
+                $LogEntry = "[$Timestamp] $($Result.Hostname) | $($Result.ValidationMethod) | $($Result.HealthStatus) | $OnboardingDisplay | $ErrorDisplay"
+                $SyncLogQueue.Add($LogEntry)
+
+                $StatusColor = switch ($Result.HealthStatus) {
+                    'Healthy' { 'Green' }
+                    { $_ -in @('Passive', 'RealTimeProtectionDisabled', 'OutdatedSignatures', 'Degraded') } { 'Yellow' }
+                    default { 'Red' }
+                }
+
+                Write-Host " $($Result.HealthStatus) [$($Result.ValidationMethod)]" -ForegroundColor $StatusColor
+
+                $Result
             }
 
-            Write-Host " $($Result.HealthStatus) [$($Result.ValidationMethod)]" -ForegroundColor $StatusColor
+            # Write all log entries to file after parallel execution completes (thread-safe)
+            # Reference: https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.utility/add-content
+            if ($LogQueue.Count -gt 0) {
+                $LogQueue | Add-Content -Path $LogFile -ErrorAction SilentlyContinue
+            }
+        }
+        else {
+            # PowerShell 5.1 fallback - sequential processing (no parallel support)
+            Write-Warning 'PowerShell 5.1 detected - using sequential validation (slower)'
+            Write-Warning 'For faster bulk validation, install PowerShell 7: https://aka.ms/install-powershell'
+            Write-Host "Processing $($Devices.Count) devices sequentially..." -ForegroundColor Yellow
 
-            $Result
+            $Results = foreach ($Device in $Devices) {
+                Write-Host "Checking $($Device.Hostname)..." -NoNewline
+                $Result = Get-MDEStatus -Computer $Device.Hostname -Cred $Credential -Method $PreferredMethod
+
+                # Log result to file (sequential, no threading concerns)
+                Write-MDELog -Hostname $Result.Hostname `
+                    -ValidationMethod $Result.ValidationMethod `
+                    -HealthStatus $Result.HealthStatus `
+                    -OnboardingState $Result.OnboardingState `
+                    -ErrorMessage $Result.ErrorMessage
+
+                $StatusColor = switch ($Result.HealthStatus) {
+                    'Healthy' { 'Green' }
+                    { $_ -in @('Passive', 'RealTimeProtectionDisabled', 'OutdatedSignatures', 'Degraded') } { 'Yellow' }
+                    default { 'Red' }
+                }
+
+                Write-Host " $($Result.HealthStatus) [$($Result.ValidationMethod)]" -ForegroundColor $StatusColor
+
+                $Result
+            }
         }
 
         # Export results to CSV
@@ -723,6 +914,7 @@ try {
 
         Write-Host "`nValidation complete!" -ForegroundColor Green
         Write-Host "Results exported to: $OutputPath" -ForegroundColor Cyan
+        Write-Host "Log file: $LogFile" -ForegroundColor Gray
 
         $Summary = $Results | Group-Object -Property HealthStatus | Select-Object Name, Count
         Write-Host "`n=== Health Status Summary ===" -ForegroundColor Yellow

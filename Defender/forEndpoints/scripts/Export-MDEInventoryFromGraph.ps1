@@ -8,7 +8,7 @@
     1. CSV validation - validate devices from CSV file
     2. Full inventory export - retrieve all devices (no CSV)
     3. Unmanaged device discovery - find devices with "CanBeOnboarded" status
-    
+
     Supports both app-only authentication (client credentials) and delegated permissions.
 
 .PARAMETER TenantId
@@ -57,6 +57,7 @@
     Version: 1.1
     Requires: PowerShell 5.1+
     API Permissions Required: Machine.Read.All or Machine.ReadWrite.All
+    Region: Australian localization (AU date format: dd/MM/yyyy HH:mm:ss)
 
 .REFERENCES
     OAuth 2.0 Client Credentials Flow - Microsoft Identity Platform
@@ -229,7 +230,7 @@ try {
                     AzureADDeviceId    = $GraphDevice.aadDeviceId
                     MDEAgentVersion    = $GraphDevice.version
                     DeviceId           = $GraphDevice.id
-                    Timestamp          = (Get-Date -Format 'yyyy-MM-dd HH:mm:ss')
+                    Timestamp          = (Get-Date -Format 'dd/MM/yyyy HH:mm:ss')  # Australian date format: DD/MM/YYYY HH:MM:SS  # Australian date format: DD/MM/YYYY HH:MM:SS
                 }
             }
             else {
@@ -247,7 +248,7 @@ try {
                     AzureADDeviceId    = $null
                     MDEAgentVersion    = $null
                     DeviceId           = $null
-                    Timestamp          = (Get-Date -Format 'yyyy-MM-dd HH:mm:ss')
+                    Timestamp          = (Get-Date -Format 'dd/MM/yyyy HH:mm:ss')  # Australian date format: DD/MM/YYYY HH:MM:SS  # Australian date format: DD/MM/YYYY HH:MM:SS
                 }
             }
         }
@@ -283,7 +284,7 @@ try {
                 DeviceId           = $_.id
                 MachineGroups      = ($_.rbacGroupName -join '; ')
                 Tags               = ($_.machineTags -join '; ')
-                Timestamp          = (Get-Date -Format 'yyyy-MM-dd HH:mm:ss')
+                Timestamp          = (Get-Date -Format 'dd/MM/yyyy HH:mm:ss')  # Australian date format: DD/MM/YYYY HH:MM:SS
             }
         }
     }

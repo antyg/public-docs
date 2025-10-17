@@ -5,7 +5,10 @@
 .DESCRIPTION
     Validates network connectivity to MDE cloud service endpoints including
     blob storage, telemetry services, and certificate validation URLs.
-    Tests DNS resolution, TCP connectivity, and HTTPS response codes.
+    Tests DNS resolution, TCP connectivity (port 443), and HTTPS response codes.
+
+    When HTTPS tests fail, automatically tests port 80 as a fallback diagnostic
+    to help identify SSL/TLS issues versus general network connectivity problems.
 
 .PARAMETER Region
     MDE service region. Valid values: AU, EU, UK, US. Default: AU
@@ -46,8 +49,13 @@
 
 .NOTES
     Author: Security Operations Team
-    Version: 1.0
+    Version: 1.1
     Requires: PowerShell 5.1+, Administrator privileges (for some tests)
+
+    Diagnostic Features:
+    - Automatically tests port 80 when HTTPS (port 443) fails
+    - Helps differentiate SSL/TLS issues from general network connectivity
+    - Provides detailed error context for troubleshooting firewall rules
 #>
 
 [CmdletBinding()]
@@ -90,8 +98,15 @@ $RegionEndpoints = @{
 # Reference: https://learn.microsoft.com/en-us/defender-endpoint/configure-environment
 # Common endpoints required for MDE cloud connectivity
 $CommonEndpoints = @(
+    # Blob storage may return 403/404 if authentication required - this is expected
+    # Reference: https://learn.microsoft.com/en-us/azure/storage/common/storage-network-security
     @{ Name = 'Blob Storage'; Url = '*.blob.core.windows.net'; TestUrl = 'winatpmanagement.blob.core.windows.net' }
+
+    # CRL Distribution uses HTTP (not HTTPS) per RFC 5280 - certificate validation infrastructure
+    # Reference: https://www.rfc-editor.org/rfc/rfc5280#section-4.2.1.13
+    # Reference: https://learn.microsoft.com/en-us/troubleshoot/windows-server/windows-security/configure-revocation-checking-certificate-validation
     @{ Name = 'CRL Distribution'; Url = 'crl.microsoft.com'; TestUrl = 'crl.microsoft.com' }
+
     @{ Name = 'Certificate Validation'; Url = 'www.microsoft.com'; TestUrl = 'www.microsoft.com' }
     @{ Name = 'Windows Update'; Url = '*.windowsupdate.com'; TestUrl = 'fe3.delivery.mp.microsoft.com' }
 )
@@ -113,6 +128,7 @@ function Test-EndpointConnectivity {
         HTTPSResponse     = $false
         HTTPStatusCode    = $null
         ResponseTime      = $null
+        Port80Reachable   = $null
         ErrorMessage      = $null
         Status            = 'Unknown'
     }
@@ -151,6 +167,9 @@ function Test-EndpointConnectivity {
             $Result.HTTPStatusCode = $WebRequest.StatusCode
             $Result.ResponseTime = [math]::Round(($EndTime - $StartTime).TotalMilliseconds, 2)
 
+            # Accept common status codes that indicate endpoint is reachable:
+            # 200 OK, 301/302 Redirect, 403 Forbidden (auth required), 404 Not Found (endpoint exists)
+            # Reference: https://www.rfc-editor.org/rfc/rfc9110#name-status-codes
             if ($WebRequest.StatusCode -in @(200, 301, 302, 403, 404)) {
                 $Result.Status = 'Success'
             }
@@ -160,20 +179,47 @@ function Test-EndpointConnectivity {
             }
         }
         catch {
+            # Exception with status code means endpoint responded (even if error)
+            # This is expected for blob storage (403/404) and validates connectivity
             if ($_.Exception.Response.StatusCode.value__) {
                 $Result.HTTPStatusCode = $_.Exception.Response.StatusCode.value__
                 $Result.HTTPSResponse = $true
                 $Result.Status = 'Success'
             }
             else {
-                $Result.ErrorMessage = "HTTPS request failed: $($_.Exception.Message)"
-                $Result.Status = 'Failed'
+                # HTTPS failed without status code - test alternative ports for additional diagnostics
+                # Reference: https://learn.microsoft.com/en-us/powershell/module/nettcpip/test-netconnection
+                Write-Verbose "HTTPS failed for $Hostname - testing port 80 as fallback diagnostic"
+                $Port80Test = Test-NetConnection -ComputerName $Hostname -Port 80 -WarningAction SilentlyContinue -ErrorAction SilentlyContinue
+
+                if ($Port80Test.TcpTestSucceeded) {
+                    $Result.Port80Reachable = $true
+                    $Result.ErrorMessage = 'HTTPS (443) failed but HTTP (80) reachable - possible SSL/TLS issue or firewall blocking HTTPS'
+                    $Result.Status = 'Warning'
+                }
+                else {
+                    $Result.Port80Reachable = $false
+                    $Result.ErrorMessage = "HTTPS request failed: $($_.Exception.Message)"
+                    $Result.Status = 'Failed'
+                }
             }
         }
     }
     catch {
-        $Result.ErrorMessage = $_.Exception.Message
-        $Result.Status = 'Failed'
+        # Final catch block - attempt port 80 diagnostic before failing completely
+        Write-Verbose "Exception in connectivity test for $Hostname - testing port 80 as fallback"
+        $Port80Test = Test-NetConnection -ComputerName $Hostname -Port 80 -WarningAction SilentlyContinue -ErrorAction SilentlyContinue
+
+        if ($Port80Test.TcpTestSucceeded) {
+            $Result.Port80Reachable = $true
+            $Result.ErrorMessage = "$($_.Exception.Message) - Port 80 reachable, possible HTTPS-specific issue"
+            $Result.Status = 'Warning'
+        }
+        else {
+            $Result.Port80Reachable = $false
+            $Result.ErrorMessage = $_.Exception.Message
+            $Result.Status = 'Failed'
+        }
     }
 
     return $Result
@@ -253,7 +299,10 @@ try {
 
         if ($VerbosePreference -eq 'Continue') {
             Write-Host "  DNS: $($Result.DNSResolution) | IP: $($Result.IPAddress)" -ForegroundColor Gray
-            Write-Host "  TCP: $($Result.TCPConnection) | HTTP: $($Result.HTTPStatusCode) | Time: $($Result.ResponseTime)ms" -ForegroundColor Gray
+            Write-Host "  TCP:443: $($Result.TCPConnection) | HTTP: $($Result.HTTPStatusCode) | Time: $($Result.ResponseTime)ms" -ForegroundColor Gray
+            if ($null -ne $Result.Port80Reachable) {
+                Write-Host "  TCP:80: $($Result.Port80Reachable) (Fallback diagnostic)" -ForegroundColor $(if ($Result.Port80Reachable) { 'Yellow' } else { 'Gray' })
+            }
             if ($Result.ErrorMessage) {
                 Write-Host "  Error: $($Result.ErrorMessage)" -ForegroundColor Red
             }
@@ -281,7 +330,10 @@ try {
 
         if ($VerbosePreference -eq 'Continue') {
             Write-Host "  DNS: $($Result.DNSResolution) | IP: $($Result.IPAddress)" -ForegroundColor Gray
-            Write-Host "  TCP: $($Result.TCPConnection) | HTTP: $($Result.HTTPStatusCode) | Time: $($Result.ResponseTime)ms" -ForegroundColor Gray
+            Write-Host "  TCP:443: $($Result.TCPConnection) | HTTP: $($Result.HTTPStatusCode) | Time: $($Result.ResponseTime)ms" -ForegroundColor Gray
+            if ($null -ne $Result.Port80Reachable) {
+                Write-Host "  TCP:80: $($Result.Port80Reachable) (Fallback diagnostic)" -ForegroundColor $(if ($Result.Port80Reachable) { 'Yellow' } else { 'Gray' })
+            }
             if ($Result.ErrorMessage) {
                 Write-Host "  Error: $($Result.ErrorMessage)" -ForegroundColor Red
             }
@@ -302,7 +354,13 @@ try {
     $FailedTests = $AllResults | Where-Object Status -EQ 'Failed'
     if ($FailedTests.Count -gt 0) {
         Write-Host "`n=== Failed Connectivity Tests ===" -ForegroundColor Red
-        $FailedTests | Select-Object Name, Hostname, ErrorMessage | Format-Table -AutoSize
+        $FailedTests | Select-Object Name, Hostname, Port80Reachable, ErrorMessage | Format-Table -AutoSize
+
+        $Port80Available = $FailedTests | Where-Object Port80Reachable -EQ $true
+        if ($Port80Available.Count -gt 0) {
+            Write-Host "`n⚠️  Note: $($Port80Available.Count) endpoint(s) reachable on port 80 but failed HTTPS (443)" -ForegroundColor Yellow
+            Write-Host '   This suggests SSL/TLS or firewall policy blocking HTTPS traffic specifically' -ForegroundColor Yellow
+        }
     }
 
     Write-Host "`n=== Recommendations ===" -ForegroundColor Yellow

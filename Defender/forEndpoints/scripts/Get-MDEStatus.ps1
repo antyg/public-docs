@@ -564,7 +564,9 @@ function Get-MDEStatusViaRegistry {
             $Data = Invoke-Command @InvokeParams
         }
 
-        if ($Data.DefenderInstalled) {
+        # Return data if we found anything useful (Defender installed, onboarding state, or service status)
+        # Reference: https://learn.microsoft.com/en-us/defender-endpoint/troubleshoot-onboarding
+        if ($Data.DefenderInstalled -or $Data.OnboardingState -or $Data.SENSEServiceStatus) {
             return @{
                 Success = $true
                 Data    = $Data
@@ -677,7 +679,9 @@ function Get-MDEStatusViaService {
             $Data = Invoke-Command @InvokeParams
         }
 
-        if ($Data.DefenderInstalled) {
+        # Return data if we found anything useful (Defender installed, onboarding state, or service status)
+        # Reference: https://learn.microsoft.com/en-us/defender-endpoint/troubleshoot-onboarding
+        if ($Data.DefenderInstalled -or $Data.OnboardingState -or $Data.SENSEServiceStatus) {
             return @{
                 Success = $true
                 Data    = $Data

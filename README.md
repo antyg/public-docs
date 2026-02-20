@@ -11,7 +11,7 @@ This library is organised into **9 top-level domains**, each covering a distinct
 | **[security/](security/)** | Security frameworks and product documentation | Defender for Cloud (19 guides + scripts), Defender for Endpoint (validation toolkit), Essential Eight, NIST, Zero Trust |
 | **[identity/](identity/)** | Identity and access management | Password policy research, Entra ID (planned), Okta, Ping |
 | **[networking/](networking/)** | Network infrastructure | Azure Firewall + ExpressRoute routing |
-| **[endpoints/](endpoints/)** | Endpoint and VM management | Windows Autopilot (330KB complete suite), Intune/MEM |
+| **[endpoints/](endpoints/)** | Endpoint and VM management | iOS device capture toolkit (ZCC VPN), Intune iOS diagnostic logging, Autopilot, platform coverage (iOS/Android/ChromeOS/macOS/Windows), virtual machines |
 | **[infrastructure/](infrastructure/)** | Core infrastructure | PKI modernisation (13 guides + 68 scripts) |
 | **[development/](development/)** | Coding standards and tooling | PSEval PowerShell standards (147 standards, 10 documents) |
 | **[integrations/](integrations/)** | API specifications and SDKs | Microsoft Graph API |
@@ -39,7 +39,7 @@ The library separates three concerns that are often conflated:
 
 | Status | Count | Description |
 |--------|-------|-------------|
-| ✅ Substantive | 8 topics | Has real content with guides, scripts, or detailed documentation |
+| ✅ Substantive | 10 topics | Has real content with guides, scripts, or detailed documentation |
 | 🌱 Seeded | 5 topics | Placeholder structure with README — content planned |
 | 📋 Planned | 20+ topics | Future additions identified in domain READMEs |
 
@@ -55,6 +55,8 @@ This library follows three quality frameworks:
 
 | I want to... | Start here |
 |--------------|-----------|
+| Capture ZCC VPN diagnostics from an iOS device | [endpoints/iOS/device-capture-toolkit/](endpoints/iOS/device-capture-toolkit/) |
+| Collect iOS diagnostic logs via Intune | [endpoints/intune/ios-diagnostic-logging/](endpoints/intune/ios-diagnostic-logging/) |
 | Deploy Windows Autopilot | [endpoints/autopilot/](endpoints/autopilot/) |
 | Implement Defender for Cloud | [security/defender-for-cloud/](security/defender-for-cloud/) |
 | Validate Defender for Endpoint | [security/defender-for-endpoint/](security/defender-for-endpoint/) |

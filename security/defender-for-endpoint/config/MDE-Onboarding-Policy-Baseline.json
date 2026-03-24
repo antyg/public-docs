@@ -1,0 +1,215 @@
+{
+  "$schema": "https://raw.githubusercontent.com/antyg/clauding/main/schemas/mde-policy-baseline-v1.json",
+  "metadata": {
+    "name": "MDE Onboarding Policy Baseline",
+    "version": "1.0.0",
+    "description": "Recommended Group Policy and Intune configuration settings for Microsoft Defender for Endpoint onboarding, sensor configuration, and operational prerequisites.",
+    "author": "antyg",
+    "created": "2026-03-23",
+    "region": "AU",
+    "applicableTo": [
+      "Windows 10 21H2+",
+      "Windows 11",
+      "Windows Server 2016+",
+      "Windows Server 2019+",
+      "Windows Server 2022+"
+    ],
+    "references": [
+      {
+        "title": "Configure MDE endpoints using Group Policy",
+        "url": "https://learn.microsoft.com/en-us/defender-endpoint/configure-endpoints-gp"
+      },
+      {
+        "title": "Configure MDE endpoints using Intune",
+        "url": "https://learn.microsoft.com/en-us/defender-endpoint/configure-endpoints-mdm"
+      },
+      {
+        "title": "MDE network connectivity requirements",
+        "url": "https://learn.microsoft.com/en-us/defender-endpoint/configure-environment"
+      },
+      {
+        "title": "Onboard devices to MDE",
+        "url": "https://learn.microsoft.com/en-us/defender-endpoint/onboard-configure"
+      }
+    ]
+  },
+  "onboarding": {
+    "description": "Core onboarding settings required for SENSE service registration and cloud communication.",
+    "settings": [
+      {
+        "name": "OnboardingInfo",
+        "description": "Onboarding blob containing workspace ID, workspace key, and region. Obtained from Security Center > Settings > Endpoints > Onboarding.",
+        "gpoPath": "Computer Configuration > Administrative Templates > Windows Components > Microsoft Defender Antivirus > MDE Onboarding",
+        "intuneProfile": "Endpoint detection and response",
+        "registryKey": "HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows Advanced Threat Protection",
+        "registryValue": "OnboardingInfo",
+        "type": "REG_SZ",
+        "required": true,
+        "notes": "Tenant-specific. Do not share across tenants. Regenerate if compromised."
+      },
+      {
+        "name": "OnboardingState",
+        "description": "Indicates the device is configured for onboarding. Set automatically by the onboarding package.",
+        "registryKey": "HKLM\\SOFTWARE\\Microsoft\\Windows Advanced Threat Protection\\Status",
+        "registryValue": "OnboardingState",
+        "type": "REG_DWORD",
+        "expectedValue": 1,
+        "required": true,
+        "notes": "Read-only indicator. Value 1 = onboarded. Value 0 = not onboarded."
+      }
+    ]
+  },
+  "sensorConfiguration": {
+    "description": "SENSE service operational settings controlling telemetry, sample submission, and diagnostic data.",
+    "settings": [
+      {
+        "name": "SampleSharing",
+        "description": "Controls whether file samples are automatically submitted to Microsoft for analysis.",
+        "gpoPath": "Computer Configuration > Administrative Templates > Windows Components > Microsoft Defender Antivirus > MAPS > Send file samples when further analysis is required",
+        "intuneProfile": "Antivirus > Microsoft Defender Antivirus",
+        "registryKey": "HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows Defender\\Spynet",
+        "registryValue": "SubmitSamplesConsent",
+        "type": "REG_DWORD",
+        "recommendedValue": 1,
+        "valueMap": {
+          "0": "Always prompt",
+          "1": "Send safe samples automatically",
+          "2": "Never send",
+          "3": "Send all samples automatically"
+        },
+        "required": false,
+        "notes": "Value 1 (safe samples) is the recommended baseline for most organisations."
+      },
+      {
+        "name": "CloudProtectionLevel",
+        "description": "Controls the aggressiveness of cloud-delivered protection blocking decisions.",
+        "gpoPath": "Computer Configuration > Administrative Templates > Windows Components > Microsoft Defender Antivirus > MAPS > Configure the 'Block at First Sight' feature",
+        "intuneProfile": "Antivirus > Microsoft Defender Antivirus",
+        "registryKey": "HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows Defender\\Spynet",
+        "registryValue": "SpynetReporting",
+        "type": "REG_DWORD",
+        "recommendedValue": 2,
+        "valueMap": {
+          "0": "Disabled",
+          "1": "Basic membership",
+          "2": "Advanced membership"
+        },
+        "required": true,
+        "notes": "Advanced membership (2) enables Block at First Sight and provides richer telemetry."
+      },
+      {
+        "name": "CloudBlockTimeout",
+        "description": "Extended timeout for cloud-delivered protection verdicts before allowing execution.",
+        "gpoPath": "Computer Configuration > Administrative Templates > Windows Components > Microsoft Defender Antivirus > MAPS > Configure extended cloud check",
+        "intuneProfile": "Antivirus > Microsoft Defender Antivirus",
+        "registryKey": "HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows Defender\\Spynet",
+        "registryValue": "CloudExtendedTimeout",
+        "type": "REG_DWORD",
+        "recommendedValue": 50,
+        "unit": "seconds",
+        "range": {
+          "min": 0,
+          "max": 50
+        },
+        "required": false,
+        "notes": "Maximum 50 seconds. Total timeout = default 10s + extended value. Recommended: 50 (maximum)."
+      },
+      {
+        "name": "DiagnosticDataLevel",
+        "description": "Windows diagnostic data level required for MDE telemetry.",
+        "gpoPath": "Computer Configuration > Administrative Templates > Windows Components > Data Collection and Preview Builds > Allow Diagnostic Data",
+        "intuneProfile": "Device restrictions > Reporting and Telemetry",
+        "registryKey": "HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows\\DataCollection",
+        "registryValue": "AllowTelemetry",
+        "type": "REG_DWORD",
+        "minimumValue": 1,
+        "recommendedValue": 2,
+        "valueMap": {
+          "0": "Security (insufficient for MDE)",
+          "1": "Required (minimum for MDE)",
+          "2": "Enhanced / Optional (recommended)",
+          "3": "Full / Optional (maximum telemetry)"
+        },
+        "required": true,
+        "notes": "MDE requires at minimum level 1 (Required). Level 2 provides richer data for Advanced Hunting."
+      }
+    ]
+  },
+  "networkPrerequisites": {
+    "description": "Network endpoints that must be reachable for MDE sensor communication. Australian region.",
+    "region": "AU",
+    "endpoints": [
+      {
+        "purpose": "Commands channel (AUS)",
+        "hostname": "edr-aus.au.endpoint.security.microsoft.com",
+        "port": 443,
+        "protocol": "HTTPS",
+        "required": true
+      },
+      {
+        "purpose": "Commands channel (AUE)",
+        "hostname": "edr-aue.au.endpoint.security.microsoft.com",
+        "port": 443,
+        "protocol": "HTTPS",
+        "required": true
+      },
+      {
+        "purpose": "Cyber data",
+        "hostname": "au-v20.events.endpoint.security.microsoft.com",
+        "port": 443,
+        "protocol": "HTTPS",
+        "required": true
+      },
+      {
+        "purpose": "Microsoft Defender Antivirus",
+        "hostname": "mdav.au.endpoint.security.microsoft.com",
+        "port": 443,
+        "protocol": "HTTPS",
+        "required": true
+      },
+      {
+        "purpose": "SmartScreen / Network Protection",
+        "hostname": "smartscreen-prod.microsoft.com",
+        "port": 443,
+        "protocol": "HTTPS",
+        "required": false,
+        "notes": "Required if SmartScreen or Network Protection is enabled."
+      },
+      {
+        "purpose": "Certificate revocation",
+        "hostname": "crl.microsoft.com",
+        "port": 80,
+        "protocol": "HTTP",
+        "required": true,
+        "notes": "CRL checks use HTTP (port 80), not HTTPS."
+      }
+    ],
+    "notes": "This is a subset of endpoints for the Australian region. See https://learn.microsoft.com/en-us/defender-endpoint/configure-environment for the complete list including global endpoints."
+  },
+  "servicePrerequisites": {
+    "description": "Windows services required for MDE operation.",
+    "services": [
+      {
+        "name": "SENSE",
+        "displayName": "Windows Defender Advanced Threat Protection Service",
+        "startType": "Automatic",
+        "requiredState": "Running",
+        "notes": "Core MDE sensor service. Must be running for onboarding and telemetry."
+      },
+      {
+        "name": "WinDefend",
+        "displayName": "Microsoft Defender Antivirus Service",
+        "startType": "Automatic",
+        "requiredState": "Running",
+        "notes": "Required for real-time protection and Attack Surface Reduction rules."
+      },
+      {
+        "name": "DiagTrack",
+        "displayName": "Connected User Experiences and Telemetry",
+        "startType": "Automatic",
+        "requiredState": "Running",
+        "notes": "Required for diagnostic data telemetry (AllowTelemetry >= 1)."
+      }
+    ]
+  }
+}

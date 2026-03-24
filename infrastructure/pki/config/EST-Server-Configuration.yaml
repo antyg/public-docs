@@ -1,0 +1,42 @@
+EST_Server_Configuration:
+  Server: Cisco ISE or Custom EST Server
+  URL: https://est.company.com.au:8443
+
+  Authentication_Methods:
+    - HTTP_Basic_Auth
+    - Client_Certificate
+    - Shared_Secret
+
+  Endpoints:
+    /cacerts:
+      Description: Get CA certificates
+      Authentication: Optional
+      Response: PKCS#7 certificate chain
+
+    /simpleenroll:
+      Description: Initial enrollment
+      Authentication: Required
+      Request: PKCS#10 CSR
+      Response: PKCS#7 certificate
+
+    /simplereenroll:
+      Description: Certificate renewal
+      Authentication: Client certificate
+      Request: PKCS#10 CSR
+      Response: PKCS#7 certificate
+
+    /serverkeygen:
+      Description: Server-side key generation
+      Authentication: Required
+      Response: PKCS#12 with private key
+
+  Certificate_Templates:
+    IoT_Device:
+      Validity: 1 year
+      Key_Size: 2048
+      Subject_Format: CN=iot-{{MAC}}.company.com.au
+
+    Network_Device:
+      Validity: 2 years
+      Key_Size: 3072
+      Subject_Format: CN={{FQDN}}

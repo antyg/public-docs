@@ -1,0 +1,30 @@
+{
+  "@odata.type": "#microsoft.graph.azureADWindowsAutopilotDeploymentProfile",
+  "displayName": "Corporate Standard Profile",
+  "description": "Standard deployment profile for corporate devices",
+  "language": "os-default",
+  "extractHardwareHash": false,
+  "deviceNameTemplate": "CORP-%RAND:5%",
+  "deviceType": "windowsPc",
+  "enableWhiteGlove": true,
+  "roleScopeTagIds": ["0"],
+  "outOfBoxExperienceSettings": {
+    "@odata.type": "microsoft.graph.outOfBoxExperienceSettings",
+    "hidePrivacySettings": true,
+    "hideEULA": true,
+    "userType": "standard",
+    "deviceUsageType": "singleUser",
+    "skipKeyboardSelectionPage": true,
+    "hideEscapeLink": true
+  },
+  "enrollmentStatusScreenSettings": {
+    "@odata.type": "microsoft.graph.windowsEnrollmentStatusScreenSettings",
+    "hideInstallationProgress": false,
+    "allowDeviceUseBeforeProfileAndAppInstallComplete": false,
+    "blockDeviceSetupRetryByUser": false,
+    "allowLogCollectionOnInstallFailure": true,
+    "customErrorMessage": "Please contact IT support for assistance with device setup.",
+    "installProgressTimeoutInMinutes": 60,
+    "allowDeviceUseOnInstallFailure": false
+  }
+}

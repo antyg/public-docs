@@ -1,0 +1,36 @@
+API_Endpoints:
+  Base_URL: https://api-pki.company.com.au/v1
+
+  Authentication:
+    Type: OAuth 2.0
+    Token_Endpoint: /auth/token
+    Scopes:
+      - certificate.request
+      - certificate.renew
+      - certificate.revoke
+      - certificate.read
+
+  Rate_Limiting:
+    Requests_Per_Minute: 60
+    Burst_Size: 10
+
+  Endpoints:
+    - Path: /certificates/request
+      Method: POST
+      Description: Submit new certificate request
+
+    - Path: /certificates/{id}
+      Method: GET
+      Description: Retrieve certificate details
+
+    - Path: /certificates/{id}/renew
+      Method: POST
+      Description: Renew existing certificate
+
+    - Path: /certificates/{id}/revoke
+      Method: POST
+      Description: Revoke certificate
+
+    - Path: /certificates/validate
+      Method: POST
+      Description: Validate certificate chain

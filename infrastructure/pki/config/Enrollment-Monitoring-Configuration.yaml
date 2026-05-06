@@ -1,0 +1,49 @@
+Monitoring_Configuration:
+  Dashboards:
+    Enrollment_Overview:
+      Widgets:
+        - Type: Counter
+          Metric: Total Enrollments Today
+          Query: COUNT(*) WHERE timestamp > NOW-24h
+
+        - Type: Gauge
+          Metric: Success Rate
+          Query: (SUCCESS/TOTAL)*100 WHERE timestamp > NOW-1h
+
+        - Type: Line Chart
+          Metric: Enrollments Over Time
+          Query: COUNT(*) GROUP BY hour
+
+        - Type: Pie Chart
+          Metric: Enrollment by Method
+          Query: COUNT(*) GROUP BY enrollment_method
+
+    Failure_Analysis:
+      Widgets:
+        - Type: Table
+          Metric: Failed Enrollments
+          Columns: [Timestamp, User, Template, Error]
+
+        - Type: Bar Chart
+          Metric: Failure Reasons
+          Query: COUNT(*) GROUP BY error_code
+
+        - Type: Heat Map
+          Metric: Failures by Hour
+          Query: COUNT(*) WHERE status='FAILED' GROUP BY hour, day
+
+  Alerts:
+    High_Failure_Rate:
+      Condition: failure_rate > 5%
+      Window: 5 minutes
+      Action: Email PKI Team
+
+    Enrollment_Spike:
+      Condition: enrollment_count > 1000
+      Window: 1 hour
+      Action: Scale infrastructure
+
+    Template_Unavailable:
+      Condition: template_error_count > 10
+      Window: 5 minutes
+      Action: Page on-call engineer

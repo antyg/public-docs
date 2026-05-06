@@ -1,0 +1,148 @@
+<!-- Custom Web Enrollment Portal -->
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Company PKI Certificate Enrollment</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/forge/0.10.0/forge.min.js"></script>
+  </head>
+  <body>
+    <div id="enrollment-wizard">
+      <h2>Certificate Enrollment Portal</h2>
+      <!-- Step 1: Authentication -->
+      <div id="step-auth" class="wizard-step active">
+        <h3>Step 1: Authentication</h3>
+        <form id="auth-form">
+          <input type="text" id="username" placeholder="Domain Username" required />
+          <input type="password" id="password" placeholder="Password" required />
+          <button type="submit">Authenticate</button>
+        </form>
+      </div>
+      <!-- Step 2: Certificate Type -->
+      <div id="step-type" class="wizard-step hidden">
+        <h3>Step 2: Select Certificate Type</h3>
+        <select id="cert-template" title="Select certificate template">
+          <option value="">Select Template...</option>
+          <option value="WebServer">Web Server (SSL/TLS)</option>
+          <option value="CodeSigning">Code Signing</option>
+          <option value="EmailSigning">Email (S/MIME)</option>
+          <option value="ClientAuth">Client Authentication</option>
+        </select>
+        <button onclick="loadTemplateDetails()">Next</button>
+      </div>
+      <!-- Step 3: Certificate Details -->
+      <div id="step-details" class="wizard-step hidden">
+        <h3>Step 3: Certificate Details</h3>
+        <form id="cert-details">
+          <input type="text" id="cn" placeholder="Common Name" required />
+          <input type="text" id="san" placeholder="SAN (comma-separated)" />
+          <select id="keysize" title="Select key size">
+            <option value="2048">2048-bit RSA</option>
+            <option value="3072">3072-bit RSA</option>
+            <option value="4096">4096-bit RSA</option>
+          </select>
+          <button type="button" onclick="generateCSR()">Generate CSR</button>
+        </form>
+      </div>
+      <!-- Step 4: Submit Request -->
+      <div id="step-submit" class="wizard-step hidden">
+        <h3>Step 4: Submit Request</h3>
+        <label for="csr-display">Certificate Signing Request (CSR):</label>
+        <textarea id="csr-display" readonly></textarea>
+        <button onclick="submitCertificateRequest()">Submit Request</button>
+      </div>
+      <!-- Step 5: Download Certificate -->
+      <div id="step-download" class="wizard-step hidden">
+        <h3>Step 5: Certificate Issued</h3>
+        <p>Certificate Serial: <span id="serial"></span></p>
+        <p>Valid Until: <span id="expiry"></span></p>
+        <button onclick="downloadCertificate()">Download Certificate</button>
+        <button onclick="downloadPFX()">Download PFX</button>
+      </div>
+    </div>
+
+    <script>
+      // WebCrypto API Certificate Generation
+      async function generateCSR() {
+        const cn = document.getElementById('cn').value;
+        const keySize = parseInt(document.getElementById('keysize').value);
+
+        // Generate key pair using WebCrypto API
+        const keyPair = await window.crypto.subtle.generateKey(
+          {
+            name: 'RSASSA-PKCS1-v1_5',
+            modulusLength: keySize,
+            publicExponent: new Uint8Array([0x01, 0x00, 0x01]),
+            hash: { name: 'SHA-256' },
+          },
+          true,
+          ['sign', 'verify']
+        );
+
+        // Create CSR using forge
+        const csr = forge.pki.createCertificationRequest();
+        csr.publicKey = await exportPublicKey(keyPair.publicKey);
+        csr.setSubject([
+          { name: 'commonName', value: cn },
+          { name: 'organizationName', value: 'Company' },
+          { name: 'countryName', value: 'AU' },
+        ]);
+
+        // Add extensions
+        csr.setAttributes([
+          {
+            name: 'extensionRequest',
+            extensions: [
+              {
+                name: 'subjectAltName',
+                altNames: getSANs(),
+              },
+            ],
+          },
+        ]);
+
+        // Sign CSR
+        csr.sign(keyPair.privateKey, forge.md.sha256.create());
+
+        // Display CSR
+        const pem = forge.pki.certificationRequestToPem(csr);
+        document.getElementById('csr-display').value = pem;
+
+        // Store private key
+        await storePrivateKey(keyPair.privateKey);
+
+        showStep('step-submit');
+      }
+
+      async function submitCertificateRequest() {
+        const csr = document.getElementById('csr-display').value;
+        const template = document.getElementById('cert-template').value;
+
+        const response = await fetch('/api/certificate/request', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: 'Bearer ' + sessionToken,
+          },
+          body: JSON.stringify({
+            csr: csr,
+            template: template,
+            attributes: getRequestAttributes(),
+          }),
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          document.getElementById('serial').textContent = result.serialNumber;
+          document.getElementById('expiry').textContent = result.validTo;
+          certificateData = result.certificate;
+          showStep('step-download');
+        } else {
+          alert('Certificate request failed: ' + (await response.text()));
+        }
+      }
+    </script>
+  </body>
+</html>

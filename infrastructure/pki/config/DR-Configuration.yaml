@@ -1,0 +1,56 @@
+# DR-Configuration.yaml
+# Disaster Recovery Configuration for PKI Infrastructure
+
+DR_Strategy:
+  Primary_Region: Australia East
+  DR_Region: Australia Southeast
+  RPO: 1 hour
+  RTO: 4 hours
+
+  Components:
+    Azure_Key_Vault:
+      Replication: Automatic geo-replication
+      Failover: Manual
+      Recovery_Time: < 1 hour
+
+    Root_CA:
+      Type: Standby instance in DR region
+      Activation: Manual
+      Sync_Method: Database replication
+
+    Storage_Accounts:
+      Replication: GRS (Geo-Redundant Storage)
+      Failover: Automatic
+      RPO: < 15 minutes
+
+    Virtual_Networks:
+      DR_Network: VNET-PKI-DR (10.51.0.0/16)
+      Connectivity: VPN to on-premises
+
+  Failover_Process:
+    1. Detection:
+      - Automated monitoring alerts
+      - Manual verification required
+
+    2. Decision:
+      - Incident commander approval
+      - Business impact assessment
+
+    3. Activation:
+      - DNS updates (TTL 300 seconds)
+      - Route updates via BGP
+      - Application failover
+
+    4. Validation:
+      - Service health checks
+      - Certificate issuance test
+      - OCSP/CRL verification
+
+    5. Communication:
+      - Stakeholder notification
+      - Service status page update
+
+  Testing_Schedule:
+    - Quarterly DR drills
+    - Annual full failover test
+    - Monthly backup restoration test

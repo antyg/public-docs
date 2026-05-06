@@ -1,0 +1,169 @@
+# Windows Autopilot Dynamic Group Membership Rules
+# Last Updated: 2025-08-27
+# Compatibility: Azure AD/Microsoft Entra ID Dynamic Groups
+# Reference: https://docs.microsoft.com/azure/active-directory/enterprise-users/groups-dynamic-membership
+
+# ========================================
+# BASIC AUTOPILOT DEVICE TARGETING
+# ========================================
+
+# All Autopilot-registered devices
+(device.devicePhysicalIds -any _ -startswith "[ZTDId]")
+
+# Devices with specific group tags
+(device.devicePhysicalIds -any _ -eq "[OrderID]:finance")
+(device.devicePhysicalIds -any _ -eq "[OrderID]:hr")
+(device.devicePhysicalIds -any _ -eq "[OrderID]:hybrid")
+(device.devicePhysicalIds -any _ -eq "[OrderID]:kiosk")
+
+# ========================================
+# OPERATING SYSTEM TARGETING
+# ========================================
+
+# Windows 11 devices (version 22H2 and newer)
+(device.deviceOSVersion -startswith "10.0.22")
+
+# Windows 10 devices (version 1909 and newer)
+(device.deviceOSVersion -startswith "10.0.19")
+
+# Combined Windows 10/11 Autopilot devices
+(device.devicePhysicalIds -any _ -startswith "[ZTDId]") and ((device.deviceOSVersion -startswith "10.0.22") or (device.deviceOSVersion -startswith "10.0.19"))
+
+# ========================================
+# HARDWARE-BASED FILTERING
+# ========================================
+
+# Specific manufacturer targeting
+(device.deviceManufacturer -eq "Dell Inc.")
+(device.deviceManufacturer -eq "HP Inc.")
+(device.deviceManufacturer -eq "Lenovo")
+(device.deviceManufacturer -eq "Microsoft Corporation")
+
+# Device model targeting
+(device.deviceModel -contains "Latitude")
+(device.deviceModel -contains "EliteBook")
+(device.deviceModel -contains "ThinkPad")
+(device.deviceModel -contains "Surface")
+
+# Combined manufacturer and Autopilot
+(device.devicePhysicalIds -any _ -startswith "[ZTDId]") and (device.deviceManufacturer -eq "Dell Inc.")
+
+# ========================================
+# MANAGEMENT STATE FILTERING
+# ========================================
+
+# MDM enrolled devices
+(device.managementType -eq "MDM")
+
+# Hybrid Azure AD joined devices
+(device.trustType -eq "ServerAd")
+
+# Azure AD joined devices
+(device.trustType -eq "AzureAd")
+
+# Workplace joined devices
+(device.trustType -eq "Workplace")
+
+# ========================================
+# TIME-BASED FILTERING
+# ========================================
+
+# Recently registered devices (fixed date - update manually)
+(device.registrationDateTime -ge "2024-08-01T00:00:00Z")
+
+# Devices registered in 2024
+(device.registrationDateTime -ge "2024-01-01T00:00:00Z") and (device.registrationDateTime -lt "2025-01-01T00:00:00Z")
+
+# NOTE: Dynamic groups do NOT support rolling dates like now() or relative dates
+# Use PowerShell automation to update timestamps periodically:
+# $thirtyDaysAgo = (Get-Date).AddDays(-30).ToString("yyyy-MM-ddTHH:mm:ssZ")
+# $newRule = "(device.registrationDateTime -ge `"$thirtyDaysAgo`")"
+# Update-MgGroup -GroupId $groupId -MembershipRule $newRule
+
+# ========================================
+# DEVICE NAMING PATTERNS
+# ========================================
+
+# Devices with specific naming conventions
+(device.displayName -startswith "CORP-")
+(device.displayName -startswith "FIN-")
+(device.displayName -startswith "HR-")
+(device.displayName -startswith "KIOSK-")
+
+# Devices containing specific text
+(device.displayName -contains "LAB")
+(device.displayName -contains "TEST")
+
+# ========================================
+# COMPLEX COMBINATION RULES
+# ========================================
+
+# Hybrid Autopilot corporate devices
+(device.trustType -eq "ServerAd") and (device.devicePhysicalIds -any _ -startswith "[ZTDId]") and (device.displayName -startswith "CORP-")
+
+# New Windows 11 Azure AD joined devices
+(device.trustType -eq "AzureAd") and (device.deviceOSVersion -startswith "10.0.22") and (device.registrationDateTime -ge "2024-01-01T00:00:00Z")
+
+# Autopilot devices excluding pilot group (by tag)
+(device.devicePhysicalIds -any _ -startswith "[ZTDId]") and -not (device.devicePhysicalIds -any _ -eq "[OrderID]:pilot")
+
+# Finance department Dell laptops with Autopilot
+(device.devicePhysicalIds -any _ -eq "[OrderID]:finance") and (device.deviceManufacturer -eq "Dell Inc.") and (device.deviceModel -contains "Latitude")
+
+# Hybrid Autopilot devices with specific trust type
+(device.devicePhysicalIds -any _ -startswith "[ZTDId]") and (device.trustType -eq "Workplace")
+
+# ========================================
+# DEPLOYMENT-SPECIFIC RULES
+# ========================================
+
+# User-driven Autopilot devices
+(device.devicePhysicalIds -any _ -startswith "[ZTDId]") and (device.trustType -eq "AzureAd")
+
+# Self-deploying Autopilot devices (often used for kiosks)
+(device.devicePhysicalIds -any _ -startswith "[ZTDId]") and (device.devicePhysicalIds -any _ -contains "kiosk")
+
+# Pre-provisioning (White Glove) devices
+(device.devicePhysicalIds -any _ -startswith "[ZTDId]") and (device.devicePhysicalIds -any _ -contains "whitglove")
+
+# ========================================
+# LIMITATIONS AND WORKAROUNDS
+# ========================================
+
+# CANNOT DO - These rules are NOT SUPPORTED in dynamic groups:
+# (device.memberOf -contains "group-id")                    # Cannot reference other groups
+# (device.groups -any _ -eq "Pilot Devices")               # Cannot reference group membership
+# -not (device.memberOf -contains "excluded-group-id")     # Cannot exclude based on group membership
+# (device.registrationDateTime -ge now())                  # Cannot use relative dates
+
+# WORKAROUNDS:
+
+# Option 1: Use device properties instead of group membership
+# Instead of excluding "Pilot Group", use device naming or tags:
+(device.displayName -startswith "PROD-") and -not (device.displayName -contains "PILOT")
+
+# Option 2: Use static groups with nested membership
+# Create static group containing multiple dynamic groups
+
+# Option 3: Use administrative units (limited scenarios)
+(device.administrativeUnitIds -any _ -eq "your-au-id-here")
+
+# ========================================
+# TESTING AND VALIDATION
+# ========================================
+
+# Test rule for single device (replace with actual device name)
+(device.displayName -eq "TESTDEVICE01")
+
+# Test rule for small subset (useful for validation)
+(device.displayName -startswith "TEST-") and (device.devicePhysicalIds -any _ -startswith "[ZTDId]")
+
+# ========================================
+# MAINTENANCE NOTES
+# ========================================
+
+# 1. Test all rules in development environment first
+# 2. Monitor group membership changes after rule deployment
+# 3. Update timestamp-based rules regularly via automation
+# 4. Document custom OrderID tags used in your environment
+# 5. Validate rules after major Azure AD/Entra ID updates

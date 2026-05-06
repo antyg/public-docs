@@ -1,0 +1,29 @@
+{
+  "@odata.type": "#microsoft.graph.azureADWindowsAutopilotDeploymentProfile",
+  "displayName": "Kiosk Self-Deploying Profile",
+  "description": "Self-deploying profile for kiosk devices",
+  "language": "os-default",
+  "extractHardwareHash": false,
+  "deviceNameTemplate": "KIOSK-%RAND:4%",
+  "deviceType": "windowsPc",
+  "enableWhiteGlove": false,
+  "roleScopeTagIds": ["0"],
+  "outOfBoxExperienceSettings": {
+    "@odata.type": "microsoft.graph.outOfBoxExperienceSettings",
+    "hidePrivacySettings": true,
+    "hideEULA": true,
+    "userType": "administrator",
+    "deviceUsageType": "shared",
+    "skipKeyboardSelectionPage": true,
+    "hideEscapeLink": true
+  },
+  "enrollmentStatusScreenSettings": {
+    "@odata.type": "microsoft.graph.windowsEnrollmentStatusScreenSettings",
+    "hideInstallationProgress": false,
+    "allowDeviceUseBeforeProfileAndAppInstallComplete": false,
+    "blockDeviceSetupRetryByUser": true,
+    "allowLogCollectionOnInstallFailure": false,
+    "installProgressTimeoutInMinutes": 90,
+    "allowDeviceUseOnInstallFailure": false
+  }
+}

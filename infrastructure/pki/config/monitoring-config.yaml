@@ -1,0 +1,66 @@
+# monitoring-config.yaml
+# PKI monitoring configuration
+
+Monitoring:
+  Metrics:
+    CA_Services:
+      - Metric: service_status
+        Service: CertSvc
+        Servers: [PKI-ICA-01, PKI-ICA-02]
+        Check_Interval: 60s
+        Alert_When: status != running
+
+    Certificate_Metrics:
+      - Metric: certificates_issued
+        Source: CA_Database
+        Interval: 5m
+
+      - Metric: certificates_expiring
+        Threshold: 30_days
+        Check_Interval: 1h
+        Alert_When: count > 10
+
+      - Metric: certificate_requests_pending
+        Source: CA_Database
+        Alert_When: count > 50
+
+    Performance_Metrics:
+      - Metric: issuance_time
+        Threshold: 30s
+        Alert_When: p95 > threshold
+
+      - Metric: ocsp_response_time
+        Threshold: 500ms
+        Alert_When: p95 > threshold
+
+      - Metric: crl_size
+        Threshold: 10MB
+        Alert_When: size > threshold
+
+    Security_Metrics:
+      - Metric: failed_requests
+        Window: 5m
+        Alert_When: count > 10
+
+      - Metric: revocations
+        Track: all
+        Alert_When: reason = KeyCompromise
+
+  Alerts:
+    Channels:
+      - Email: pki-alerts@company.com.au
+      - Teams: PKI-Operations
+      - PagerDuty: pki-oncall
+
+    Escalation:
+      Level_1:
+        After: 5m
+        Contact: operations-team
+
+      Level_2:
+        After: 15m
+        Contact: pki-team
+
+      Level_3:
+        After: 30m
+        Contact: management
